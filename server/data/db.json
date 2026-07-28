@@ -1,0 +1,360 @@
+{
+  "meetings": [
+    {
+      "id": "meeting-341d2487",
+      "title": "Product Marketing Meeting (weekly) 2021 06 28",
+      "createdAt": "2026-08-26T06:00:36.023Z",
+      "updatedAt": "2026-08-26T06:02:54.728Z",
+      "duration": "01:05",
+      "transcript": [
+        {
+          "id": "89f22b57-42e9-45a9-8fd2-8a87424d4645",
+          "time": "00:08",
+          "speaker": "Facilitator",
+          "text": "Starting our recorded session regarding \"Product Marketing Meeting (weekly) 2021-06-28\". Let's go over the core agenda items."
+        },
+        {
+          "id": "2bfea465-0659-4563-bb56-be9be901f180",
+          "time": "00:18",
+          "speaker": "Lead Architect",
+          "text": "The latest release build passed integration tests with no major regression warnings."
+        },
+        {
+          "id": "d0452d29-33ea-42c7-98f5-8c52e35cbdbb",
+          "time": "00:32",
+          "speaker": "Product Lead",
+          "text": "Great. Let’s make sure customer telemetry and alerting thresholds are verified before we greenlight the public rollout."
+        },
+        {
+          "id": "029c6bfd-8956-4ab6-a9ff-68e3a6c4eaac",
+          "time": "00:46",
+          "speaker": "Lead Architect",
+          "text": "I will prepare the telemetry dashboards and email the staging link to the team by tomorrow morning."
+        },
+        {
+          "id": "66327740-1980-49ee-8f56-b9ba82c13e96",
+          "time": "00:58",
+          "speaker": "Facilitator",
+          "text": "Excellent. Let’s reconvene on Thursday for the final sign-off."
+        }
+      ],
+      "summary": {
+        "title": "Product Marketing Meeting (weekly) 2021 06 28",
+        "date": "Aug 26, 2026",
+        "attendees": [
+          "Facilitator (Participant)",
+          "Lead Architect (Participant)",
+          "Product Lead (Participant)"
+        ],
+        "summary": "The meeting focused on key project deliverables and strategic alignments. Topics discussed included starting our recorded session regarding \"product marketing meeting (weekly) 2021-06-28\". let's go over the core agenda items.. The team reviewed current status and established concrete next steps.",
+        "keyDecisions": [
+          "Agreed on milestones outlined in Starting our recorded session regarding \"Product Marketing M..."
+        ],
+        "actionItems": [
+          {
+            "id": "e42bde46-249e-49bb-85aa-07367cd7d888",
+            "owner": "Facilitator",
+            "task": "Starting our recorded session regarding \"Product Marketing Meeting (weekly) 2021-06-28\". Let's go over the core agenda items.",
+            "due": "By Friday",
+            "notes": "Mentioned at [00:08]",
+            "completed": false
+          },
+          {
+            "id": "b5b53d8f-8441-4840-9379-78bad9c984e4",
+            "owner": "Product Lead",
+            "task": "Great. Let’s make sure customer telemetry and alerting thresholds are verified before we greenlight the public rollout.",
+            "due": "By Friday",
+            "notes": "Mentioned at [00:32]",
+            "completed": false
+          },
+          {
+            "id": "f79019a6-8578-4f54-9a1a-8462a5d4f2a9",
+            "owner": "Lead Architect",
+            "task": "I will prepare the telemetry dashboards and email the staging link to the team by tomorrow morning.",
+            "due": "By Friday",
+            "notes": "Mentioned at [00:46]",
+            "completed": false
+          },
+          {
+            "id": "bdbd0465-a1c6-480c-bda3-be18ab58e7cf",
+            "owner": "Facilitator",
+            "task": "Excellent. Let’s reconvene on Thursday for the final sign-off.",
+            "due": "By Friday",
+            "notes": "Mentioned at [00:58]",
+            "completed": false
+          }
+        ],
+        "discussionHighlights": [
+          "Facilitator noted: Starting our recorded session regarding \"Product Marketing Meeting (weekly) 2021-06-28\". Let's go over the core agenda items.",
+          "Lead Architect noted: The latest release build passed integration tests with no major regression warnings.",
+          "Product Lead noted: Great. Let’s make sure customer telemetry and alerting thresholds are verified before we greenlight the public rollout.",
+          "Lead Architect noted: I will prepare the telemetry dashboards and email the staging link to the team by tomorrow morning."
+        ],
+        "nextSteps": [
+          "Facilitator to finish: Starting our recorded session regarding \"Product Marketing Meeting (weekly) 2021-06-28\". Let's go over the core agenda items. (By Friday)",
+          "Product Lead to finish: Great. Let’s make sure customer telemetry and alerting thresholds are verified before we greenlight the public rollout. (By Friday)"
+        ],
+        "template": "Standard Meeting Notes",
+        "language": "English",
+        "modelUsed": "Nimbus 4B (High Quality)",
+        "generatedAt": "2026-08-26T06:02:54.724Z"
+      },
+      "audioPath": "/Users/muhammedshraeef/Documents/GitHub/minomeet/server/uploads/1787724035892-809632456.mp3",
+      "tags": [
+        "Imported",
+        "Audio"
+      ]
+    },
+    {
+      "id": "meeting-b844bf6c",
+      "title": "Meeting 2026-08-26_00-27",
+      "createdAt": "2026-08-26T05:42:03.827Z",
+      "updatedAt": "2026-08-26T05:42:06.282Z",
+      "duration": "00:27",
+      "transcript": [
+        {
+          "id": "line-1787722900590",
+          "time": "00:04",
+          "speaker": "Speaker",
+          "text": "hello"
+        }
+      ],
+      "summary": {
+        "title": "Meeting 2026-08-26_00-27",
+        "date": "Aug 26, 2026",
+        "attendees": [
+          "Speaker (Participant)"
+        ],
+        "summary": "The meeting focused on key project deliverables and strategic alignments. Topics discussed included . The team reviewed current status and established concrete next steps.",
+        "keyDecisions": [
+          "Agreed on milestones outlined in hello..."
+        ],
+        "actionItems": [
+          {
+            "id": "6269d749-a092-4d6f-bbd1-58868c781991",
+            "owner": "Speaker",
+            "task": "Follow up on discussion items from this meeting",
+            "due": "By next sync",
+            "notes": "Review shared minutes",
+            "completed": false
+          }
+        ],
+        "discussionHighlights": [
+          "Speaker noted: hello"
+        ],
+        "nextSteps": [
+          "Schedule follow-up review sync."
+        ],
+        "template": "Standard Meeting Notes",
+        "language": "Auto",
+        "modelUsed": "Nimbus 1B (Fast)",
+        "generatedAt": "2026-08-26T05:42:06.277Z"
+      },
+      "tags": [
+        "General"
+      ]
+    },
+    {
+      "id": "meeting-3",
+      "title": "Meeting 2026-08-22_09-46",
+      "createdAt": "2026-08-22T09:46:00.000Z",
+      "updatedAt": "2026-08-26T05:05:54.409Z",
+      "duration": "00:24",
+      "tags": [
+        "Architecture",
+        "Database"
+      ],
+      "transcript": [
+        {
+          "id": "t-301",
+          "time": "00:04",
+          "speaker": "Vikram",
+          "text": "We are seeing read spikes on the user activity table during peak hours in US East."
+        },
+        {
+          "id": "t-302",
+          "time": "00:12",
+          "speaker": "Elena",
+          "text": "Adding read replicas or caching frequently accessed profile summaries in Redis would drop DB load by 70%."
+        },
+        {
+          "id": "t-303",
+          "time": "00:20",
+          "speaker": "Vikram",
+          "text": "Let’s benchmark Redis caching first since we already have the cluster provisioned."
+        }
+      ],
+      "summary": {
+        "title": "Meeting 2026-08-22_09-46",
+        "date": "Aug 26, 2026",
+        "attendees": [
+          "Vikram (Participant)",
+          "Elena (Participant)"
+        ],
+        "summary": "The meeting focused on key project deliverables and strategic alignments. Topics discussed included we are seeing read spikes on the user activity table during peak hours in us east.. The team reviewed current status and established concrete next steps.",
+        "keyDecisions": [
+          "Agreed on milestones outlined in We are seeing read spikes on the user activity table during ..."
+        ],
+        "actionItems": [
+          {
+            "id": "3a98d953-c6e3-4da6-b45a-2c25295c0628",
+            "owner": "Elena",
+            "task": "Adding read replicas or caching frequently accessed profile summaries in Redis would drop DB load by 70%.",
+            "due": "By Friday",
+            "notes": "Mentioned at [00:12]",
+            "completed": false
+          },
+          {
+            "id": "b1e6f4e3-803c-4754-a0c0-327f347e0936",
+            "owner": "Vikram",
+            "task": "Let’s benchmark Redis caching first since we already have the cluster provisioned.",
+            "due": "By Friday",
+            "notes": "Mentioned at [00:20]",
+            "completed": false
+          }
+        ],
+        "discussionHighlights": [
+          "Vikram noted: We are seeing read spikes on the user activity table during peak hours in US East.",
+          "Elena noted: Adding read replicas or caching frequently accessed profile summaries in Redis would drop DB load by 70%.",
+          "Vikram noted: Let’s benchmark Redis caching first since we already have the cluster provisioned."
+        ],
+        "nextSteps": [
+          "Elena to finish: Adding read replicas or caching frequently accessed profile summaries in Redis would drop DB load by 70%. (By Friday)",
+          "Vikram to finish: Let’s benchmark Redis caching first since we already have the cluster provisioned. (By Friday)"
+        ],
+        "template": "Project Sync / Status Update",
+        "language": "English",
+        "modelUsed": "Nimbus 4B (High Quality)",
+        "generatedAt": "2026-08-26T05:05:54.402Z"
+      }
+    },
+    {
+      "id": "meeting-4",
+      "title": "Meeting 2026-08-22_09-38",
+      "createdAt": "2026-08-22T09:38:00.000Z",
+      "updatedAt": "2026-08-26T05:05:45.088Z",
+      "duration": "00:07",
+      "tags": [
+        "Quick Sync"
+      ],
+      "transcript": [
+        {
+          "id": "t-401",
+          "time": "00:02",
+          "speaker": "Sam",
+          "text": "Quick check: did everyone receive the calendar invite for next week’s offsite?"
+        },
+        {
+          "id": "t-402",
+          "time": "00:05",
+          "speaker": "Rachel",
+          "text": "Yes, confirmed. I’ll send the dietary requirements form by noon."
+        }
+      ],
+      "summary": {
+        "title": "Meeting 2026-08-22_09-38",
+        "date": "Aug 26, 2026",
+        "attendees": [
+          "Sam (Participant)",
+          "Rachel (Participant)"
+        ],
+        "summary": "Client Alignment Session: Reviewed client requirements, timeline milestones, deliverables, and integration credentials.",
+        "keyDecisions": [
+          "Agreed on milestones outlined in Quick check: did everyone receive the calendar invite for ne..."
+        ],
+        "actionItems": [
+          {
+            "id": "c7d135fb-05ab-4858-b6b6-2913a05f9d4a",
+            "owner": "Rachel",
+            "task": "Yes, confirmed. I’ll send the dietary requirements form by noon.",
+            "due": "By Friday",
+            "notes": "Mentioned at [00:05]",
+            "completed": false
+          }
+        ],
+        "discussionHighlights": [
+          "Sam noted: Quick check: did everyone receive the calendar invite for next week’s offsite?",
+          "Rachel noted: Yes, confirmed. I’ll send the dietary requirements form by noon."
+        ],
+        "nextSteps": [
+          "Rachel to finish: Yes, confirmed. I’ll send the dietary requirements form by noon. (By Friday)"
+        ],
+        "template": "Client / Sales Meeting",
+        "language": "English",
+        "modelUsed": "Nimbus 4B (High Quality)",
+        "generatedAt": "2026-08-26T05:05:45.083Z"
+      }
+    },
+    {
+      "id": "meeting-5",
+      "title": "Meeting 2026-08-22_08-44",
+      "createdAt": "2026-08-22T08:44:00.000Z",
+      "updatedAt": "2026-08-22T08:55:00.000Z",
+      "duration": "00:11",
+      "tags": [
+        "Client Sync",
+        "Onboarding"
+      ],
+      "transcript": [
+        {
+          "id": "t-501",
+          "time": "00:03",
+          "speaker": "Jordan",
+          "text": "Acme Corp requested onboarding documentation and API sandbox keys for their dev team."
+        },
+        {
+          "id": "t-502",
+          "time": "00:08",
+          "speaker": "Tara",
+          "text": "I generated the sandbox client ID and secret. Will email their tech lead by EOD."
+        }
+      ],
+      "summary": {
+        "title": "Meeting 2026-08-22_08-44",
+        "date": "Aug 22, 2026",
+        "attendees": [
+          "Jordan (Account Exec)",
+          "Tara (Solutions Engineer)"
+        ],
+        "summary": "Aligned on delivering sandbox access credentials and onboarding guide to Acme Corp.",
+        "keyDecisions": [
+          "Sandbox environment provisioned with 30-day trial quota."
+        ],
+        "actionItems": [
+          {
+            "id": "act-501",
+            "owner": "Tara",
+            "task": "Email sandbox keys and Postman collection to Acme Corp tech lead",
+            "due": "Today, 5:00 PM",
+            "notes": "Include webhook guide in attachment",
+            "completed": true
+          }
+        ],
+        "discussionHighlights": [
+          "Client is eager to start prototyping in sprint 33."
+        ],
+        "template": "Client / Sales Meeting",
+        "language": "English",
+        "modelUsed": "Nimbus 1B (Fast)",
+        "generatedAt": "2026-08-22T08:56:00.000Z"
+      }
+    }
+  ],
+  "settings": {
+    "notifications": true,
+    "storagePath": "/Users/you/Minomeet/recordings",
+    "autoDeleteRecordingsDays": 30,
+    "saveAudio": true,
+    "audioFormat": "MP4",
+    "transcriptionEngine": "Nimbus Whisper · Local On-Device",
+    "liveCaptions": true,
+    "speakerLabels": true,
+    "autoSummary": true,
+    "defaultLanguage": "English",
+    "defaultTemplate": "Retrospective (Agile)",
+    "selectedModel": "Nimbus 1B (Fast)",
+    "betaDiarization": true,
+    "betaAskMeetings": true,
+    "betaAutoFollowUp": true
+  }
+}
