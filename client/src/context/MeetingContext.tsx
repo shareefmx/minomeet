@@ -113,37 +113,12 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
     refreshTranscriptionModels();
   }, []);
 
-  // Dynamic Theme Handler (System / Auto, Light, Dark)
+  // Enforce Clean Light Theme permanently across entire application
   useEffect(() => {
-    const theme = settings?.theme || 'system';
     const root = document.documentElement;
-
-    const applyTheme = (isDark: boolean) => {
-      if (isDark) {
-        root.classList.add('dark');
-        root.setAttribute('data-theme', 'dark');
-      } else {
-        root.classList.remove('dark');
-        root.setAttribute('data-theme', 'light');
-      }
-    };
-
-    if (theme === 'dark') {
-      applyTheme(true);
-    } else if (theme === 'light') {
-      applyTheme(false);
-    } else {
-      // System / Auto Mode
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      applyTheme(mediaQuery.matches);
-
-      const handleChange = (e: MediaQueryListEvent) => {
-        applyTheme(e.matches);
-      };
-      mediaQuery.addEventListener('change', handleChange);
-      return () => mediaQuery.removeEventListener('change', handleChange);
-    }
-  }, [settings?.theme]);
+    root.classList.remove('dark');
+    root.setAttribute('data-theme', 'light');
+  }, []);
 
   const refreshMeetings = async () => {
     try {

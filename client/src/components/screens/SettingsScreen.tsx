@@ -22,9 +22,6 @@ import {
   HardDrive,
   Loader2,
   Cloud,
-  Sun,
-  Moon,
-  Monitor,
   Bell
 } from 'lucide-react';
 import { SettingsTab } from '../../types/meeting.js';
@@ -739,102 +736,6 @@ export const SettingsScreen: React.FC = () => {
         {/* 6. GENERAL & STORAGE TAB */}
         {settingsTab === 'general' && (
           <div className="space-y-5">
-            {/* Appearance & Themes */}
-            <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs">
-              <div className="mb-3">
-                <h4 className="text-sm font-bold text-[#111827] flex items-center gap-2">
-                  <Sun className="w-4 h-4 text-[#2563eb]" />
-                  <span>Appearance &amp; Theme</span>
-                </h4>
-                <p className="text-xs text-[#6b7280] mt-0.5">
-                  Select your interface theme. Changes take effect across all workspace screens immediately.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {/* 1. Device / System Auto */}
-                <button
-                  onClick={() => updateSettings({ theme: 'system' })}
-                  className={`p-3.5 rounded-xl border-2 text-left transition cursor-pointer flex flex-col justify-between ${
-                    (settings.theme || 'system') === 'system'
-                      ? 'border-[#2563eb] bg-[#eff6ff]'
-                      : 'border-[#e5e7eb] hover:border-[#cbd5e1] bg-white'
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="w-8 h-8 rounded-lg bg-blue-100/70 text-[#2563eb] flex items-center justify-center">
-                        <Monitor className="w-4 h-4" />
-                      </div>
-                      {(settings.theme || 'system') === 'system' && (
-                        <span className="text-[#2563eb] text-xs font-black flex items-center gap-1">
-                          <Check className="w-4 h-4" /> Active
-                        </span>
-                      )}
-                    </div>
-                    <div className="font-extrabold text-xs text-[#111827]">Device Theme</div>
-                    <div className="text-[11px] text-[#6b7280] mt-0.5">
-                      Automatically syncs with macOS / OS system dark &amp; light mode.
-                    </div>
-                  </div>
-                </button>
-
-                {/* 2. Light Theme */}
-                <button
-                  onClick={() => updateSettings({ theme: 'light' })}
-                  className={`p-3.5 rounded-xl border-2 text-left transition cursor-pointer flex flex-col justify-between ${
-                    settings.theme === 'light'
-                      ? 'border-[#2563eb] bg-[#eff6ff]'
-                      : 'border-[#e5e7eb] hover:border-[#cbd5e1] bg-white'
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center">
-                        <Sun className="w-4 h-4" />
-                      </div>
-                      {settings.theme === 'light' && (
-                        <span className="text-[#2563eb] text-xs font-black flex items-center gap-1">
-                          <Check className="w-4 h-4" /> Active
-                        </span>
-                      )}
-                    </div>
-                    <div className="font-extrabold text-xs text-[#111827]">Light Theme</div>
-                    <div className="text-[11px] text-[#6b7280] mt-0.5">
-                      Clean white canvases with sharp high-contrast typography.
-                    </div>
-                  </div>
-                </button>
-
-                {/* 3. Dark Theme */}
-                <button
-                  onClick={() => updateSettings({ theme: 'dark' })}
-                  className={`p-3.5 rounded-xl border-2 text-left transition cursor-pointer flex flex-col justify-between ${
-                    settings.theme === 'dark'
-                      ? 'border-[#2563eb] bg-[#eff6ff]'
-                      : 'border-[#e5e7eb] hover:border-[#cbd5e1] bg-white'
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center">
-                        <Moon className="w-4 h-4" />
-                      </div>
-                      {settings.theme === 'dark' && (
-                        <span className="text-[#2563eb] text-xs font-black flex items-center gap-1">
-                          <Check className="w-4 h-4" /> Active
-                        </span>
-                      )}
-                    </div>
-                    <div className="font-extrabold text-xs text-[#111827]">Dark Theme</div>
-                    <div className="text-[11px] text-[#6b7280] mt-0.5">
-                      Obsidian dark interface engineered for reduced eye fatigue.
-                    </div>
-                  </div>
-                </button>
-              </div>
-            </div>
-
             {/* Desktop Notifications */}
             <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

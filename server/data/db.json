@@ -6666,7 +6666,7 @@
   ],
   "settings": {
     "notifications": true,
-    "storagePath": "/Users/you/Minomeet/recordings",
+    "storagePath": "/Users/muhammedshraeef/Documents/GitHub/minomeet/server/uploads",
     "autoDeleteRecordingsDays": 30,
     "saveAudio": true,
     "audioFormat": "MP4",
@@ -6680,6 +6680,6 @@
     "betaDiarization": true,
     "betaAskMeetings": true,
     "betaAutoFollowUp": true,
-    "theme": "dark"
+    "theme": "light"
   }
 }
