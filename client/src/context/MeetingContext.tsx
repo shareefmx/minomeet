@@ -108,6 +108,31 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
     refreshTranscriptionModels();
   }, []);
 
+  // Theme synchronization effect (Device/System, Light, Dark)
+  useEffect(() => {
+    const theme = settings?.theme || 'system';
+    const root = document.documentElement;
+
+    const applyTheme = () => {
+      const isSystemDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (theme === 'dark' || (theme === 'system' && isSystemDark)) {
+        root.classList.add('dark');
+        root.setAttribute('data-theme', 'dark');
+      } else {
+        root.classList.remove('dark');
+        root.setAttribute('data-theme', 'light');
+      }
+    };
+
+    applyTheme();
+
+    if (theme === 'system' && window.matchMedia) {
+      const mql = window.matchMedia('(prefers-color-scheme: dark)');
+      mql.addEventListener('change', applyTheme);
+      return () => mql.removeEventListener('change', applyTheme);
+    }
+  }, [settings?.theme]);
+
   const refreshMeetings = async () => {
     try {
       const data = await api.getMeetings();

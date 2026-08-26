@@ -31,7 +31,7 @@ export const App: React.FC = () => {
   }, []);
 
   return (
-    <div className="h-screen w-screen overflow-hidden flex flex-col bg-white font-sans select-none text-[#111827]">
+    <div className="h-screen w-screen overflow-hidden flex flex-col bg-white dark:bg-[#0f172a] font-sans select-none text-[#111827] dark:text-slate-100 transition-colors duration-200">
       {/* 6-Second Auto-Dismissing Header Banner with Animated Timeline */}
       {showBanner && (
         <div className="relative bg-gradient-to-r from-[#4f46e5] via-[#4338ca] to-[#312e81] text-white px-6 py-2.5 text-xs flex items-center justify-between shadow-md transition-all duration-500 z-30 flex-none animate-in fade-in slide-in-from-top-2 overflow-hidden">
@@ -64,12 +64,12 @@ export const App: React.FC = () => {
       <Titlebar />
 
       {/* Full-Screen Web Application Body */}
-      <div className="flex-1 flex min-h-0 relative overflow-hidden bg-white">
+      <div className="flex-1 flex min-h-0 relative overflow-hidden bg-white dark:bg-[#0f172a]">
         {/* Left Web Sidebar */}
         <Sidebar />
 
         {/* Central Screen Viewport */}
-        <main className="flex-1 flex flex-col min-w-0 bg-white relative overflow-hidden">
+        <main className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#0f172a] relative overflow-hidden">
           {currentScreen === 'home' && <HomeScreen />}
           {currentScreen === 'recording' && <RecordingScreen />}
           {currentScreen === 'notes' && <NotesScreen />}

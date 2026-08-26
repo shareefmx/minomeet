@@ -3183,9 +3183,10 @@
     "liveCaptions": true,
     "speakerLabels": true,
     "autoSummary": true,
-    "defaultLanguage": "Malayalam",
+    "defaultLanguage": "English",
     "defaultTemplate": "Standard Meeting Notes",
     "selectedModel": "Nimbus 1B (Fast)",
+    "theme": "system",
     "betaDiarization": true,
     "betaAskMeetings": true,
     "betaAutoFollowUp": true

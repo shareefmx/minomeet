@@ -55,6 +55,7 @@ export interface AppSettings {
   defaultLanguage: string;
   defaultTemplate: string;
   selectedModel: string;
+  theme?: 'system' | 'light' | 'dark';
   betaDiarization: boolean;
   betaAskMeetings: boolean;
   betaAutoFollowUp: boolean;
@@ -62,7 +63,7 @@ export interface AppSettings {
 
 export type ScreenType = 'home' | 'recording' | 'notes' | 'settings';
 
-export type SettingsTab = 'recording' | 'transcription' | 'model' | 'summary' | 'templates' | 'general' | 'beta';
+export type SettingsTab = 'recording' | 'transcription' | 'model' | 'summary' | 'templates' | 'appearance' | 'general' | 'beta';
 
 export interface ToastMessage {
   id: string;

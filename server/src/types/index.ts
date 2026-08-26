@@ -55,6 +55,7 @@ export interface AppSettings {
   defaultLanguage: string;
   defaultTemplate: string;
   selectedModel: string;
+  theme?: 'system' | 'light' | 'dark';
   betaDiarization: boolean;
   betaAskMeetings: boolean;
   betaAutoFollowUp: boolean;

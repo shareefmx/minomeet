@@ -30,6 +30,22 @@
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
 }
 
+.dark, :root[data-theme="dark"] {
+  --bg: #0f172a;
+  --stage: #1e293b;
+  --border: #334155;
+  --border-strong: #475569;
+  --text: #f8fafc;
+  --text-soft: #cbd5e1;
+  --text-mute: #64748b;
+  --blue: #3b82f6;
+  --blue-bg: #1e3a8a;
+  --blue-bg-strong: #1d4ed8;
+  --blue-text: #bfdbfe;
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
 html, body, #root {
   height: 100%;
   width: 100%;
@@ -37,8 +53,14 @@ html, body, #root {
   padding: 0;
   overflow: hidden;
   font-family: var(--font);
-  background-color: #ffffff;
-  color: #111827;
+  background-color: var(--bg);
+  color: var(--text);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.dark body, .dark #root {
+  background-color: #0f172a;
+  color: #f8fafc;
 }
 
 /* Custom animated waveforms */
