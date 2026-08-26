@@ -1,4 +1,5 @@
 import { TranscriptLine } from '../types/meeting.js';
+import { api } from './api.js';
 
 const SAMPLE_DIALOGUE: { speaker: string; text: string }[] = [
   { speaker: 'Dev', text: "Alright, let's start with the scanner updates — we swapped our legacy static scanner for the new Argus engine last week." },
@@ -25,9 +26,12 @@ export class SpeechCaptureService {
   private isSimulated = false;
   private simIndex = 0;
   private simInterval: any = null;
+  private chunkInterval: any = null;
   private audioChunks: Blob[] = [];
   private activeSourceType: AudioSourceType = 'mixed';
   private hasSystemAudioTrack = false;
+  private recordedSeconds = 0;
+  private seenTexts = new Set<string>();
 
   public getIsSimulationActive(): boolean {
     return this.isSimulated;
@@ -212,6 +216,40 @@ export class SpeechCaptureService {
             console.warn('Web Audio meter visualizer notice:', e);
           }
         }
+
+        // Live chunk transcription loop for system audio / Zoom / YouTube
+        let lastTranscribedOffset = 0;
+        this.chunkInterval = setInterval(async () => {
+          this.recordedSeconds += 4;
+          if (this.audioChunks.length > 2) {
+            const recentChunks = this.audioChunks.slice(Math.max(0, this.audioChunks.length - 5));
+            if (recentChunks.length > 0) {
+              const chunkBlob = new Blob(recentChunks, { type: 'audio/webm' });
+              const offset = lastTranscribedOffset;
+              lastTranscribedOffset = this.recordedSeconds;
+
+              try {
+                const segs = await api.transcribeLiveChunk({
+                  blob: chunkBlob,
+                  offsetSeconds: offset
+                });
+
+                if (segs && segs.length > 0) {
+                  for (const s of segs) {
+                    const text = s.text.trim();
+                    if (text && !this.seenTexts.has(text)) {
+                      this.seenTexts.add(text);
+                      onTranscriptLine({
+                        ...s,
+                        speaker: this.hasSystemAudioTrack ? 'Meeting Audio' : 'Speaker'
+                      });
+                    }
+                  }
+                }
+              } catch {}
+            }
+          }
+        }, 4500);
       }
     } catch (err) {
       console.warn('Live audio capture notice, running with speech synthesis fallback:', err);
@@ -233,16 +271,19 @@ export class SpeechCaptureService {
             const res = event.results[i];
             const transcript = res[0]?.transcript?.trim();
             if (res.isFinal && transcript) {
-              const elapsed = Math.floor((Date.now() - startTime) / 1000);
-              const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
-              const s = String(elapsed % 60).padStart(2, '0');
+              if (!this.seenTexts.has(transcript)) {
+                this.seenTexts.add(transcript);
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
+                const s = String(elapsed % 60).padStart(2, '0');
 
-              onTranscriptLine({
-                id: 'line-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
-                time: `${m}:${s}`,
-                speaker: this.hasSystemAudioTrack ? 'Meeting Audio' : 'Speaker',
-                text: transcript
-              });
+                onTranscriptLine({
+                  id: 'line-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+                  time: `${m}:${s}`,
+                  speaker: this.hasSystemAudioTrack ? 'Voice & Meeting' : 'Speaker',
+                  text: transcript
+                });
+              }
               if (onInterimText) onInterimText('');
             } else if (transcript) {
               interimText += transcript + ' ';
@@ -281,6 +322,51 @@ export class SpeechCaptureService {
     return { success: true, hasSystemAudio: this.hasSystemAudioTrack };
   }
 
+  /**
+   * Dynamically links a Chrome Tab with audio during an active recording.
+   */
+  public async attachSystemAudioTab(): Promise<boolean> {
+    try {
+      if (!navigator.mediaDevices?.getDisplayMedia) return false;
+
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: { displaySurface: 'browser' },
+        audio: {
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
+          suppressLocalAudioPlayback: false
+        },
+        systemAudio: 'include',
+        selfBrowserSurface: 'include',
+        surfaceSwitching: 'include'
+      } as any);
+
+      const tracks = stream.getAudioTracks();
+      if (tracks.length > 0) {
+        this.hasSystemAudioTrack = true;
+        this.displayStream = stream;
+
+        if (this.audioContext && this.audioStream) {
+          const sysSource = this.audioContext.createMediaStreamSource(new MediaStream(tracks));
+          const destination = this.audioContext.createMediaStreamDestination();
+          if (this.micSourceNode) this.micSourceNode.connect(destination);
+          sysSource.connect(destination);
+          this.sysSourceNode = sysSource;
+          this.audioStream = destination.stream;
+        }
+
+        tracks[0].onended = () => {
+          this.hasSystemAudioTrack = false;
+        };
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
   private fallbackToSimulation(
     onTranscriptLine: (line: TranscriptLine) => void,
     onInterimText?: (interim: string) => void
@@ -316,6 +402,14 @@ export class SpeechCaptureService {
       clearInterval(this.simInterval);
       this.simInterval = null;
     }
+
+    if (this.chunkInterval) {
+      clearInterval(this.chunkInterval);
+      this.chunkInterval = null;
+    }
+
+    this.seenTexts.clear();
+    this.recordedSeconds = 0;
 
     if (this.recognition) {
       try {

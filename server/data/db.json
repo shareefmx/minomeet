@@ -1,6 +1,76 @@
 {
   "meetings": [
     {
+      "id": "meeting-5f3fe9a1",
+      "title": "Meeting 2026-08-26_02-06",
+      "createdAt": "2026-08-26T07:53:06.873Z",
+      "updatedAt": "2026-08-26T07:53:11.722Z",
+      "duration": "02:06",
+      "transcript": [
+        {
+          "id": "line-1787730673490-hdtr",
+          "time": "00:05",
+          "speaker": "Meeting Audio",
+          "text": "hello"
+        },
+        {
+          "id": "line-1787730677604-rl5j",
+          "time": "00:09",
+          "speaker": "Meeting Audio",
+          "text": "my name is sharif"
+        },
+        {
+          "id": "line-1787730683206-ez64",
+          "time": "00:15",
+          "speaker": "Meeting Audio",
+          "text": "stills olivered"
+        },
+        {
+          "id": "line-1787730740704-omsq",
+          "time": "01:12",
+          "speaker": "Meeting Audio",
+          "text": "yeah I think is audible I am playing YouTube video can you stay"
+        }
+      ],
+      "summary": {
+        "title": "Meeting 2026-08-26_02-06",
+        "date": "Aug 26, 2026",
+        "attendees": [
+          "Meeting Audio (Participant)"
+        ],
+        "summary": "The meeting focused on key project deliverables and strategic alignments. Topics discussed included . The team reviewed current status and established concrete next steps.",
+        "keyDecisions": [
+          "Agreed on milestones outlined in hello..."
+        ],
+        "actionItems": [
+          {
+            "id": "f5d22989-9ceb-4bfc-bb96-0cba9cd05021",
+            "owner": "Meeting Audio",
+            "task": "Follow up on discussion items from this meeting",
+            "due": "By next sync",
+            "notes": "Review shared minutes",
+            "completed": false
+          }
+        ],
+        "discussionHighlights": [
+          "Meeting Audio noted: hello",
+          "Meeting Audio noted: my name is sharif",
+          "Meeting Audio noted: stills olivered",
+          "Meeting Audio noted: yeah I think is audible I am playing YouTube video can you stay"
+        ],
+        "nextSteps": [
+          "Schedule follow-up review sync."
+        ],
+        "template": "Standard Meeting Notes",
+        "language": "English",
+        "modelUsed": "Nimbus 1B (Fast)",
+        "generatedAt": "2026-08-26T07:53:11.714Z"
+      },
+      "tags": [
+        "General"
+      ]
+    },
+    {
       "id": "meeting-43fd4a07",
       "title": "Product Marketing Meeting (weekly) 2021 06 28",
       "createdAt": "2026-08-26T07:26:04.707Z",

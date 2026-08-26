@@ -84,6 +84,54 @@ export class AudioService {
     };
   }
 
+  /**
+   * Transcribes a short live audio chunk (e.g. from system audio / YouTube / Zoom)
+   * using local Parakeet / Whisper.
+   */
+  public async transcribeLiveChunk(
+    filePath: string,
+    modelId?: string,
+    language?: string,
+    offsetSeconds: number = 0
+  ): Promise<TranscriptLine[]> {
+    if (!filePath || !fs.existsSync(filePath)) return [];
+
+    const chosenModel = modelId || transcriptionModelService.getActiveModel().id;
+    const pyScript = path.join(SCRIPTS_DIR, 'transcribe.py');
+
+    try {
+      const segments = await new Promise<TranscriptLine[]>((resolve) => {
+        const langParam = language ? `--language "${language}"` : '';
+        const cmd = `python3 "${pyScript}" --audio "${filePath}" --model "${chosenModel}" ${langParam} --download_root "${MODELS_DIR}"`;
+
+        exec(cmd, { maxBuffer: 5 * 1024 * 1024, timeout: 8000 }, (err, stdout) => {
+          if (stdout) {
+            try {
+              const output = JSON.parse(stdout.trim());
+              if (output.success && Array.isArray(output.segments) && output.segments.length > 0) {
+                const adjusted = output.segments.map((s: TranscriptLine, i: number) => {
+                  const segSec = this.parseDurationToSeconds(s.time) + offsetSeconds;
+                  return {
+                    ...s,
+                    id: `live-${Date.now()}-${i}-${uuidv4().slice(0, 4)}`,
+                    time: this.formatSeconds(segSec),
+                    speaker: s.speaker || 'Meeting Audio'
+                  };
+                });
+                return resolve(adjusted);
+              }
+            } catch {}
+          }
+          resolve([]);
+        });
+      });
+
+      return segments;
+    } catch {
+      return [];
+    }
+  }
+
   private getEstimatedDurationFromFile(filePath?: string): string {
     if (!filePath || !fs.existsSync(filePath)) return '00:45';
     try {

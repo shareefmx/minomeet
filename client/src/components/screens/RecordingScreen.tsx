@@ -1,7 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useMeeting } from '../../context/MeetingContext.js';
-import { Copy, Pause, Play, Square, X, Mic, Volume2, Layers, Cpu } from 'lucide-react';
+import { Copy, Pause, Play, Square, X, Mic, Volume2, Layers, Cpu, Link2, AlertCircle } from 'lucide-react';
 import { exportService } from '../../services/export.js';
+import { speechService } from '../../services/speech.js';
 
 export const RecordingScreen: React.FC = () => {
   const {
@@ -17,7 +18,10 @@ export const RecordingScreen: React.FC = () => {
   } = useMeeting();
 
   const [isPaused, setIsPaused] = useState(false);
+  const [isConnectingTab, setIsConnectingTab] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const hasSystemAudio = speechService.getHasSystemAudio();
 
   // Auto-scroll as new transcript lines or interim speech arrive
   useEffect(() => {
@@ -41,6 +45,17 @@ export const RecordingScreen: React.FC = () => {
   const togglePause = () => {
     setIsPaused(!isPaused);
     showToast(isPaused ? 'Recording Resumed' : 'Recording Paused', '', 'info');
+  };
+
+  const handleConnectTabAudio = async () => {
+    setIsConnectingTab(true);
+    const ok = await speechService.attachSystemAudioTab();
+    setIsConnectingTab(false);
+    if (ok) {
+      showToast('Chrome Tab Audio Connected!', 'Now capturing meeting & video sound.', 'success');
+    } else {
+      showToast('Tab Audio Notice', 'Select the "Chrome Tab" tab and check "Also share tab audio".', 'info');
+    }
   };
 
   return (
@@ -120,6 +135,45 @@ export const RecordingScreen: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* System & Meeting Audio Link Bar */}
+      {(audioSource === 'mixed' || audioSource === 'system') && (
+        <div className={`px-6 py-2 flex items-center justify-between text-xs border-b flex-wrap gap-2 transition ${
+          hasSystemAudio ? 'bg-[#f0fdf4] border-[#bbf7d0] text-[#166534]' : 'bg-[#fffbeb] border-[#fde68a] text-[#92400e]'
+        }`}>
+          <div className="flex items-center gap-2">
+            {hasSystemAudio ? (
+              <>
+                <span className="w-2.5 h-2.5 rounded-full bg-[#16a34a] animate-pulse" />
+                <span className="font-bold">Live System Audio Connected (Zoom / YouTube / Meeting Audio active)</span>
+              </>
+            ) : (
+              <>
+                <AlertCircle className="w-4 h-4 text-[#d97706] flex-none" />
+                <span className="font-semibold">
+                  No system audio detected from window share. (macOS requires selecting &ldquo;Chrome Tab&rdquo; to capture audio).
+                </span>
+              </>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3">
+            {!hasSystemAudio && (
+              <button
+                onClick={handleConnectTabAudio}
+                disabled={isConnectingTab}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#d97706] hover:bg-[#b45309] text-white font-bold text-xs shadow-xs transition cursor-pointer"
+              >
+                <Link2 className="w-3.5 h-3.5" />
+                <span>{isConnectingTab ? 'Connecting…' : 'Connect Chrome Tab Audio'}</span>
+              </button>
+            )}
+            <span className="text-[11px] opacity-85 hidden md:inline">
+              Tip: Pick <strong>Chrome Tab</strong> &rarr; Check <strong>&ldquo;Also share tab audio&rdquo;</strong>
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Live Transcript Stream Container */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-8 py-6 space-y-4 pb-28">

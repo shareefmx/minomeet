@@ -183,6 +183,30 @@ export const api = {
     });
     const data = await res.json();
     return data;
+  },
+
+  async transcribeLiveChunk(payload: {
+    blob: Blob;
+    offsetSeconds?: number;
+    model?: string;
+    language?: string;
+  }): Promise<TranscriptLine[]> {
+    try {
+      const formData = new FormData();
+      formData.append('audio', payload.blob, 'chunk.webm');
+      if (payload.offsetSeconds !== undefined) formData.append('offsetSeconds', String(payload.offsetSeconds));
+      if (payload.model) formData.append('model', payload.model);
+      if (payload.language) formData.append('language', payload.language);
+
+      const res = await fetch(`${API_BASE}/transcription/live-chunk`, {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      return data.segments || [];
+    } catch {
+      return [];
+    }
   }
 };
 
