@@ -61,6 +61,7 @@ export const api = {
     model?: string;
     language?: string;
     template?: string;
+    duration?: string;
   }): Promise<Meeting> {
     const formData = new FormData();
     formData.append('audio', payload.file);
@@ -68,6 +69,7 @@ export const api = {
     if (payload.model) formData.append('model', payload.model);
     if (payload.language) formData.append('language', payload.language);
     if (payload.template) formData.append('template', payload.template);
+    if (payload.duration) formData.append('duration', payload.duration);
 
     const res = await fetch(`${API_BASE}/meetings/import`, {
       method: 'POST',

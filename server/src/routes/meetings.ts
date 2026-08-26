@@ -145,14 +145,21 @@ router.post('/import', upload.single('audio'), async (req: Request, res: Respons
     const model = req.body.model as string | undefined;
     const language = req.body.language as string | undefined;
     const template = req.body.template as string | undefined;
+    const clientDuration = req.body.duration as string | undefined;
 
-    // Transcribe audio using local Whisper / Parakeet model
-    const transcript = await audioService.transcribeAudioFile(
+    // Transcribe audio using local Whisper / Parakeet model and obtain actual audio length
+    const transcribeResult = await audioService.transcribeAudioFile(
       file ? file.path : undefined,
       originalName,
       model,
-      language
+      language,
+      clientDuration
     );
+
+    const transcript = transcribeResult.segments;
+    const realDuration = clientDuration && clientDuration !== '00:00'
+      ? clientDuration
+      : (transcribeResult.duration || '00:45');
 
     const title = originalName.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ') || 'Imported Meeting Recording';
     const meetingId = 'meeting-' + uuidv4().slice(0, 8);
@@ -174,7 +181,7 @@ router.post('/import', upload.single('audio'), async (req: Request, res: Respons
       title,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      duration: '01:05',
+      duration: realDuration,
       transcript,
       summary,
       audioPath: file ? file.path : undefined,

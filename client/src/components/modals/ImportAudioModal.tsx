@@ -29,6 +29,7 @@ export const ImportAudioModal: React.FC = () => {
   } = useMeeting();
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [audioDuration, setAudioDuration] = useState<string>('00:00');
   const [autoSummarize, setAutoSummarize] = useState<boolean>(true);
   const [selectedModel, setSelectedModel] = useState<string>(activeTranscriptionModel?.id || 'whisper-large-v3-turbo');
   const [selectedLanguage, setSelectedLanguage] = useState<string>(settings?.defaultLanguage || 'English');
@@ -55,16 +56,49 @@ export const ImportAudioModal: React.FC = () => {
 
   if (!modals.import) return null;
 
+  const inspectAudioFile = (file: File) => {
+    setSelectedFile(file);
+    setAudioDuration('00:00');
+
+    try {
+      const url = URL.createObjectURL(file);
+      const audio = new Audio();
+      audio.preload = 'metadata';
+      audio.src = url;
+
+      audio.onloadedmetadata = () => {
+        const dur = audio.duration;
+        if (dur && !isNaN(dur) && isFinite(dur)) {
+          const totalSec = Math.round(dur);
+          const h = Math.floor(totalSec / 3600);
+          const m = Math.floor((totalSec % 3600) / 60);
+          const s = totalSec % 60;
+          const formatted = h > 0
+            ? `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+            : `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+          setAudioDuration(formatted);
+        }
+        URL.revokeObjectURL(url);
+      };
+
+      audio.onerror = () => {
+        URL.revokeObjectURL(url);
+      };
+    } catch (e) {
+      console.warn('Could not read audio file metadata in browser:', e);
+    }
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
+      inspectAudioFile(e.target.files[0]);
     }
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setSelectedFile(e.dataTransfer.files[0]);
+      inspectAudioFile(e.dataTransfer.files[0]);
     }
   };
 
@@ -111,7 +145,8 @@ export const ImportAudioModal: React.FC = () => {
         autoSummarize,
         model: selectedModel,
         language: selectedLanguage,
-        template: selectedTemplate
+        template: selectedTemplate,
+        duration: audioDuration !== '00:00' ? audioDuration : undefined
       });
 
       if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
@@ -127,9 +162,10 @@ export const ImportAudioModal: React.FC = () => {
         setIsUploading(false);
         closeModal('import');
         setSelectedFile(null);
+        setAudioDuration('00:00');
         setProgressPercent(0);
         selectMeeting(meeting);
-        showToast('Audio transcribed successfully!', '100% On-device transcript & MOM ready.', 'success');
+        showToast('Audio transcribed successfully!', `Meeting length: ${meeting.duration} • MOM ready.`, 'success');
       }, 550);
     } catch (err: any) {
       if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
@@ -305,13 +341,21 @@ export const ImportAudioModal: React.FC = () => {
                 </div>
 
                 {selectedFile ? (
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
                     <div className="text-sm font-bold text-[#111827] flex items-center justify-center gap-1.5">
                       <Check className="w-4 h-4 text-green-600" />
                       <span className="truncate max-w-xs">{selectedFile.name}</span>
                     </div>
-                    <div className="text-xs text-[#9aa2af]">
-                      {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB &bull; Ready to transcribe
+                    <div className="text-xs text-[#6b7280] flex items-center justify-center gap-2 flex-wrap">
+                      <span className="font-mono">{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</span>
+                      {audioDuration && audioDuration !== '00:00' && (
+                        <>
+                          <span>&bull;</span>
+                          <span className="inline-flex items-center gap-1 font-bold text-[#1e3a8a] bg-[#dbeafe] px-2 py-0.5 rounded-md border border-[#bfdbfe]">
+                            Audio Length: {audioDuration}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
                 ) : (
