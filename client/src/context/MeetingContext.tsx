@@ -151,14 +151,30 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const downloadTranscriptionModel = async (id: string) => {
     try {
-      showToast('Download started', `Downloading ${id} weights to local cache…`, 'info');
+      showToast('Download started', `Downloading model weights to local storage…`, 'info');
       setTranscriptionModels(prev =>
         prev.map(m => m.id === id ? { ...m, status: 'downloading', downloadProgress: 15 } : m)
       );
 
+      // Smooth progress update animation while server downloads weights
+      const progressTimer = setInterval(() => {
+        setTranscriptionModels(prev =>
+          prev.map(m => {
+            if (m.id === id && m.status === 'downloading') {
+              const current = m.downloadProgress || 15;
+              const nextProg = Math.min(95, current + Math.floor(Math.random() * 14) + 8);
+              return { ...m, downloadProgress: nextProg };
+            }
+            return m;
+          })
+        );
+      }, 400);
+
       const updated = await api.downloadTranscriptionModel(id);
+      clearInterval(progressTimer);
+
       setTranscriptionModels(prev =>
-        prev.map(m => m.id === id ? updated : m)
+        prev.map(m => m.id === id ? { ...updated, status: 'downloaded', downloadProgress: 100 } : m)
       );
       showToast('Model Ready!', `${updated.name} downloaded and ready for offline use.`, 'success');
       await refreshTranscriptionModels();

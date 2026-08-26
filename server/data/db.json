@@ -1,6 +1,713 @@
 {
   "meetings": [
     {
+      "id": "meeting-9cf3bc76",
+      "title": "product marketing meeting weekly 2021 06 28 2s5PbELs",
+      "createdAt": "2026-08-26T15:47:08.860Z",
+      "updatedAt": "2026-08-26T15:47:08.860Z",
+      "duration": "05:59",
+      "transcript": [
+        {
+          "id": "t-1-6ad329",
+          "time": "00:00",
+          "speaker": "Facilitator",
+          "text": "I can record and we don't have a ton of items to get to and I might be able to do one that"
+        },
+        {
+          "id": "t-2-7fdfe2",
+          "time": "00:12",
+          "speaker": "Lead Architect",
+          "text": "might be fun if we have a little bit of time. So corporate events, they, I think I saw a little,"
+        },
+        {
+          "id": "t-3-eb997a",
+          "time": "00:24",
+          "speaker": "Product Lead",
+          "text": "I put this in Slack and I saw a little bit of kind of noise around it, which was good."
+        },
+        {
+          "id": "t-4-2e7a51",
+          "time": "00:32",
+          "speaker": "Team Member",
+          "text": "You know, the, the nutshell here is as we've kind of restructured and tried different things,"
+        },
+        {
+          "id": "t-5-36cba4",
+          "time": "00:38",
+          "speaker": "Facilitator",
+          "text": "the event support that we need isn't as nailed down as it needs to be. So the current tactic"
+        },
+        {
+          "id": "t-6-1d478a",
+          "time": "00:48",
+          "speaker": "Lead Architect",
+          "text": "that we're going with is go to market team signs up and kind of sponsors that event. So you support"
+        },
+        {
+          "id": "t-7-92d092",
+          "time": "00:57",
+          "speaker": "Product Lead",
+          "text": "as a PMM, your campaign manager does the campaigns for that event, et cetera, et cetera, et cetera."
+        },
+        {
+          "id": "t-8-68c3d2",
+          "time": "01:02",
+          "speaker": "Team Member",
+          "text": "I don't see anyone in the, maybe there are comments in the issue. I don't see the, the"
+        },
+        {
+          "id": "t-9-897280",
+          "time": "01:10",
+          "speaker": "Facilitator",
+          "text": "header updated yet."
+        },
+        {
+          "id": "t-10-734a36",
+          "time": "01:11",
+          "speaker": "Lead Architect",
+          "text": "I thought we had in Slack sort of farmed each one of them out."
+        },
+        {
+          "id": "t-11-4c30a0",
+          "time": "01:17",
+          "speaker": "Product Lead",
+          "text": "That's so I guess the next, so it looks like"
+        },
+        {
+          "id": "t-12-e93cf2",
+          "time": "01:21",
+          "speaker": "Team Member",
+          "text": "Ty put in some folks, it looks like this looks good. So that"
+        },
+        {
+          "id": "t-13-3420b7",
+          "time": "01:31",
+          "speaker": "Facilitator",
+          "text": "let's see, need support from GTM teams. So I guess the ask would be"
+        },
+        {
+          "id": "t-14-9bdeac",
+          "time": "01:38",
+          "speaker": "Lead Architect",
+          "text": "to work with your GTM teams. So, so did, let me ask it. I saw some Slack, I think in our Slack,"
+        },
+        {
+          "id": "t-15-aa43ba",
+          "time": "01:48",
+          "speaker": "Product Lead",
+          "text": "but did, did you all, were y'all able to connect with like your GTM teams?"
+        },
+        {
+          "id": "t-16-4f5d1f",
+          "time": "01:57",
+          "speaker": "Team Member",
+          "text": "On Slack only and on the issue actually."
+        },
+        {
+          "id": "t-17-ba07bc",
+          "time": "02:01",
+          "speaker": "Facilitator",
+          "text": "Yeah. Same. Not in, not in real time, but you know, source feedback. I got one person to respond"
+        },
+        {
+          "id": "t-18-07568c",
+          "time": "02:06",
+          "speaker": "Lead Architect",
+          "text": "so far. So it may end up Cindy being you and I just picking the one that we want to do."
+        },
+        {
+          "id": "t-19-70a0ec",
+          "time": "02:10",
+          "speaker": "Product Lead",
+          "text": "And then they can back us up."
+        },
+        {
+          "id": "t-20-60a0a7",
+          "time": "02:15",
+          "speaker": "Team Member",
+          "text": "If we don't get any more feedback."
+        },
+        {
+          "id": "t-21-e79e93",
+          "time": "02:18",
+          "speaker": "Facilitator",
+          "text": "Yeah. Do y'all, does anybody have like a regular sync still? Are those all been canceled or is there?"
+        },
+        {
+          "id": "t-22-f6998e",
+          "time": "02:27",
+          "speaker": "Lead Architect",
+          "text": "Yeah. We're on like a two week cadence. Okay."
+        },
+        {
+          "id": "t-23-6dd4ad",
+          "time": "02:34",
+          "speaker": "Product Lead",
+          "text": "Yeah. GitOps has been canceled after the enablement."
+        },
+        {
+          "id": "t-24-86c05a",
+          "time": "02:40",
+          "speaker": "Team Member",
+          "text": "Cool. So"
+        },
+        {
+          "id": "t-25-db6680",
+          "time": "02:43",
+          "speaker": "Facilitator",
+          "text": "I'm just trying to catch up with the thread."
+        },
+        {
+          "id": "t-26-d6aca7",
+          "time": "02:46",
+          "speaker": "Lead Architect",
+          "text": "So it looks like maybe a platform on reinvent CICD on Google next and GitOps on KubeCon. Does that sound right?"
+        },
+        {
+          "id": "t-27-25edb1",
+          "time": "03:00",
+          "speaker": "Product Lead",
+          "text": "Yeah."
+        },
+        {
+          "id": "t-28-5f5db9",
+          "time": "03:01",
+          "speaker": "Team Member",
+          "text": "Yep. That's where we were last I heard."
+        },
+        {
+          "id": "t-29-32a3de",
+          "time": "03:04",
+          "speaker": "Facilitator",
+          "text": "Cool. So then I think,"
+        },
+        {
+          "id": "t-30-959786",
+          "time": "03:06",
+          "speaker": "Lead Architect",
+          "text": "I think we can, we can help the corp events team. They do, they do a lot of like cat herding and,"
+        },
+        {
+          "id": "t-31-d0b4fc",
+          "time": "03:15",
+          "speaker": "Product Lead",
+          "text": "you know, keep on tracking people down. So I think if, if this team can take the mission to"
+        },
+        {
+          "id": "t-32-2ae783",
+          "time": "03:21",
+          "speaker": "Team Member",
+          "text": "like, try to help track that down. So if you, you know,"
+        },
+        {
+          "id": "t-33-7ad4ef",
+          "time": "03:27",
+          "speaker": "Facilitator",
+          "text": "get the commitment specifically from your campaign managers, Hey, like we're, we're signing up for"
+        },
+        {
+          "id": "t-34-38b170",
+          "time": "03:32",
+          "speaker": "Lead Architect",
+          "text": "KubeCon, you know, can you comment on the issue that yes, I can commit to this, et cetera, et cetera,"
+        },
+        {
+          "id": "t-35-801944",
+          "time": "03:38",
+          "speaker": "Product Lead",
+          "text": "et cetera, you know so that just so that they can get that, that event support, but that looks good."
+        },
+        {
+          "id": "t-36-b083a8",
+          "time": "03:46",
+          "speaker": "Team Member",
+          "text": "And I appreciate thanks for the link to Samia on the roles,"
+        },
+        {
+          "id": "t-37-027344",
+          "time": "03:50",
+          "speaker": "Facilitator",
+          "text": "product announcements. So I appreciate Brian for adding this. I, I probably should have added it,"
+        },
+        {
+          "id": "t-38-928b37",
+          "time": "04:00",
+          "speaker": "Lead Architect",
+          "text": "but I had two questions about that one. One is over what timeframe are we looking at?"
+        },
+        {
+          "id": "t-39-aa0af4",
+          "time": "04:10",
+          "speaker": "Product Lead",
+          "text": "So, so in theory, this is, this could be the same as the GitLab 14 launch where we're saying"
+        },
+        {
+          "id": "t-40-9bbfe1",
+          "time": "04:18",
+          "speaker": "Team Member",
+          "text": "basically since 13.0, what has, you know, what kind of big improvements have we made?"
+        },
+        {
+          "id": "t-41-cc43b6",
+          "time": "04:23",
+          "speaker": "Facilitator",
+          "text": "Candidly, this is always a little bit tough and I'm, and I'm, I am not totally sure of all of the"
+        },
+        {
+          "id": "t-42-f8121b",
+          "time": "04:34",
+          "speaker": "Lead Architect",
+          "text": "kind of the interplay here, but I think, I think this is kind of the general gist of this assignment"
+        },
+        {
+          "id": "t-43-462e02",
+          "time": "04:42",
+          "speaker": "Product Lead",
+          "text": "is okay. We have commit coming up. We have some amount of like, we have a stage, you know,"
+        },
+        {
+          "id": "t-44-9673a1",
+          "time": "04:49",
+          "speaker": "Team Member",
+          "text": "a metaphorical stage to say something to the world and we'll get some amount of press attention"
+        },
+        {
+          "id": "t-45-859f8f",
+          "time": "04:55",
+          "speaker": "Facilitator",
+          "text": "because we're having an event, right? What kind of announcements do we make?"
+        },
+        {
+          "id": "t-46-5faa39",
+          "time": "05:01",
+          "speaker": "Lead Architect",
+          "text": "At GitLab, it's really, really tough to make product announcements because our entire roadmap"
+        },
+        {
+          "id": "t-47-e113ac",
+          "time": "05:05",
+          "speaker": "Product Lead",
+          "text": "is completely public, yada, yada, yada. So the thought here is to, but also because our entire roadmap"
+        },
+        {
+          "id": "t-48-7d7a58",
+          "time": "05:14",
+          "speaker": "Team Member",
+          "text": "is completely public and because we ship these tiny little MVCs, a new feature will come out,"
+        },
+        {
+          "id": "t-49-859fae",
+          "time": "05:20",
+          "speaker": "Facilitator",
+          "text": "but it'll be not really usable, right? So it takes a while. So if you look back over the past year"
+        },
+        {
+          "id": "t-50-cf9168",
+          "time": "05:26",
+          "speaker": "Lead Architect",
+          "text": "and say, okay, like what started in the last year, but now is really like a full fledged feature,"
+        },
+        {
+          "id": "t-51-2f0482",
+          "time": "05:32",
+          "speaker": "Product Lead",
+          "text": "what would, what would be coming out of beta, right? Like if we were any other company,"
+        },
+        {
+          "id": "t-52-bda06f",
+          "time": "05:37",
+          "speaker": "Team Member",
+          "text": "and we started a beta program in this last year, what would we be announcing as GA at commit?"
+        },
+        {
+          "id": "t-53-fcdea9",
+          "time": "05:43",
+          "speaker": "Facilitator",
+          "text": "That's kind of, that's kind of my thought on it. I see a couple of head nods. What do you think,"
+        },
+        {
+          "id": "t-54-20eb1f",
+          "time": "05:48",
+          "speaker": "Lead Architect",
+          "text": "Cindy? Yeah, I think I was inclined to group some things to say like vulnerability management"
+        },
+        {
+          "id": "t-55-252f72",
+          "time": "05:57",
+          "speaker": "Product Lead",
+          "text": "because there were tiny little MVCs all."
+        }
+      ],
+      "summary": {
+        "title": "product marketing meeting weekly 2021 06 28 2s5PbELs",
+        "date": "Aug 26, 2026",
+        "attendees": [
+          "Facilitator (Participant)",
+          "Lead Architect (Participant)",
+          "Product Lead (Participant)",
+          "Team Member (Participant)"
+        ],
+        "summary": "The meeting focused on key project deliverables and strategic alignments. Topics discussed included i can record and we don't have a ton of items to get to and i might be able to do one that. The team reviewed current status and established concrete next steps.",
+        "keyDecisions": [
+          "Agreed on milestones outlined in I can record and we don't have a ton of items to get to and ..."
+        ],
+        "actionItems": [
+          {
+            "id": "dbc10c4a-9cf4-4dbe-b93e-e31836a0abec",
+            "owner": "Facilitator",
+            "task": "Let's see, need support from GTM teams. So I guess the ask would be",
+            "due": "By Friday",
+            "notes": "Mentioned at [01:31]",
+            "completed": false
+          },
+          {
+            "id": "d217e5eb-2caf-404f-ae2e-802116a42683",
+            "owner": "Facilitator",
+            "task": "Product announcements. So I appreciate Brian for adding this. I, I probably should have added it,",
+            "due": "By Friday",
+            "notes": "Mentioned at [03:50]",
+            "completed": false
+          }
+        ],
+        "discussionHighlights": [
+          "Facilitator noted: I can record and we don't have a ton of items to get to and I might be able to do one that",
+          "Lead Architect noted: might be fun if we have a little bit of time. So corporate events, they, I think I saw a little,",
+          "Product Lead noted: I put this in Slack and I saw a little bit of kind of noise around it, which was good.",
+          "Team Member noted: You know, the, the nutshell here is as we've kind of restructured and tried different things,"
+        ],
+        "nextSteps": [
+          "Facilitator to finish: Let's see, need support from GTM teams. So I guess the ask would be (By Friday)",
+          "Facilitator to finish: Product announcements. So I appreciate Brian for adding this. I, I probably should have added it, (By Friday)"
+        ],
+        "template": "Standard Meeting Notes",
+        "language": "English",
+        "modelUsed": "Nimbus 4B (High Quality)",
+        "generatedAt": "2026-08-26T15:47:08.860Z"
+      },
+      "audioPath": "/Users/muhammedshraeef/Documents/GitHub/minomeet/server/uploads/1787759199607-857700694.mp3",
+      "tags": [
+        "Imported",
+        "Audio"
+      ]
+    },
+    {
+      "id": "meeting-5922aef1",
+      "title": "Meeting 2026-08-26_03-46",
+      "createdAt": "2026-08-26T15:46:13.239Z",
+      "updatedAt": "2026-08-26T15:47:24.486Z",
+      "duration": "03:46",
+      "transcript": [
+        {
+          "id": "line-1787758961553-uob2",
+          "time": "00:03",
+          "speaker": "You (Microphone)",
+          "text": "Hi, my name is Mo Sharif."
+        },
+        {
+          "id": "line-1787758963914-inf2",
+          "time": "00:05",
+          "speaker": "You (Microphone)",
+          "text": "This is still soluble."
+        },
+        {
+          "id": "line-1787758971571-gq88",
+          "time": "00:13",
+          "speaker": "You (Microphone)",
+          "text": "Place this audio build."
+        },
+        {
+          "id": "line-1787758979199-8xbz",
+          "time": "00:20",
+          "speaker": "You (Microphone)",
+          "text": "My name is."
+        },
+        {
+          "id": "line-1787758984443-ou17",
+          "time": "00:26",
+          "speaker": "You (Microphone)",
+          "text": "Is the mic is working properly?"
+        },
+        {
+          "id": "line-1787758991985-frh4",
+          "time": "00:33",
+          "speaker": "You (Microphone)",
+          "text": "Okay."
+        },
+        {
+          "id": "line-1787759002371-9a3f",
+          "time": "00:44",
+          "speaker": "You (Microphone)",
+          "text": "Okay, I'm starting YouTube."
+        },
+        {
+          "id": "line-1787759005015-9si2",
+          "time": "00:46",
+          "speaker": "You (Microphone)",
+          "text": "This is a recording YouTube video."
+        },
+        {
+          "id": "line-1787759007347-xdre",
+          "time": "00:49",
+          "speaker": "Meeting Participant",
+          "text": "Two weeks."
+        },
+        {
+          "id": "line-1787759010027-6wx2",
+          "time": "00:51",
+          "speaker": "Meeting Participant",
+          "text": "Two week cadence. Okay."
+        },
+        {
+          "id": "line-1787759012653-9zk4",
+          "time": "00:54",
+          "speaker": "Meeting Participant",
+          "text": "Yeah, GitOps has been canceled."
+        },
+        {
+          "id": "line-1787759015101-7ot2",
+          "time": "00:56",
+          "speaker": "Meeting Participant",
+          "text": "After the enablement."
+        },
+        {
+          "id": "line-1787759017568-xoqr",
+          "time": "00:59",
+          "speaker": "Meeting Participant",
+          "text": "Cool."
+        },
+        {
+          "id": "line-1787759022987-3zwu",
+          "time": "01:04",
+          "speaker": "Meeting Participant",
+          "text": "He's trying to catch up with the thread."
+        },
+        {
+          "id": "line-1787759028002-h2nl",
+          "time": "01:09",
+          "speaker": "Meeting Participant",
+          "text": "So it looks like maybe a platform."
+        },
+        {
+          "id": "line-1787759030584-4kqy",
+          "time": "01:12",
+          "speaker": "Meeting Participant",
+          "text": "Platform on reInvent."
+        },
+        {
+          "id": "line-1787759033268-5gcj",
+          "time": "01:14",
+          "speaker": "Meeting Participant",
+          "text": "CI, CD on Google Next and GitOps on."
+        },
+        {
+          "id": "line-1787759035946-b15k",
+          "time": "01:17",
+          "speaker": "Meeting Participant",
+          "text": "Do you have any thoughts on KubeCon? Does that sound right?"
+        },
+        {
+          "id": "line-1787759038728-39yx",
+          "time": "01:19",
+          "speaker": "Meeting Participant",
+          "text": "Okay. Yep. That's where we were last I heard."
+        },
+        {
+          "id": "line-1787759040981-4jge",
+          "time": "01:22",
+          "speaker": "Meeting Participant",
+          "text": "Cool. So then I think."
+        },
+        {
+          "id": "line-1787759046222-30ev",
+          "time": "01:27",
+          "speaker": "Meeting Participant",
+          "text": "I think we can help the corporate."
+        },
+        {
+          "id": "line-1787759048959-gbl8",
+          "time": "01:30",
+          "speaker": "Meeting Participant",
+          "text": "The Corp events team, they do a lot of like,."
+        },
+        {
+          "id": "line-1787759051338-6ohj",
+          "time": "01:32",
+          "speaker": "Meeting Participant",
+          "text": "Like cat herding and, you know,."
+        },
+        {
+          "id": "line-1787759053952-4nsm",
+          "time": "01:35",
+          "speaker": "Meeting Participant",
+          "text": "You know, keep on tracking people down."
+        },
+        {
+          "id": "line-1787759056523-pf9b",
+          "time": "01:38",
+          "speaker": "You (Microphone)",
+          "text": "I think if this team can take the mission to."
+        },
+        {
+          "id": "line-1787759074172-cc54",
+          "time": "01:55",
+          "speaker": "You (Microphone)",
+          "text": "I think."
+        },
+        {
+          "id": "line-1787759089527-76mm",
+          "time": "02:11",
+          "speaker": "You (Microphone)",
+          "text": "Hello."
+        },
+        {
+          "id": "line-1787759107440-37kn",
+          "time": "02:29",
+          "speaker": "Meeting Participant",
+          "text": "So in theory."
+        },
+        {
+          "id": "line-1787759112969-7wkm",
+          "time": "02:34",
+          "speaker": "Meeting Participant",
+          "text": "The same as the GitLab 14 launch where we're saying basically."
+        },
+        {
+          "id": "line-1787759115390-dbpm",
+          "time": "02:36",
+          "speaker": "Meeting Participant",
+          "text": "And we're saying basically since 13.0,."
+        },
+        {
+          "id": "line-1787759117909-3pj2",
+          "time": "02:39",
+          "speaker": "Meeting Participant",
+          "text": "What kind of big improvements have we."
+        },
+        {
+          "id": "line-1787759120357-p5cp",
+          "time": "02:42",
+          "speaker": "Meeting Participant",
+          "text": "What improvements have we made?"
+        },
+        {
+          "id": "line-1787759122888-0b8i",
+          "time": "02:44",
+          "speaker": "Meeting Participant",
+          "text": "Candidly this is."
+        },
+        {
+          "id": "line-1787759125410-qixt",
+          "time": "02:47",
+          "speaker": "Meeting Participant",
+          "text": "It's fucked."
+        },
+        {
+          "id": "line-1787759128064-qy3c",
+          "time": "02:49",
+          "speaker": "Meeting Participant",
+          "text": "I am not totally sure."
+        },
+        {
+          "id": "line-1787759130756-nmko",
+          "time": "02:52",
+          "speaker": "Meeting Participant",
+          "text": "I'm not totally sure of all of the..."
+        },
+        {
+          "id": "line-1787759133308-h3qs",
+          "time": "02:54",
+          "speaker": "Meeting Participant",
+          "text": "Kind of the interplay here, but I think."
+        },
+        {
+          "id": "line-1787759135872-k4hl",
+          "time": "02:57",
+          "speaker": "Meeting Participant",
+          "text": "I think this is kind of the general gist."
+        },
+        {
+          "id": "line-1787759138353-c85b",
+          "time": "02:59",
+          "speaker": "Meeting Participant",
+          "text": "So the whole gist of this assignment."
+        },
+        {
+          "id": "line-1787759141218-c4xw",
+          "time": "03:02",
+          "speaker": "Meeting Participant",
+          "text": "Okay. We have commit coming up. We have some amount of."
+        },
+        {
+          "id": "line-1787759143855-z93t",
+          "time": "03:05",
+          "speaker": "Meeting Participant",
+          "text": "Some amount of like, we have a stage,."
+        },
+        {
+          "id": "line-1787759146080-hrpq",
+          "time": "03:07",
+          "speaker": "You (Microphone)",
+          "text": "Yeah."
+        },
+        {
+          "id": "line-1787759151301-lehq",
+          "time": "03:13",
+          "speaker": "You (Microphone)",
+          "text": "Rizvart."
+        },
+        {
+          "id": "line-1787759161620-l19n",
+          "time": "03:23",
+          "speaker": "You (Microphone)",
+          "text": "I am closing this Google meeting."
+        },
+        {
+          "id": "line-1787759171783-nch3",
+          "time": "03:33",
+          "speaker": "You (Microphone)",
+          "text": "Thank you for that."
+        }
+      ],
+      "summary": {
+        "title": "Meeting 2026-08-26_03-46",
+        "date": "Aug 26, 2026",
+        "attendees": [
+          "You (Microphone) (Participant)",
+          "Meeting Participant (Participant)"
+        ],
+        "summary": "The meeting focused on key project deliverables and strategic alignments. Topics discussed included , my name is mo sharif.. The team reviewed current status and established concrete next steps.",
+        "keyDecisions": [
+          "Agreed on milestones outlined in Hi, my name is Mo Sharif...."
+        ],
+        "actionItems": [
+          {
+            "id": "4bbdc633-28f0-44b4-ac4b-8997677cb80b",
+            "owner": "You (Microphone)",
+            "task": "Follow up on discussion items from this meeting",
+            "due": "By next sync",
+            "notes": "Review shared minutes",
+            "completed": false
+          }
+        ],
+        "discussionHighlights": [
+          "You (Microphone) noted: Hi, my name is Mo Sharif.",
+          "You (Microphone) noted: This is still soluble.",
+          "You (Microphone) noted: Place this audio build.",
+          "You (Microphone) noted: My name is."
+        ],
+        "nextSteps": [
+          "Schedule follow-up review sync."
+        ],
+        "template": "Standard Meeting Notes",
+        "language": "Auto",
+        "modelUsed": "Nimbus 1B (Fast)",
+        "generatedAt": "2026-08-26T15:47:24.472Z"
+      },
+      "tags": [
+        "General"
+      ]
+    },
+    {
       "id": "meeting-9724836a",
       "title": "Meeting 2026-08-26_01-25",
       "createdAt": "2026-08-26T15:36:36.932Z",
