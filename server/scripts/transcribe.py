@@ -127,7 +127,7 @@ def main():
         raw_segments = result.get("segments", [])
         formatted_segments = []
 
-        speakers = ["Facilitator", "Lead Architect", "Product Lead", "Team Member"]
+        speakers = ["Team Member"]
 
         for idx, seg in enumerate(raw_segments):
             start_sec = seg.get("start", 0.0)
@@ -135,7 +135,7 @@ def main():
             if not text:
                 continue
 
-            speaker = speakers[idx % len(speakers)]
+            speaker = "Team Member"
             formatted_segments.append({
                 "id": f"t-{idx+1}-{uuid.uuid4().hex[:6]}",
                 "time": format_timestamp(start_sec),
@@ -147,7 +147,7 @@ def main():
             formatted_segments.append({
                 "id": f"t-1-{uuid.uuid4().hex[:6]}",
                 "time": "00:02",
-                "speaker": "Speaker",
+                "speaker": "Team Member",
                 "text": full_text
             })
 
@@ -187,31 +187,31 @@ def main():
                 {
                     "id": f"t-1-{uuid.uuid4().hex[:6]}",
                     "time": format_timestamp(t1),
-                    "speaker": "Facilitator",
+                    "speaker": "Team Member",
                     "text": f"Starting our recorded audio review regarding \"{base_name}\". Let's go over the core agenda items."
                 },
                 {
                     "id": f"t-2-{uuid.uuid4().hex[:6]}",
                     "time": format_timestamp(t2),
-                    "speaker": "Lead Architect",
+                    "speaker": "Team Member",
                     "text": "The latest service build passed integration tests with no major regression warnings."
                 },
                 {
                     "id": f"t-3-{uuid.uuid4().hex[:6]}",
                     "time": format_timestamp(t3),
-                    "speaker": "Product Lead",
+                    "speaker": "Team Member",
                     "text": "Let’s verify telemetry metrics and alerting thresholds before public rollout."
                 },
                 {
                     "id": f"t-4-{uuid.uuid4().hex[:6]}",
                     "time": format_timestamp(t4),
-                    "speaker": "Lead Architect",
+                    "speaker": "Team Member",
                     "text": "I will prepare the telemetry dashboards and email the staging link to the team by tomorrow."
                 },
                 {
                     "id": f"t-5-{uuid.uuid4().hex[:6]}",
                     "time": format_timestamp(t5),
-                    "speaker": "Facilitator",
+                    "speaker": "Team Member",
                     "text": "Excellent. Let’s reconvene on Thursday for the final sign-off."
                 }
             ]

@@ -18,7 +18,7 @@ export class AIService {
     const speakers = Array.from(new Set(transcript.map(t => t.speaker).filter(Boolean))) as string[];
     const attendeesList = speakers.length > 0
       ? speakers.map(s => `${s} (Participant)`)
-      : ['Lead Facilitator', 'Core Team'];
+      : ['Team Member'];
 
     const title = meetingTitle || (transcript.length > 0 ? `Meeting Sync — ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : 'Untitled Meeting');
     const dateFormatted = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -61,7 +61,7 @@ export class AIService {
       actionItems: actionItems.length > 0 ? actionItems : [
         {
           id: uuidv4(),
-          owner: speakers[0] || 'Team Lead',
+          owner: speakers[0] || 'Team Member',
           task: 'Follow up on discussion items from this meeting',
           due: 'By next sync',
           notes: 'Review shared minutes',
@@ -172,7 +172,7 @@ export class AIService {
       body = `Hi everyone,\n\nQuick recap of our meeting today:\n\n**Summary:**\n${summaryText}\n\n**Action Items:**\n${actionsList || '• None'}\n\nLet me know if anything was missed.\n\nBest,\nMinomeet AI`;
     } else if (tone === 'action-oriented') {
       const actionsList = actionItems.map(a => `• [ ] **${a.owner}** → ${a.task} [Due: ${a.due}] - ${a.notes}`).join('\n');
-      body = `Team,\n\nHere are the critical deliverables and action items from today's "${title}":\n\n**Action Matrix:**\n${actionsList}\n\n**Key Decisions:**\n${meeting.summary?.keyDecisions?.map(d => `• ${d}`).join('\n') || '• As discussed.'}\n\nPlease update your ticket status as items progress.\n\nBest regards,\nMeeting Facilitator`;
+      body = `Team,\n\nHere are the critical deliverables and action items from today's "${title}":\n\n**Action Matrix:**\n${actionsList}\n\n**Key Decisions:**\n${meeting.summary?.keyDecisions?.map(d => `• ${d}`).join('\n') || '• As discussed.'}\n\nPlease update your ticket status as items progress.\n\nBest regards,\nTeam Member`;
     } else {
       const actionsList = actionItems.map(a => `• **${a.owner}**: ${a.task} (Target Due Date: ${a.due})`).join('\n');
       body = `Dear Attendees (${attendees}),\n\nThank you for your time during our "${title}" session. Below is a structured summary of the discussion, decisions, and assigned responsibilities:\n\n### Executive Summary\n${summaryText}\n\n### Key Decisions Made\n${meeting.summary?.keyDecisions?.map(d => `• ${d}`).join('\n') || '• Confirmed roadmap timelines.'}\n\n### Action Items & Ownership\n${actionsList || '• No open action items.'}\n\nPlease reach out if you have any questions or require revisions to these minutes.\n\nWarm regards,\nMinomeet On-Device AI Assistant`;

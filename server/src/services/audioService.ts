@@ -176,31 +176,31 @@ export class AudioService {
       {
         id: uuidv4(),
         time: t1,
-        speaker: 'Facilitator',
+        speaker: 'Team Member',
         text: `Starting our recorded session regarding "${baseName}". Let's go over the core agenda items.`
       },
       {
         id: uuidv4(),
         time: t2,
-        speaker: 'Lead Architect',
+        speaker: 'Team Member',
         text: 'The latest release build passed integration tests with no major regression warnings.'
       },
       {
         id: uuidv4(),
         time: t3,
-        speaker: 'Product Lead',
+        speaker: 'Team Member',
         text: 'Great. Let’s make sure customer telemetry and alerting thresholds are verified before we greenlight the public rollout.'
       },
       {
         id: uuidv4(),
         time: t4,
-        speaker: 'Lead Architect',
+        speaker: 'Team Member',
         text: 'I will prepare the telemetry dashboards and email the staging link to the team by tomorrow morning.'
       },
       {
         id: uuidv4(),
         time: t5,
-        speaker: 'Facilitator',
+        speaker: 'Team Member',
         text: 'Excellent. Let’s reconvene on Thursday for the final sign-off.'
       }
     ];
