@@ -77,20 +77,21 @@ export class SpeechCaptureService {
       this.ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
-          if (msg.type === 'transcription' && Array.isArray(msg.segments)) {
-            for (const seg of msg.segments) {
-              const text = seg.text?.trim();
-              if (text && !this.seenTexts.has(text)) {
-                this.seenTexts.add(text);
-                onTranscriptLine({
-                  id: seg.id || `live-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-                  time: seg.time || '00:00',
-                  speaker: seg.speaker || (this.sysLevel > this.micLevel ? 'Meeting Audio' : 'You (Microphone)'),
-                  text
-                });
-                if (onInterimText) onInterimText('');
-              }
+          if (msg.type === 'sentence' && msg.sentence) {
+            const s = msg.sentence;
+            const text = s.text?.trim();
+            if (text && !this.seenTexts.has(text) && text.length > 2) {
+              this.seenTexts.add(text);
+              onTranscriptLine({
+                id: s.id || `line-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                time: s.time || '00:00',
+                speaker: s.speaker || (this.sysLevel > this.micLevel + 0.05 ? 'Meeting Participant' : 'You (Microphone)'),
+                text
+              });
+              if (onInterimText) onInterimText('');
             }
+          } else if (msg.type === 'interim' && msg.text) {
+            if (onInterimText) onInterimText(msg.text);
           }
         } catch {}
       };
@@ -316,8 +317,12 @@ export class SpeechCaptureService {
           for (let i = event.resultIndex; i < event.results.length; ++i) {
             const res = event.results[i];
             const transcript = res[0]?.transcript?.trim();
-            if (res.isFinal && transcript) {
-              if (!this.seenTexts.has(transcript)) {
+            if (res.isFinal && transcript && transcript.length >= 3) {
+              let formatted = transcript[0].toUpperCase() + transcript.slice(1);
+              if (!/[.?!]$/.test(formatted)) formatted += '.';
+
+              if (!this.seenTexts.has(formatted) && !this.seenTexts.has(transcript)) {
+                this.seenTexts.add(formatted);
                 this.seenTexts.add(transcript);
                 const elapsed = Math.floor((Date.now() - startTime) / 1000);
                 const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
@@ -327,7 +332,7 @@ export class SpeechCaptureService {
                   id: 'line-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
                   time: `${m}:${s}`,
                   speaker: this.sysLevel > this.micLevel + 0.05 ? 'Meeting Participant' : 'You (Microphone)',
-                  text: transcript
+                  text: formatted
                 });
               }
               if (onInterimText) onInterimText('');

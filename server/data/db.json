@@ -1,6 +1,264 @@
 {
   "meetings": [
     {
+      "id": "meeting-73ed952c",
+      "title": "Meeting 2026-08-26_01-26",
+      "createdAt": "2026-08-26T08:10:40.728Z",
+      "updatedAt": "2026-08-26T08:10:40.728Z",
+      "duration": "01:26",
+      "transcript": [
+        {
+          "id": "seg-1787731774042",
+          "time": "00:02",
+          "speaker": "Speaker",
+          "text": "Selam animusun almışıyor."
+        },
+        {
+          "id": "line-1787731774464-08cx",
+          "time": "00:05",
+          "speaker": "You (Microphone)",
+          "text": "hello my name is"
+        },
+        {
+          "id": "seg-1787731775552",
+          "time": "00:04",
+          "speaker": "Speaker",
+          "text": "Obrigado."
+        },
+        {
+          "id": "seg-1787731777080",
+          "time": "00:05",
+          "speaker": "Speaker",
+          "text": "Thank you."
+        },
+        {
+          "id": "seg-1787731778611",
+          "time": "00:07",
+          "speaker": "Speaker",
+          "text": "All right."
+        },
+        {
+          "id": "seg-1787731780151",
+          "time": "00:08",
+          "speaker": "Speaker",
+          "text": "Yeah."
+        },
+        {
+          "id": "seg-1787731784766",
+          "time": "00:13",
+          "speaker": "Speaker",
+          "text": "We did a"
+        },
+        {
+          "id": "seg-1787731786302",
+          "time": "00:15",
+          "speaker": "Speaker",
+          "text": "I love you."
+        },
+        {
+          "id": "seg-1787731789374",
+          "time": "00:18",
+          "speaker": "Speaker",
+          "text": "If you hold, hold."
+        },
+        {
+          "id": "seg-1787731790958",
+          "time": "00:19",
+          "speaker": "Speaker",
+          "text": "I'll talk to you soon."
+        },
+        {
+          "id": "seg-1787731794033",
+          "time": "00:22",
+          "speaker": "Speaker",
+          "text": "Let's see who can find it faster."
+        },
+        {
+          "id": "seg-1787731797072",
+          "time": "00:25",
+          "speaker": "Speaker",
+          "text": "I can guarantee you not within"
+        },
+        {
+          "id": "seg-1787731798628",
+          "time": "00:27",
+          "speaker": "Speaker",
+          "text": "amount of tabs I have open."
+        },
+        {
+          "id": "seg-1787731800141",
+          "time": "00:28",
+          "speaker": "Speaker",
+          "text": "Oh my God."
+        },
+        {
+          "id": "line-1787731801700-uel6",
+          "time": "00:32",
+          "speaker": "You (Microphone)",
+          "text": "you"
+        },
+        {
+          "id": "seg-1787731801745",
+          "time": "00:30",
+          "speaker": "Speaker",
+          "text": "So I'm like, it probably won't be me."
+        },
+        {
+          "id": "seg-1787731803190",
+          "time": "00:31",
+          "speaker": "Speaker",
+          "text": "Yes."
+        },
+        {
+          "id": "seg-1787731804753",
+          "time": "00:33",
+          "speaker": "Speaker",
+          "text": "So I, this is why"
+        },
+        {
+          "id": "seg-1787731806275",
+          "time": "00:35",
+          "speaker": "Speaker",
+          "text": "I send everything to"
+        },
+        {
+          "id": "seg-1787731807791",
+          "time": "00:36",
+          "speaker": "Speaker",
+          "text": "Google."
+        },
+        {
+          "id": "seg-1787731809326",
+          "time": "00:38",
+          "speaker": "Speaker",
+          "text": "Gmail."
+        },
+        {
+          "id": "seg-1787731810895",
+          "time": "00:39",
+          "speaker": "Speaker",
+          "text": "because the search is so"
+        },
+        {
+          "id": "seg-1787731812435",
+          "time": "00:41",
+          "speaker": "Speaker",
+          "text": "fast. So I literally..."
+        },
+        {
+          "id": "seg-1787731813981",
+          "time": "00:42",
+          "speaker": "Speaker",
+          "text": "We have a folder where all"
+        },
+        {
+          "id": "seg-1787731815535",
+          "time": "00:44",
+          "speaker": "Speaker",
+          "text": "all of my GitLab pings go."
+        },
+        {
+          "id": "seg-1787731817005",
+          "time": "00:45",
+          "speaker": "Speaker",
+          "text": "And I"
+        },
+        {
+          "id": "seg-1787731818607",
+          "time": "00:47",
+          "speaker": "Speaker",
+          "text": "I can just search for infographics."
+        },
+        {
+          "id": "seg-1787731820118",
+          "time": "00:48",
+          "speaker": "Speaker",
+          "text": "Oh, I found it."
+        },
+        {
+          "id": "seg-1787731821685",
+          "time": "00:50",
+          "speaker": "Speaker",
+          "text": "I found it, I found it."
+        },
+        {
+          "id": "seg-1787731823192",
+          "time": "00:51",
+          "speaker": "Speaker",
+          "text": "a good look at first."
+        },
+        {
+          "id": "seg-1787731824698",
+          "time": "00:53",
+          "speaker": "Speaker",
+          "text": "I'm not."
+        },
+        {
+          "id": "seg-1787731826248",
+          "time": "00:55",
+          "speaker": "Speaker",
+          "text": "I found it."
+        },
+        {
+          "id": "seg-1787731827758",
+          "time": "00:56",
+          "speaker": "Speaker",
+          "text": "Oh!"
+        },
+        {
+          "id": "seg-1787731829381",
+          "time": "00:58",
+          "speaker": "Speaker",
+          "text": "is the one. So this there's two."
+        },
+        {
+          "id": "seg-1787731830906",
+          "time": "00:59",
+          "speaker": "Speaker",
+          "text": "This is the one for the single tool."
+        },
+        {
+          "id": "seg-1787731832400",
+          "time": "01:01",
+          "speaker": "Speaker",
+          "text": "comparison, but then for"
+        },
+        {
+          "id": "seg-1787731833924",
+          "time": "01:02",
+          "speaker": "Speaker",
+          "text": "the same."
+        },
+        {
+          "id": "seg-1787731835475",
+          "time": "01:04",
+          "speaker": "Speaker",
+          "text": "but then here's the one"
+        },
+        {
+          "id": "seg-1787731836974",
+          "time": "01:05",
+          "speaker": "Speaker",
+          "text": "for"
+        },
+        {
+          "id": "seg-1787731838601",
+          "time": "01:07",
+          "speaker": "Speaker",
+          "text": "I'll just put it in chat for you guys."
+        },
+        {
+          "id": "seg-1787731840049",
+          "time": "01:08",
+          "speaker": "Speaker",
+          "text": "Okay."
+        }
+      ],
+      "tags": [
+        "General"
+      ]
+    },
+    {
       "id": "meeting-d7a66bdf",
       "title": "Meeting 2026-08-26_00-14",
       "createdAt": "2026-08-26T08:01:51.719Z",

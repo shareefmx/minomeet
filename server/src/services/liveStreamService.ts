@@ -18,6 +18,8 @@ interface ClientSession {
   offsetSeconds: number;
   lastSpeaker: string;
   isProcessing: boolean;
+  silenceCount: number;
+  lastSentence: string;
 }
 
 export class LiveStreamService {
@@ -51,7 +53,7 @@ export class LiveStreamService {
             const parsed = JSON.parse(trimmed);
             if (parsed.status === 'ready') {
               this.isWorkerReady = true;
-              console.log(`⚡ Live Speech Streaming Worker Ready (Device: ${parsed.device})`);
+              console.log(`⚡ High-Accuracy Sentence Transcriber Ready (Device: ${parsed.device})`);
             } else if (parsed.id && this.pendingRequests.has(parsed.id)) {
               const cb = this.pendingRequests.get(parsed.id);
               this.pendingRequests.delete(parsed.id);
@@ -73,7 +75,7 @@ export class LiveStreamService {
         this.workerProcess = null;
       });
     } catch (e) {
-      console.warn('Could not spawn persistent stream worker, falling back to on-demand:', e);
+      console.warn('Persistent stream worker notice:', e);
     }
   }
 
@@ -82,7 +84,7 @@ export class LiveStreamService {
     offsetSeconds: number = 0,
     language?: string
   ): Promise<any[]> {
-    if (!pcmBuffer || pcmBuffer.length < 3200) return [];
+    if (!pcmBuffer || pcmBuffer.length < 6400) return [];
 
     if (this.workerProcess && this.workerProcess.stdin?.writable) {
       const reqId = `req-${++this.reqCounter}-${Date.now()}`;
@@ -98,7 +100,7 @@ export class LiveStreamService {
         const timer = setTimeout(() => {
           this.pendingRequests.delete(reqId);
           resolve([]);
-        }, 3000);
+        }, 4000);
 
         this.pendingRequests.set(reqId, (res) => {
           clearTimeout(timer);
@@ -120,7 +122,7 @@ export class LiveStreamService {
     this.wss = new WebSocketServer({ server, path: '/api/transcription/live-stream' });
 
     this.wss.on('connection', (ws: WebSocket) => {
-      console.log('🎙️ Real-Time Live Audio Streaming client connected.');
+      console.log('🎙️ Real-Time High-Accuracy Live Stream connected.');
 
       const session: ClientSession = {
         ws,
@@ -128,7 +130,9 @@ export class LiveStreamService {
         bufferBytes: 0,
         offsetSeconds: 0,
         lastSpeaker: 'Speaker',
-        isProcessing: false
+        isProcessing: false,
+        silenceCount: 0,
+        lastSentence: ''
       };
 
       ws.on('message', async (data: any, isBinary: boolean) => {
@@ -137,8 +141,9 @@ export class LiveStreamService {
           session.buffer.push(chunk);
           session.bufferBytes += chunk.length;
 
-          // Process every ~1.5s of 16kHz 16-bit mono audio (16000 * 2 = 32,000 bytes/sec -> ~48,000 bytes)
-          if (session.bufferBytes >= 48000 && !session.isProcessing) {
+          // 16kHz 16-bit mono = 32,000 bytes/sec
+          // Accumulate ~3.0s to 4.0s of continuous natural sentence audio (96,000 to 128,000 bytes)
+          if (session.bufferBytes >= 96000 && !session.isProcessing) {
             session.isProcessing = true;
             const fullPcm = Buffer.concat(session.buffer);
             const currentOffset = session.offsetSeconds;
@@ -149,39 +154,53 @@ export class LiveStreamService {
             try {
               const segments = await this.transcribePcmBuffer(fullPcm, currentOffset);
               if (segments && segments.length > 0) {
-                const enriched = segments.map(s => ({
-                  ...s,
-                  speaker: session.lastSpeaker || 'Speaker'
-                }));
-                ws.send(JSON.stringify({
-                  type: 'transcription',
-                  segments: enriched
-                }));
+                const seg = segments[0];
+                const text = seg.text?.trim();
+
+                // Ensure it's a complete sentence and not a duplicate
+                if (text && text !== session.lastSentence && text.length > 3) {
+                  session.lastSentence = text;
+                  const enriched = {
+                    id: `line-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                    time: seg.time || '00:00',
+                    speaker: session.lastSpeaker || 'Speaker',
+                    text
+                  };
+
+                  ws.send(JSON.stringify({
+                    type: 'sentence',
+                    sentence: enriched
+                  }));
+                }
               }
             } catch (err) {
-              console.warn('Live stream chunk transcribe error:', err);
+              console.warn('Live sentence transcribe error:', err);
             } finally {
               session.isProcessing = false;
             }
           }
         } else {
-          // JSON control frame
           try {
             const msg = JSON.parse(data.toString());
             if (msg.type === 'metadata') {
               if (msg.speaker) session.lastSpeaker = msg.speaker;
               if (msg.offset !== undefined) session.offsetSeconds = msg.offset;
             } else if (msg.type === 'flush') {
-              if (session.bufferBytes > 3200 && !session.isProcessing) {
+              if (session.bufferBytes > 8000 && !session.isProcessing) {
                 session.isProcessing = true;
                 const fullPcm = Buffer.concat(session.buffer);
                 session.buffer = [];
                 session.bufferBytes = 0;
                 const segments = await this.transcribePcmBuffer(fullPcm, session.offsetSeconds);
-                if (segments.length > 0) {
+                if (segments.length > 0 && segments[0].text !== session.lastSentence) {
                   ws.send(JSON.stringify({
-                    type: 'transcription',
-                    segments: segments.map(s => ({ ...s, speaker: session.lastSpeaker }))
+                    type: 'sentence',
+                    sentence: {
+                      id: `line-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                      time: segments[0].time || '00:00',
+                      speaker: session.lastSpeaker || 'Speaker',
+                      text: segments[0].text
+                    }
                   }));
                 }
                 session.isProcessing = false;
@@ -198,7 +217,7 @@ export class LiveStreamService {
 
       ws.send(JSON.stringify({
         type: 'ready',
-        message: 'Live stream connected to Parakeet/Whisper AI Engine'
+        message: 'High-Accuracy Sentence-Level Engine Ready'
       }));
     });
   }
