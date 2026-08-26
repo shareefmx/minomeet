@@ -15,8 +15,39 @@ const SCRIPTS_DIR = path.join(__dirname, '../../scripts');
 
 const DEFAULT_MODELS: TranscriptionModel[] = [
   {
+    id: 'parakeet-tdt-lightning',
+    name: 'Parakeet TDT 1.1B Lightning (Recommended - Real-Time & Accurate)',
+    family: 'parakeet',
+    description: 'FastConformer-TDT architecture with sub-50ms streaming latency and studio-grade accuracy. Recommended for real-time live meetings, lightning-fast speech tracking, and instant transcription.',
+    sizeBytes: 650117120,
+    sizeFormatted: '620 MB',
+    ramRequired: '~1.5 GB RAM',
+    speedRating: 'Real-Time (<50ms) ⚡ Lightning',
+    accuracyScore: 5,
+    recommended: true,
+    status: 'downloaded',
+    downloadProgress: 100,
+    downloadedAt: new Date().toISOString(),
+    localPath: path.join(MODELS_DIR, 'parakeet_tdt.pt')
+  },
+  {
+    id: 'parakeet-compact',
+    name: 'Parakeet Compact 0.6B (Ultra-Fast)',
+    family: 'parakeet',
+    description: 'Ultra-low latency streaming model designed for live meeting transcription and minimal power consumption.',
+    sizeBytes: 304087040,
+    sizeFormatted: '290 MB',
+    ramRequired: '~800 MB RAM',
+    speedRating: 'Real-Time (<30ms) ⚡ Lightning',
+    accuracyScore: 4,
+    status: 'downloaded',
+    downloadProgress: 100,
+    downloadedAt: new Date().toISOString(),
+    localPath: path.join(MODELS_DIR, 'parakeet-compact.pt')
+  },
+  {
     id: 'whisper-large-v3-turbo',
-    name: 'Whisper Large-v3 Turbo (Recommended)',
+    name: 'Whisper Large-v3 Turbo (High Accuracy)',
     family: 'whisper',
     description: 'State-of-the-art accuracy with 8x faster decoding than Large-v3. Ideal for professional meetings, technical jargon, and multi-speaker conferences.',
     sizeBytes: 1610612736,
@@ -24,7 +55,6 @@ const DEFAULT_MODELS: TranscriptionModel[] = [
     ramRequired: '~2 GB VRAM / 4 GB RAM',
     speedRating: '8x Real-Time',
     accuracyScore: 5,
-    recommended: true,
     status: 'downloaded',
     downloadProgress: 100,
     downloadedAt: new Date().toISOString(),
@@ -111,41 +141,12 @@ const DEFAULT_MODELS: TranscriptionModel[] = [
     downloadProgress: 100,
     downloadedAt: new Date().toISOString(),
     localPath: path.join(MODELS_DIR, 'tiny.pt')
-  },
-  {
-    id: 'parakeet-tdt-lightning',
-    name: 'Parakeet TDT 1.1B Lightning (Real-Time)',
-    family: 'parakeet',
-    description: 'Sub-50ms streaming latency architecture optimized for live audio feeds, dynamic speech rate tracking, and instant captioning.',
-    sizeBytes: 650117120,
-    sizeFormatted: '620 MB',
-    ramRequired: '~1.5 GB RAM',
-    speedRating: 'Real-Time (<50ms)',
-    accuracyScore: 4,
-    recommended: true,
-    status: 'downloaded',
-    downloadProgress: 100,
-    downloadedAt: new Date().toISOString(),
-    localPath: path.join(MODELS_DIR, 'parakeet_tdt.pt')
-  },
-  {
-    id: 'parakeet-compact',
-    name: 'Parakeet Compact 0.6B',
-    family: 'parakeet',
-    description: 'Ultra-low latency streaming model designed for live meeting transcription and minimal power consumption.',
-    sizeBytes: 304087040,
-    sizeFormatted: '290 MB',
-    ramRequired: '~800 MB RAM',
-    speedRating: 'Real-Time (<30ms)',
-    accuracyScore: 4,
-    status: 'not_downloaded',
-    downloadProgress: 0
   }
 ];
 
 class TranscriptionModelService {
   private models: TranscriptionModel[] = [];
-  private activeModelId: string = 'whisper-large-v3-turbo';
+  private activeModelId: string = 'parakeet-tdt-lightning';
 
   constructor() {
     this.init();

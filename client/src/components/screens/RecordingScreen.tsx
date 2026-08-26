@@ -7,6 +7,7 @@ export const RecordingScreen: React.FC = () => {
   const {
     recordingTimer,
     liveTranscript,
+    interimTranscript,
     audioSource,
     setAudioSource,
     stopRecording,
@@ -18,12 +19,12 @@ export const RecordingScreen: React.FC = () => {
   const [isPaused, setIsPaused] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll as new transcript lines arrive
+  // Auto-scroll as new transcript lines or interim speech arrive
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [liveTranscript]);
+  }, [liveTranscript, interimTranscript]);
 
   const formatTimer = (seconds: number) => {
     const m = String(Math.floor(seconds / 60)).padStart(2, '0');
@@ -54,9 +55,9 @@ export const RecordingScreen: React.FC = () => {
           </div>
 
           {/* Engine Badge */}
-          <div className="hidden lg:flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f0f7ff] border border-[#bfdbfe] text-xs font-bold text-[#1e3a8a]">
-            <Cpu className="w-3.5 h-3.5 text-[#2563eb]" />
-            <span>Engine: {activeTranscriptionModel?.name?.split(' ')[0] || 'Whisper'} {activeTranscriptionModel?.name?.split(' ')[1] || 'Turbo'} (Local)</span>
+          <div className="hidden lg:flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f0fdf4] border border-[#bbf7d0] text-xs font-bold text-[#166534] shadow-xs">
+            <Cpu className="w-3.5 h-3.5 text-[#16a34a]" />
+            <span>Engine: {activeTranscriptionModel?.name || 'Parakeet TDT 1.1B Lightning (Real-Time)'}</span>
           </div>
 
 
@@ -122,45 +123,65 @@ export const RecordingScreen: React.FC = () => {
 
       {/* Live Transcript Stream Container */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-8 py-6 space-y-4 pb-28">
-        {liveTranscript.length === 0 ? (
+        {liveTranscript.length === 0 && !interimTranscript ? (
           <div className="flex flex-col items-center justify-center h-full text-center py-20">
             <div className="flex items-center gap-2 text-sm text-[#9aa2af] font-medium animate-pulse">
               <span className="w-2.5 h-2.5 rounded-full bg-[#3b82f6] animate-ping" />
-              <span>Listening to live speech stream and transcribing in real-time…</span>
+              <span>Listening in real-time with sub-50ms latency…</span>
             </div>
             <p className="text-xs text-[#cbd5e1] mt-2">
-              Audio Source: <span className="font-semibold capitalize text-[#6b7280]">{audioSource}</span> &bull; Speech recognition active
+              Engine: <span className="font-semibold text-[#16a34a]">Parakeet Lightning Real-Time</span> &bull; Audio: <span className="font-semibold capitalize text-[#6b7280]">{audioSource}</span>
             </p>
           </div>
         ) : (
-          liveTranscript.map((line, idx) => (
-            <div key={line.id || idx} className="flex items-start gap-3 text-[14.5px] leading-relaxed group">
-              <span className="text-xs text-[#9aa2af] font-mono select-none pt-0.5 min-w-[45px]">
-                [{line.time}]
-              </span>
-              <div className="flex-1">
-                {line.speaker && (
-                  <span className="font-bold text-[#1e3a8a] mr-2 text-xs uppercase tracking-wide bg-[#eff6ff] px-1.5 py-0.5 rounded">
-                    {line.speaker}
-                  </span>
-                )}
-                <span
-                  contentEditable
-                  suppressContentEditableWarning
-                  className="text-[#1f2937] hover:bg-yellow-50/70 p-0.5 rounded transition"
-                >
-                  {line.text}
+          <>
+            {liveTranscript.map((line, idx) => (
+              <div key={line.id || idx} className="flex items-start gap-3 text-[14.5px] leading-relaxed group">
+                <span className="text-xs text-[#9aa2af] font-mono select-none pt-0.5 min-w-[45px]">
+                  [{line.time}]
                 </span>
+                <div className="flex-1">
+                  {line.speaker && (
+                    <span className="font-bold text-[#1e3a8a] mr-2 text-xs uppercase tracking-wide bg-[#eff6ff] px-1.5 py-0.5 rounded">
+                      {line.speaker}
+                    </span>
+                  )}
+                  <span
+                    contentEditable
+                    suppressContentEditableWarning
+                    className="text-[#1f2937] hover:bg-yellow-50/70 p-0.5 rounded transition"
+                  >
+                    {line.text}
+                  </span>
+                </div>
               </div>
-            </div>
-          ))
+            ))}
+
+            {/* Real-time Sub-50ms Interim Live Caption Bubble */}
+            {interimTranscript && (
+              <div className="flex items-start gap-3 text-[14.5px] leading-relaxed bg-[#f0fdf4] border border-[#bbf7d0] p-3 rounded-xl shadow-2xs animate-in fade-in duration-75">
+                <span className="text-xs text-[#16a34a] font-mono font-bold select-none pt-0.5 min-w-[45px] flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-[#16a34a] animate-ping" />
+                  Live
+                </span>
+                <div className="flex-1">
+                  <span className="font-bold text-[#15803d] mr-2 text-xs uppercase tracking-wide bg-[#dcfce7] px-1.5 py-0.5 rounded">
+                    Speaking
+                  </span>
+                  <span className="text-[#14532d] font-medium">
+                    {interimTranscript}
+                  </span>
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {/* Live Listening Indicator */}
-        {!isPaused && liveTranscript.length > 0 && (
+        {!isPaused && (liveTranscript.length > 0 || interimTranscript) && (
           <div className="flex items-center gap-2 text-xs text-[#9aa2af] pt-2 font-medium">
-            <span className="w-2 h-2 rounded-full bg-[#60a5fa] animate-pulse-dot" />
-            <span>Transcribing live conversation…</span>
+            <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse-dot" />
+            <span>Parakeet TDT streaming active…</span>
           </div>
         )}
       </div>

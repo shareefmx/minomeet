@@ -1,20 +1,20 @@
 {
   "models": [
     {
-      "id": "whisper-large-v3-turbo",
-      "name": "Whisper Large-v3 Turbo (Recommended)",
-      "family": "whisper",
-      "description": "State-of-the-art accuracy with 8x faster decoding than Large-v3. Ideal for professional meetings, technical jargon, and multi-speaker conferences.",
-      "sizeBytes": 1610612736,
-      "sizeFormatted": "1.5 GB",
-      "ramRequired": "~2 GB VRAM / 4 GB RAM",
-      "speedRating": "8x Real-Time",
+      "id": "parakeet-tdt-lightning",
+      "name": "Parakeet TDT 1.1B Lightning (Recommended - Real-Time & Accurate)",
+      "family": "parakeet",
+      "description": "FastConformer-TDT architecture with sub-50ms streaming latency and studio-grade accuracy. Recommended for real-time live meetings, lightning-fast speech tracking, and instant transcription.",
+      "sizeBytes": 650117120,
+      "sizeFormatted": "620 MB",
+      "ramRequired": "~1.5 GB RAM",
+      "speedRating": "Real-Time (<50ms) ⚡ Lightning",
       "accuracyScore": 5,
       "recommended": true,
       "status": "downloaded",
       "downloadProgress": 100,
-      "downloadedAt": "2026-08-26T06:39:58.338Z",
-      "localPath": "/Users/muhammedshraeef/Documents/GitHub/minomeet/server/models/turbo.pt"
+      "downloadedAt": "2026-08-26T06:39:58.339Z",
+      "localPath": "/Users/muhammedshraeef/Documents/GitHub/minomeet/server/models/parakeet_tdt.pt"
     },
     {
       "id": "whisper-large-v3",

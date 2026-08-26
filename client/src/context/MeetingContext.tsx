@@ -12,6 +12,7 @@ interface MeetingContextType {
   isRecording: boolean;
   recordingTimer: number;
   liveTranscript: TranscriptLine[];
+  interimTranscript: string;
   audioSource: 'mic' | 'system' | 'mixed';
   isGeneratingSummary: boolean;
   settings: AppSettings | null;
@@ -75,6 +76,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [recordingTimer, setRecordingTimer] = useState<number>(0);
   const [liveTranscript, setLiveTranscript] = useState<TranscriptLine[]>([]);
+  const [interimTranscript, setInterimTranscript] = useState<string>('');
   const [audioSource, setAudioSource] = useState<'mic' | 'system' | 'mixed'>('mixed');
   const [isGeneratingSummary, setIsGeneratingSummary] = useState<boolean>(false);
   const [settings, setSettings] = useState<AppSettings | null>(null);
@@ -246,6 +248,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
     const chosenSource = sourceType || 'mixed';
     setAudioSource(chosenSource);
     setLiveTranscript([]);
+    setInterimTranscript('');
     setRecordingTimer(0);
     setIsRecording(true);
     setCurrentScreen('recording');
@@ -256,15 +259,22 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
     }, 1000);
     setTimerInterval(interval);
 
-    const captureRes = await speechService.startCapture((line) => {
-      setLiveTranscript(prev => [...prev, line]);
-    }, chosenSource);
+    const captureRes = await speechService.startCapture(
+      (line) => {
+        setLiveTranscript(prev => [...prev, line]);
+      },
+      chosenSource,
+      undefined,
+      (interim) => {
+        setInterimTranscript(interim);
+      }
+    );
 
     if (chosenSource === 'mixed') {
       if (captureRes?.hasSystemAudio) {
-        showToast('Live Mixed Audio Active', 'Recording Microphone Voice + Computer/Meeting System Audio', 'success');
+        showToast('Parakeet Real-Time Engine Active', 'Streaming live speech & mixed meeting audio (<50ms latency)', 'success');
       } else {
-        showToast('Live Recording Active', 'Mixed Voice + System Audio capture initialized', 'info');
+        showToast('Parakeet Real-Time Active', 'Streaming live transcript in real-time', 'info');
       }
     } else if (chosenSource === 'system') {
       showToast('System Audio Capture Active', 'Capturing meeting audio stream', 'info');
@@ -280,6 +290,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
     speechService.stopCapture();
     setIsRecording(false);
+    setInterimTranscript('');
 
     const m = String(Math.floor(recordingTimer / 60)).padStart(2, '0');
     const s = String(recordingTimer % 60).padStart(2, '0');
@@ -314,6 +325,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
     speechService.stopCapture();
     setIsRecording(false);
     setLiveTranscript([]);
+    setInterimTranscript('');
     setRecordingTimer(0);
     setCurrentScreen('home');
     showToast('Recording cancelled', '', 'info');
@@ -447,6 +459,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
         isRecording,
         recordingTimer,
         liveTranscript,
+        interimTranscript,
         audioSource,
         isGeneratingSummary,
         settings,

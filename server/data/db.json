@@ -3067,30 +3067,6 @@
       ]
     },
     {
-      "id": "meeting-e29668bb",
-      "title": "Meeting 2026-08-26_00-31",
-      "createdAt": "2026-08-26T07:12:30.049Z",
-      "updatedAt": "2026-08-26T07:12:30.049Z",
-      "duration": "00:31",
-      "transcript": [
-        {
-          "id": "line-1787728326962",
-          "time": "00:04",
-          "speaker": "Speaker",
-          "text": "hi"
-        },
-        {
-          "id": "line-1787728330196",
-          "time": "00:07",
-          "speaker": "Speaker",
-          "text": "my name is Mosharraf"
-        }
-      ],
-      "tags": [
-        "General"
-      ]
-    },
-    {
       "id": "meeting-71cb811d",
       "title": "Meeting 2026-08-26_00-57",
       "createdAt": "2026-08-26T07:11:54.784Z",

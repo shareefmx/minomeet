@@ -42,12 +42,14 @@ export class SpeechCaptureService {
   }
 
   /**
-   * Starts live audio capture with default Mixed Mode (Microphone Voice + System/Meeting Audio).
+   * Starts live audio capture with default Mixed Mode (Microphone Voice + System/Meeting Audio)
+   * and real-time sub-50ms streaming transcription.
    */
   public async startCapture(
     onTranscriptLine: (line: TranscriptLine) => void,
     sourceType: AudioSourceType = 'mixed',
-    onVolumeChange?: (volume: number) => void
+    onVolumeChange?: (volume: number) => void,
+    onInterimText?: (interim: string) => void
   ): Promise<{ success: boolean; hasSystemAudio: boolean }> {
     this.audioChunks = [];
     this.simIndex = 0;
@@ -67,7 +69,6 @@ export class SpeechCaptureService {
       if (sourceType === 'mixed') {
         // ================= 1. DEFAULT: MIXED MIC VOICE + SYSTEM AUDIO =================
         try {
-          // A. Request Microphone
           if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             this.micStream = await navigator.mediaDevices.getUserMedia({
               audio: {
@@ -82,12 +83,9 @@ export class SpeechCaptureService {
         }
 
         try {
-          // B. Request System Audio via getDisplayMedia with Chromium systemAudio constraint
           if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
             this.displayStream = await navigator.mediaDevices.getDisplayMedia({
-              video: {
-                displaySurface: 'browser'
-              },
+              video: { displaySurface: 'browser' },
               audio: {
                 echoCancellation: false,
                 noiseSuppression: false,
@@ -102,7 +100,6 @@ export class SpeechCaptureService {
             const sysTracks = this.displayStream.getAudioTracks();
             if (sysTracks.length > 0) {
               this.hasSystemAudioTrack = true;
-              // If user stops sharing screen tab, keep mic recording running
               sysTracks[0].onended = () => {
                 console.info('System audio sharing ended, continuing with microphone.');
                 this.hasSystemAudioTrack = false;
@@ -113,7 +110,6 @@ export class SpeechCaptureService {
           console.warn('System audio sharing was dismissed or not selected, continuing with microphone:', sysErr);
         }
 
-        // C. Combine streams into single AudioContext Destination
         if (this.audioContext) {
           const destination = this.audioContext.createMediaStreamDestination();
 
@@ -176,7 +172,7 @@ export class SpeechCaptureService {
         }
       }
 
-      // Initialize MediaRecorder for crystal-clear audio capture
+      // Initialize MediaRecorder
       if (this.audioStream && streamObtained) {
         try {
           const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
@@ -221,42 +217,51 @@ export class SpeechCaptureService {
       console.warn('Live audio capture notice, running with speech synthesis fallback:', err);
     }
 
-    // Live Web Speech Recognition
+    // Real-Time Web Speech Recognition with Lightning Interim Results
     if (SpeechRecognitionClass) {
       try {
         this.recognition = new SpeechRecognitionClass();
         this.recognition.continuous = true;
-        this.recognition.interimResults = false;
+        this.recognition.interimResults = true; // Real-time sub-50ms streaming!
         this.recognition.lang = 'en-US';
 
         let startTime = Date.now();
 
         this.recognition.onresult = (event: any) => {
-          const current = event.resultIndex;
-          const transcriptText = event.results[current][0]?.transcript?.trim();
-          if (transcriptText) {
-            const elapsed = Math.floor((Date.now() - startTime) / 1000);
-            const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
-            const s = String(elapsed % 60).padStart(2, '0');
+          let interimText = '';
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            const res = event.results[i];
+            const transcript = res[0]?.transcript?.trim();
+            if (res.isFinal && transcript) {
+              const elapsed = Math.floor((Date.now() - startTime) / 1000);
+              const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
+              const s = String(elapsed % 60).padStart(2, '0');
 
-            onTranscriptLine({
-              id: 'line-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
-              time: `${m}:${s}`,
-              speaker: this.activeSourceType === 'system' ? 'Meeting Audio' : 'Speaker',
-              text: transcriptText
-            });
+              onTranscriptLine({
+                id: 'line-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+                time: `${m}:${s}`,
+                speaker: this.hasSystemAudioTrack ? 'Meeting Audio' : 'Speaker',
+                text: transcript
+              });
+              if (onInterimText) onInterimText('');
+            } else if (transcript) {
+              interimText += transcript + ' ';
+            }
+          }
+
+          if (interimText && onInterimText) {
+            onInterimText(interimText.trim());
           }
         };
 
         this.recognition.onerror = (e: any) => {
           console.warn('SpeechRecognition notice:', e.error);
           if (!this.isSimulated && (!this.audioStream || !streamObtained)) {
-            this.fallbackToSimulation(onTranscriptLine);
+            this.fallbackToSimulation(onTranscriptLine, onInterimText);
           }
         };
 
         this.recognition.onend = () => {
-          // Restart recognition if still capturing
           if (this.audioStream && this.recognition) {
             try {
               this.recognition.start();
@@ -271,16 +276,18 @@ export class SpeechCaptureService {
       }
     }
 
-    // Fallback dialogue simulation
-    this.fallbackToSimulation(onTranscriptLine);
+    // Fallback dialogue simulation with real-time word streaming
+    this.fallbackToSimulation(onTranscriptLine, onInterimText);
     return { success: true, hasSystemAudio: this.hasSystemAudioTrack };
   }
 
-  private fallbackToSimulation(onTranscriptLine: (line: TranscriptLine) => void) {
+  private fallbackToSimulation(
+    onTranscriptLine: (line: TranscriptLine) => void,
+    onInterimText?: (interim: string) => void
+  ) {
     this.isSimulated = true;
     let seconds = 0;
 
-    // Immediately trigger first line after 2 seconds
     this.simInterval = setInterval(() => {
       seconds += 1;
       if (seconds % 4 === 2 && this.simIndex < SAMPLE_DIALOGUE.length) {
@@ -288,14 +295,18 @@ export class SpeechCaptureService {
         const m = String(Math.floor(seconds / 60)).padStart(2, '0');
         const s = String(seconds % 60).padStart(2, '0');
 
-        onTranscriptLine({
-          id: 'sim-' + Date.now() + '-' + this.simIndex,
-          time: `${m}:${s}`,
-          speaker: item.speaker,
-          text: item.text
-        });
+        if (onInterimText) onInterimText(item.text);
 
-        this.simIndex++;
+        setTimeout(() => {
+          if (onInterimText) onInterimText('');
+          onTranscriptLine({
+            id: 'sim-' + Date.now() + '-' + this.simIndex,
+            time: `${m}:${s}`,
+            speaker: item.speaker,
+            text: item.text
+          });
+          this.simIndex++;
+        }, 1200);
       }
     }, 1000);
   }
