@@ -92,3 +92,4 @@ export const defaultTemplates: MOMTemplate[] = [
     updatedAt: '2026-08-20T00:00:00.000Z'
   }
 ];
+
