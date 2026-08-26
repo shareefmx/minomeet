@@ -70,7 +70,7 @@ Documenting meeting discussions, recording action items, and drafting follow-up 
 - **Key Decisions**: Clear bulleted list of approved decisions and roadmap alignments.
 - **Action Items Matrix**: Assignee, task description, due dates, context notes, and completion toggles.
 - **Multi-Template Support**: Standard Notes, Daily Standup, Project Sync, Agile Retro, Client/Sales Meeting, Executive Brief.
-- **Multi-Language Generation**: English, Spanish, French, German, Hindi, and Malayalam.
+- **English-Specialized Neural Generation**: High-precision English transcription and MOM synthesis.
 - **Ask Your Meetings (Semantic Q&A)**: Ask natural language questions across all past meeting transcripts.
 - **Automated Follow-Up Emails**: Generate email recaps in Professional, Concise, or Action-Oriented tones.
 

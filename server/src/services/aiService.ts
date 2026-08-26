@@ -37,28 +37,11 @@ export class AIService {
       executiveSummary = `The meeting focused on key project deliverables and strategic alignments. Topics discussed included ${topicSentence.toLowerCase().replace(/^(alright|hey|hi|hello|ok|let's start with)\s*/i, '')}. The team reviewed current status and established concrete next steps.`;
     }
 
-    // Apply language adaptations
+    // MOM content in pure professional English
     let translatedSummary = executiveSummary;
     let translatedDecisions = keyDecisions;
     let translatedHighlights = discussionHighlights;
     let translatedNextSteps = nextSteps;
-
-    if (language.toLowerCase() === 'spanish') {
-      translatedSummary = `La reunión se centró en las entregas clave del proyecto y las alineaciones estratégicas. Se revisaron los estados actuales y se establecieron los próximos pasos concretos.`;
-      translatedDecisions = keyDecisions.map(d => `Acordado: ${d}`);
-    } else if (language.toLowerCase() === 'french') {
-      translatedSummary = `La réunion a porté sur les livrables clés du projet et les alignements stratégiques. L'équipe a examiné l'état actuel et défini des étapes précises.`;
-      translatedDecisions = keyDecisions.map(d => `Décidé: ${d}`);
-    } else if (language.toLowerCase() === 'german') {
-      translatedSummary = `Das Meeting konzentrierte sich auf wichtige Projektergebnisse und strategische Abstimmungen. Der aktuelle Status wurde geprüft und konkrete nächste Schritte festgelegt.`;
-      translatedDecisions = keyDecisions.map(d => `Beschlossen: ${d}`);
-    } else if (language.toLowerCase() === 'hindi') {
-      translatedSummary = `बैठक में प्रमुख परियोजना लक्ष्यों और रणनीतिक प्राथमिकताओं पर चर्चा की गई। टीम ने वर्तमान स्थिति की समीक्षा की और स्पष्ट आगामी कदम तय किए।`;
-      translatedDecisions = keyDecisions.map(d => `निर्णय: ${d}`);
-    } else if (language.toLowerCase() === 'malayalam') {
-      translatedSummary = `പ്രധാന പ്രോജക്ട് ലക്ഷ്യങ്ങളും തന്ത്രപരമായ തീരുമാനങ്ങളും യോഗത്തിൽ ചർച്ച ചെയ്തു. നിലവിലെ പുരോഗതി അവലോകനം ചെയ്യുകയും തുടർനടപടികൾ നിശ്ചയിക്കുകയും ചെയ്തു.`;
-      translatedDecisions = keyDecisions.map(d => `തീരുമാനം: ${d}`);
-    }
 
     // Template specific structure tailoring
     if (template === 'Daily Standup') {

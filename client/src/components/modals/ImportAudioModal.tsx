@@ -415,13 +415,7 @@ export const ImportAudioModal: React.FC = () => {
                     onChange={(e) => setSelectedLanguage(e.target.value)}
                     className="w-full text-xs font-semibold px-3 py-2 border border-[#d6dbe2] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#2563eb] bg-white text-[#111827]"
                   >
-                    <option value="English">English</option>
-                    <option value="Auto">Auto Detect</option>
-                    <option value="Spanish">Spanish</option>
-                    <option value="French">French</option>
-                    <option value="German">German</option>
-                    <option value="Hindi">Hindi</option>
-                    <option value="Malayalam">Malayalam</option>
+                    <option value="English">English (Global / US / UK)</option>
                   </select>
                 </div>
 

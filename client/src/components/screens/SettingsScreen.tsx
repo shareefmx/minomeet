@@ -544,22 +544,19 @@ export const SettingsScreen: React.FC = () => {
             </div>
 
             <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs">
-              <h4 className="text-sm font-bold text-[#111827]">Default Language</h4>
+              <h4 className="text-sm font-bold text-[#111827]">Transcription &amp; Summary Language</h4>
               <p className="text-xs text-[#6b7280] mt-0.5 mb-3">
-                Choose the primary language for MOM AI document generation.
+                Minomeet is specialized for high-precision English transcription and MOM generation.
               </p>
               <div className="flex items-center gap-2 flex-wrap">
-                {['English', 'Spanish', 'French', 'German', 'Hindi', 'Malayalam'].map((lang) => (
+                {['English'].map((lang) => (
                   <button
                     key={lang}
                     onClick={() => updateSettings({ defaultLanguage: lang })}
-                    className={`px-3 py-1.5 rounded-full text-xs font-bold border transition cursor-pointer ${
-                      settings.defaultLanguage === lang
-                        ? 'bg-[#dbeafe] border-[#bfdbfe] text-[#1e3a8a]'
-                        : 'border-[#d6dbe2] text-[#374151] hover:bg-[#f6f7f9]'
-                    }`}
+                    className="px-4 py-2 rounded-full text-xs font-bold border transition cursor-pointer bg-[#dbeafe] border-[#bfdbfe] text-[#1e3a8a] flex items-center gap-1.5 shadow-2xs"
                   >
-                    {lang} {settings.defaultLanguage === lang && '✓'}
+                    <span>{lang} (Global / US / UK)</span>
+                    <Check className="w-3.5 h-3.5 text-[#2563eb]" />
                   </button>
                 ))}
               </div>

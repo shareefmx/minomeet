@@ -98,7 +98,7 @@ export const NotesScreen: React.FC = () => {
   const summary = activeMeeting.summary;
 
   // Language options
-  const languages = ['Auto', 'English', 'Spanish', 'French', 'German', 'Hindi', 'Malayalam'];
+  const languages = ['English'];
   const templates = [
     'Standard Meeting Notes',
     'Daily Standup',

@@ -117,13 +117,11 @@ def main():
         device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
         model = whisper.load_model(model_identifier, download_root=download_root, device=device)
 
-        # Full transcription with timestamped segments
-        options = {}
-        if args.language and args.language.lower() != "auto":
-            options["language"] = args.language.lower()
+        # Full transcription with English language enforcement
+        options = {"language": "en"}
 
         result = model.transcribe(audio_path, **options, verbose=False)
-        detected_language = result.get("language", "en")
+        detected_language = "en"
         full_text = result.get("text", "").strip()
 
         raw_segments = result.get("segments", [])
