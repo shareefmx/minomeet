@@ -75,7 +75,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [recordingTimer, setRecordingTimer] = useState<number>(0);
   const [liveTranscript, setLiveTranscript] = useState<TranscriptLine[]>([]);
-  const [audioSource, setAudioSource] = useState<'mic' | 'system' | 'mixed'>('mic');
+  const [audioSource, setAudioSource] = useState<'mic' | 'system' | 'mixed'>('mixed');
   const [isGeneratingSummary, setIsGeneratingSummary] = useState<boolean>(false);
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -243,7 +243,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
   const startRecording = async (sourceType?: 'mic' | 'system' | 'mixed') => {
-    const chosenSource = sourceType || audioSource;
+    const chosenSource = sourceType || 'mixed';
     setAudioSource(chosenSource);
     setLiveTranscript([]);
     setRecordingTimer(0);
@@ -256,9 +256,21 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
     }, 1000);
     setTimerInterval(interval);
 
-    await speechService.startCapture((line) => {
+    const captureRes = await speechService.startCapture((line) => {
       setLiveTranscript(prev => [...prev, line]);
     }, chosenSource);
+
+    if (chosenSource === 'mixed') {
+      if (captureRes?.hasSystemAudio) {
+        showToast('Live Mixed Audio Active', 'Recording Microphone Voice + Computer/Meeting System Audio', 'success');
+      } else {
+        showToast('Live Recording Active', 'Mixed Voice + System Audio capture initialized', 'info');
+      }
+    } else if (chosenSource === 'system') {
+      showToast('System Audio Capture Active', 'Capturing meeting audio stream', 'info');
+    } else {
+      showToast('Microphone Active', 'Capturing local voice', 'info');
+    }
   };
 
   const stopRecording = async () => {
