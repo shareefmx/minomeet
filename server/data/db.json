@@ -1,6 +1,112 @@
 {
   "meetings": [
     {
+      "id": "meeting-24ce8a49",
+      "title": "Meeting 2026-08-26_00-39",
+      "createdAt": "2026-08-26T08:28:07.383Z",
+      "updatedAt": "2026-08-26T08:30:55.581Z",
+      "duration": "00:39",
+      "transcript": [
+        {
+          "id": "line-1787732857809-ukdz",
+          "time": "00:00",
+          "speaker": "Speaker",
+          "text": "What? What are they?"
+        },
+        {
+          "id": "line-1787732860552-6mbw",
+          "time": "00:03",
+          "speaker": "Speaker",
+          "text": "Oh, I care. Are they playing better? Yeah."
+        },
+        {
+          "id": "line-1787732863467-ai15",
+          "time": "00:06",
+          "speaker": "Speaker",
+          "text": "To say that means nothing to me looking at."
+        },
+        {
+          "id": "line-1787732866504-avvh",
+          "time": "00:09",
+          "speaker": "Speaker",
+          "text": "But quick question. I'm not going to be."
+        },
+        {
+          "id": "line-1787732869736-n9ho",
+          "time": "00:12",
+          "speaker": "Speaker",
+          "text": "No, we're on top of it. Actually,."
+        },
+        {
+          "id": "line-1787732872605-y53i",
+          "time": "00:15",
+          "speaker": "Speaker",
+          "text": "Brought that up, but she said."
+        },
+        {
+          "id": "line-1787732875762-ozg7",
+          "time": "00:18",
+          "speaker": "Speaker",
+          "text": "I understand. But small thing, what do you."
+        },
+        {
+          "id": "line-1787732878813-e52q",
+          "time": "00:22",
+          "speaker": "Speaker",
+          "text": "Oh, I don't know."
+        },
+        {
+          "id": "line-1787732881914-nvch",
+          "time": "00:25",
+          "speaker": "Speaker",
+          "text": "Yeah. I usually let the designers handle that."
+        },
+        {
+          "id": "line-1787732884807-90z2",
+          "time": "00:28",
+          "speaker": "Speaker",
+          "text": "Bye."
+        }
+      ],
+      "summary": {
+        "title": "Meeting 2026-08-26_00-39",
+        "date": "Aug 26, 2026",
+        "attendees": [
+          "Speaker (Participant)"
+        ],
+        "summary": "The meeting focused on key project deliverables and strategic alignments. Topics discussed included what? what are they?. The team reviewed current status and established concrete next steps.",
+        "keyDecisions": [
+          "Agreed on milestones outlined in What? What are they?..."
+        ],
+        "actionItems": [
+          {
+            "id": "6d594883-c7d2-450d-afb3-3ba05fa2a276",
+            "owner": "Speaker",
+            "task": "Follow up on discussion items from this meeting",
+            "due": "By next sync",
+            "notes": "Review shared minutes",
+            "completed": false
+          }
+        ],
+        "discussionHighlights": [
+          "Speaker noted: What? What are they?",
+          "Speaker noted: Oh, I care. Are they playing better? Yeah.",
+          "Speaker noted: To say that means nothing to me looking at.",
+          "Speaker noted: But quick question. I'm not going to be."
+        ],
+        "nextSteps": [
+          "Schedule follow-up review sync."
+        ],
+        "template": "Standard Meeting Notes",
+        "language": "English",
+        "modelUsed": "Nimbus 1B (Fast)",
+        "generatedAt": "2026-08-26T08:29:39.161Z"
+      },
+      "tags": [
+        "General"
+      ]
+    },
+    {
       "id": "meeting-43fd4a07",
       "title": "Product Marketing Meeting (weekly) 2021 06 28",
       "createdAt": "2026-08-26T07:26:04.707Z",

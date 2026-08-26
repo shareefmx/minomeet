@@ -192,34 +192,36 @@ export const NotesScreen: React.FC = () => {
         {/* ================= LEFT PANE: TRANSCRIPT ================= */}
         <div className="flex-1 flex flex-col min-w-0 bg-[#fafafa]/50">
           {/* Transcript Toolbar */}
-          <div className="flex items-center gap-2 px-5 py-3 border-b border-[#e5e7eb] bg-white flex-wrap">
-            <button
-              onClick={handleCopyTranscript}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#d6dbe2] bg-white text-xs font-bold text-[#374151] hover:bg-[#f6f7f9] shadow-sm transition cursor-pointer"
-            >
-              <Copy className="w-3.5 h-3.5" />
-              <span>Copy</span>
-            </button>
-            <button
-              onClick={() => showToast('Recordings folder', '/Users/you/Minomeet/recordings', 'info')}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#d6dbe2] bg-white text-xs font-bold text-[#374151] hover:bg-[#f6f7f9] shadow-sm transition cursor-pointer"
-            >
-              <FolderOpen className="w-3.5 h-3.5" />
-              <span>Recording</span>
-            </button>
-            <button
-              onClick={handleEnhanceAudio}
-              disabled={isEnhancing}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold shadow-sm transition cursor-pointer ${
-                isEnhancing
-                  ? 'bg-blue-50 border-blue-200 text-blue-600 animate-pulse'
-                  : 'bg-white border-[#d6dbe2] text-[#374151] hover:bg-[#f6f7f9]'
-              }`}
-            >
-              <Wand2 className="w-3.5 h-3.5" />
-              <span>{isEnhancing ? 'Enhancing…' : 'Enhance'}</span>
-            </button>
-            <div className="ml-auto text-xs text-[#9aa2af] font-mono">
+          <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-[#e5e7eb] bg-white h-[53px] flex-none">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleCopyTranscript}
+                className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-[#e2e8f0] bg-white text-xs font-semibold text-[#374151] hover:bg-[#f8fafc] hover:border-[#cbd5e1] shadow-2xs transition cursor-pointer"
+              >
+                <Copy className="w-3.5 h-3.5 text-[#64748b]" />
+                <span>Copy</span>
+              </button>
+              <button
+                onClick={() => showToast('Recordings folder', '/Users/you/Minomeet/recordings', 'info')}
+                className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-[#e2e8f0] bg-white text-xs font-semibold text-[#374151] hover:bg-[#f8fafc] hover:border-[#cbd5e1] shadow-2xs transition cursor-pointer"
+              >
+                <FolderOpen className="w-3.5 h-3.5 text-[#64748b]" />
+                <span>Recording</span>
+              </button>
+              <button
+                onClick={handleEnhanceAudio}
+                disabled={isEnhancing}
+                className={`inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border text-xs font-semibold shadow-2xs transition cursor-pointer ${
+                  isEnhancing
+                    ? 'bg-blue-50 border-blue-200 text-blue-600 animate-pulse'
+                    : 'bg-white border-[#e2e8f0] text-[#374151] hover:bg-[#f8fafc] hover:border-[#cbd5e1]'
+                }`}
+              >
+                <Wand2 className="w-3.5 h-3.5 text-[#2563eb]" />
+                <span>{isEnhancing ? 'Enhancing…' : 'Enhance'}</span>
+              </button>
+            </div>
+            <div className="text-xs text-[#94a3b8] font-mono whitespace-nowrap pl-2">
               {activeMeeting.transcript.length} lines &bull; {activeMeeting.duration}
             </div>
           </div>
@@ -339,196 +341,212 @@ export const NotesScreen: React.FC = () => {
             /* Minutes of Meeting Document View */
             <div className="flex-1 flex flex-col h-full overflow-hidden">
               {/* MOM Toolbar */}
-              <div className="flex items-center gap-2 px-5 py-3 border-b border-[#e5e7eb] bg-white flex-wrap shadow-xs">
-                {/* Regenerate Button */}
-                <button
-                  onClick={() => generateSummaryForActive(activeTemplate, activeLang)}
-                  disabled={isGeneratingSummary}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#dbeafe] border border-[#bfdbfe] text-[#1e3a8a] text-xs font-bold hover:bg-[#bfdbfe] shadow-sm transition cursor-pointer"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isGeneratingSummary ? 'animate-spin' : ''}`} />
-                  <span>{isGeneratingSummary ? 'Generating…' : 'Regenerate Summary'}</span>
-                </button>
-
-                {/* Language Dropdown */}
-                <div className="relative">
+              <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-[#e5e7eb] bg-white h-[53px] flex-none min-w-0">
+                {/* Left Controls: Synthesis & Model Controls */}
+                <div className="flex items-center gap-1.5 min-w-0 overflow-x-auto no-scrollbar">
+                  {/* 1. Regenerate Summary */}
                   <button
-                    onClick={() => {
-                      setLangMenuOpen(!langMenuOpen);
-                      setTemplateMenuOpen(false);
-                      setExportMenuOpen(false);
-                    }}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-[#d6dbe2] bg-white text-xs font-semibold text-[#374151] hover:bg-[#f6f7f9] shadow-sm transition cursor-pointer"
+                    onClick={() => generateSummaryForActive(activeTemplate, activeLang)}
+                    disabled={isGeneratingSummary}
+                    className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-[#eff6ff] border border-[#bfdbfe] text-[#1d4ed8] text-xs font-bold hover:bg-[#dbeafe] shadow-2xs transition cursor-pointer flex-none"
+                    title="Regenerate AI Minutes of Meeting"
                   >
-                    <Globe className="w-3.5 h-3.5 text-[#4b5563]" />
-                    <span>{activeLang}</span>
-                    <ChevronDown className="w-3 h-3 text-[#9aa2af]" />
+                    <RefreshCw className={`w-3.5 h-3.5 ${isGeneratingSummary ? 'animate-spin' : ''}`} />
+                    <span className="whitespace-nowrap">{isGeneratingSummary ? 'Generating…' : 'Regenerate Summary'}</span>
                   </button>
-                  {langMenuOpen && (
-                    <div className="absolute top-full mt-1.5 left-0 w-44 bg-white border border-[#e5e7eb] rounded-xl shadow-xl py-1 z-50 text-xs">
-                      {languages.map((lang) => (
+
+                  {/* 2. English Language Indicator */}
+                  <div className="relative flex-none">
+                    <button
+                      onClick={() => {
+                        setLangMenuOpen(!langMenuOpen);
+                        setTemplateMenuOpen(false);
+                        setExportMenuOpen(false);
+                        setOptionsMenuOpen(false);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-2.5 h-8 rounded-lg border border-[#e2e8f0] bg-white text-xs font-semibold text-[#374151] hover:bg-[#f8fafc] hover:border-[#cbd5e1] shadow-2xs transition cursor-pointer"
+                      title="Transcription and MOM language"
+                    >
+                      <Globe className="w-3.5 h-3.5 text-[#64748b]" />
+                      <span>{activeLang}</span>
+                      <ChevronDown className="w-3 h-3 text-[#94a3b8]" />
+                    </button>
+                    {langMenuOpen && (
+                      <div className="absolute top-full mt-1.5 left-0 w-44 bg-white border border-[#e2e8f0] rounded-xl shadow-xl py-1 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
+                        {languages.map((lang) => (
+                          <div
+                            key={lang}
+                            onClick={() => handleLanguageSelect(lang)}
+                            className={`flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-[#f8fafc] ${
+                              activeLang === lang ? 'text-[#2563eb] font-bold bg-[#eff6ff]' : 'text-[#374151]'
+                            }`}
+                          >
+                            <span>{lang}</span>
+                            {activeLang === lang && <Check className="w-3.5 h-3.5" />}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 3. AI Model Selector */}
+                  <button
+                    onClick={() => openModal('model')}
+                    className="inline-flex items-center gap-1.5 px-2.5 h-8 rounded-lg border border-[#e2e8f0] bg-white text-xs font-semibold text-[#374151] hover:bg-[#f8fafc] hover:border-[#cbd5e1] shadow-2xs transition cursor-pointer flex-none"
+                    title="Configure AI model"
+                  >
+                    <Cpu className="w-3.5 h-3.5 text-[#7c3aed]" />
+                    <span>AI Model</span>
+                  </button>
+
+                  {/* 4. MOM Template Selector */}
+                  <div className="relative flex-none">
+                    <button
+                      onClick={() => {
+                        setTemplateMenuOpen(!templateMenuOpen);
+                        setLangMenuOpen(false);
+                        setExportMenuOpen(false);
+                        setOptionsMenuOpen(false);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-2.5 h-8 rounded-lg border border-[#e2e8f0] bg-white text-xs font-semibold text-[#374151] hover:bg-[#f8fafc] hover:border-[#cbd5e1] shadow-2xs transition cursor-pointer max-w-[190px]"
+                      title="Select summary template"
+                    >
+                      <FileText className="w-3.5 h-3.5 text-[#64748b] flex-none" />
+                      <span className="truncate">{activeTemplate}</span>
+                      <ChevronDown className="w-3 h-3 text-[#94a3b8] flex-none" />
+                    </button>
+                    {templateMenuOpen && (
+                      <div className="absolute top-full mt-1.5 left-0 w-64 bg-white border border-[#e2e8f0] rounded-xl shadow-xl py-1 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
+                        {templates.map((tmpl) => (
+                          <div
+                            key={tmpl}
+                            onClick={() => handleTemplateSelect(tmpl)}
+                            className={`flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-[#f8fafc] ${
+                              activeTemplate === tmpl ? 'text-[#2563eb] font-bold bg-[#eff6ff]' : 'text-[#374151]'
+                            }`}
+                          >
+                            <span>{tmpl}</span>
+                            {activeTemplate === tmpl && <Check className="w-3.5 h-3.5" />}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right Controls: Collaboration, Export, Save & Menu */}
+                <div className="flex items-center gap-1.5 flex-none pl-2">
+                  {/* 5. Follow-up Email Draft */}
+                  <button
+                    onClick={() => openModal('email')}
+                    className="inline-flex items-center gap-1.5 px-2.5 h-8 rounded-lg border border-[#e9d5ff] bg-[#faf5ff] text-[#7e22ce] text-xs font-bold hover:bg-[#f3e8ff] shadow-2xs transition cursor-pointer"
+                    title="Generate follow-up email draft"
+                  >
+                    <Mail className="w-3.5 h-3.5" />
+                    <span className="whitespace-nowrap">Email Draft</span>
+                  </button>
+
+                  {/* 6. Export Menu */}
+                  <div className="relative">
+                    <button
+                      onClick={() => {
+                        setExportMenuOpen(!exportMenuOpen);
+                        setLangMenuOpen(false);
+                        setTemplateMenuOpen(false);
+                        setOptionsMenuOpen(false);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-[#e2e8f0] bg-white text-xs font-bold text-[#374151] hover:bg-[#f8fafc] hover:border-[#cbd5e1] shadow-2xs transition cursor-pointer"
+                    >
+                      <Download className="w-3.5 h-3.5 text-[#64748b]" />
+                      <span>Export</span>
+                      <ChevronDown className="w-3 h-3 text-[#94a3b8]" />
+                    </button>
+                    {exportMenuOpen && (
+                      <div className="absolute top-full mt-1.5 right-0 w-52 bg-white border border-[#e2e8f0] rounded-xl shadow-xl py-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
                         <div
-                          key={lang}
-                          onClick={() => handleLanguageSelect(lang)}
-                          className={`flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-[#f3f4f6] ${
-                            activeLang === lang ? 'text-[#2563eb] font-bold bg-[#eff6ff]' : 'text-[#374151]'
-                          }`}
+                          onClick={() => {
+                            exportService.downloadFile(exportService.toMarkdown(activeMeeting), `${activeMeeting.title}.md`, 'text/markdown');
+                            setExportMenuOpen(false);
+                            showToast('Markdown file downloaded', '', 'success');
+                          }}
+                          className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-[#f8fafc] text-[#374151]"
                         >
-                          <span>{lang}</span>
-                          {activeLang === lang && <Check className="w-3.5 h-3.5" />}
+                          <Download className="w-3.5 h-3.5 text-[#2563eb]" />
+                          <span>Download Markdown (.md)</span>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* AI Model Button */}
-                <button
-                  onClick={() => openModal('model')}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-[#d6dbe2] bg-white text-xs font-semibold text-[#374151] hover:bg-[#f6f7f9] shadow-sm transition cursor-pointer"
-                >
-                  <Cpu className="w-3.5 h-3.5 text-[#7c3aed]" />
-                  <span>AI Model</span>
-                </button>
-
-                {/* Template Selector Dropdown */}
-                <div className="relative">
-                  <button
-                    onClick={() => {
-                      setTemplateMenuOpen(!templateMenuOpen);
-                      setLangMenuOpen(false);
-                      setExportMenuOpen(false);
-                    }}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-[#d6dbe2] bg-white text-xs font-semibold text-[#374151] hover:bg-[#f6f7f9] shadow-sm transition cursor-pointer max-w-[200px] truncate"
-                  >
-                    <FileText className="w-3.5 h-3.5 text-[#4b5563]" />
-                    <span className="truncate">{activeTemplate}</span>
-                    <ChevronDown className="w-3 h-3 text-[#9aa2af] flex-none" />
-                  </button>
-                  {templateMenuOpen && (
-                    <div className="absolute top-full mt-1.5 left-0 w-64 bg-white border border-[#e5e7eb] rounded-xl shadow-xl py-1 z-50 text-xs">
-                      {templates.map((tmpl) => (
                         <div
-                          key={tmpl}
-                          onClick={() => handleTemplateSelect(tmpl)}
-                          className={`flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-[#f3f4f6] ${
-                            activeTemplate === tmpl ? 'text-[#2563eb] font-bold bg-[#eff6ff]' : 'text-[#374151]'
-                          }`}
+                          onClick={() => {
+                            exportService.printMeeting(activeMeeting);
+                            setExportMenuOpen(false);
+                          }}
+                          className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-[#f8fafc] text-[#374151]"
                         >
-                          <span>{tmpl}</span>
-                          {activeTemplate === tmpl && <Check className="w-3.5 h-3.5" />}
+                          <Printer className="w-3.5 h-3.5 text-[#15803d]" />
+                          <span>Print / Save PDF</span>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                        <div
+                          onClick={() => {
+                            handleCopyMOM();
+                            setExportMenuOpen(false);
+                          }}
+                          className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-[#f8fafc] text-[#374151]"
+                        >
+                          <Copy className="w-3.5 h-3.5 text-[#7c3aed]" />
+                          <span>Copy Formatted Text</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
-                <div className="flex-1" />
-
-                {/* Follow-up Email Generator */}
-                <button
-                  onClick={() => openModal('email')}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-[#c9dcff] bg-[#eff4ff] text-[#1e3a8a] text-xs font-bold hover:bg-[#dbeafe] shadow-sm transition cursor-pointer"
-                  title="Generate follow-up email draft"
-                >
-                  <Mail className="w-3.5 h-3.5" />
-                  <span>Email Draft</span>
-                </button>
-
-                {/* Export Dropdown */}
-                <div className="relative">
+                  {/* 7. Save Button */}
                   <button
-                    onClick={() => {
-                      setExportMenuOpen(!exportMenuOpen);
-                      setLangMenuOpen(false);
-                      setTemplateMenuOpen(false);
-                    }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#d6dbe2] bg-white text-xs font-bold text-[#374151] hover:bg-[#f6f7f9] shadow-sm transition cursor-pointer"
+                    onClick={() => showToast('Saved', 'Your changes have been saved.', 'success')}
+                    className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-[#0f172a] text-white text-xs font-bold hover:bg-[#1e293b] shadow-2xs transition cursor-pointer"
                   >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>Export</span>
-                    <ChevronDown className="w-3 h-3 text-[#9aa2af]" />
+                    <Save className="w-3.5 h-3.5" />
+                    <span>Save</span>
                   </button>
-                  {exportMenuOpen && (
-                    <div className="absolute top-full mt-1.5 right-0 w-48 bg-white border border-[#e5e7eb] rounded-xl shadow-xl py-1.5 z-50 text-xs">
-                      <div
-                        onClick={() => {
-                          exportService.downloadFile(exportService.toMarkdown(activeMeeting), `${activeMeeting.title}.md`, 'text/markdown');
-                          setExportMenuOpen(false);
-                          showToast('Markdown file downloaded', '', 'success');
-                        }}
-                        className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-[#f3f4f6] text-[#374151]"
-                      >
-                        <Download className="w-3.5 h-3.5 text-[#2563eb]" />
-                        <span>Download as Markdown (.md)</span>
-                      </div>
-                      <div
-                        onClick={() => {
-                          exportService.printMeeting(activeMeeting);
-                          setExportMenuOpen(false);
-                        }}
-                        className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-[#f3f4f6] text-[#374151]"
-                      >
-                        <Printer className="w-3.5 h-3.5 text-[#15803d]" />
-                        <span>Print / Save as PDF</span>
-                      </div>
-                      <div
-                        onClick={() => {
-                          handleCopyMOM();
-                          setExportMenuOpen(false);
-                        }}
-                        className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-[#f3f4f6] text-[#374151]"
-                      >
-                        <Copy className="w-3.5 h-3.5 text-[#7c3aed]" />
-                        <span>Copy Formatted Text</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
 
-                {/* Save Button */}
-                <button
-                  onClick={() => showToast('Saved', 'Your changes have been saved.', 'success')}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#111827] text-white text-xs font-bold hover:bg-[#1f2937] shadow-sm transition cursor-pointer"
-                >
-                  <Save className="w-3.5 h-3.5" />
-                  <span>Save</span>
-                </button>
-
-                {/* Meeting Options Dropdown */}
-                <div className="relative">
-                  <button
-                    onClick={() => setOptionsMenuOpen(!optionsMenuOpen)}
-                    className="p-1.5 rounded-lg border border-[#d6dbe2] bg-white text-[#6b7280] hover:text-[#111827] hover:bg-[#f6f7f9] shadow-sm transition cursor-pointer"
-                    title="Meeting options"
-                  >
-                    <MoreVertical className="w-3.5 h-3.5" />
-                  </button>
-                  {optionsMenuOpen && (
-                    <div className="absolute top-full mt-1.5 right-0 w-36 bg-white border border-[#e5e7eb] rounded-xl shadow-xl py-1 z-50 text-xs">
-                      <button
-                        onClick={() => {
-                          setOptionsMenuOpen(false);
-                          openRenameModal(activeMeeting);
-                        }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-left text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition font-medium cursor-pointer"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                        <span>Rename</span>
-                      </button>
-                      <div className="h-px bg-gray-100 my-0.5" />
-                      <button
-                        onClick={() => {
-                          setOptionsMenuOpen(false);
-                          openDeleteModal(activeMeeting);
-                        }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-left text-red-600 hover:bg-red-50 transition font-medium cursor-pointer"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>Delete</span>
-                      </button>
-                    </div>
-                  )}
+                  {/* 8. More Options Dropdown */}
+                  <div className="relative">
+                    <button
+                      onClick={() => {
+                        setOptionsMenuOpen(!optionsMenuOpen);
+                        setLangMenuOpen(false);
+                        setTemplateMenuOpen(false);
+                        setExportMenuOpen(false);
+                      }}
+                      className="w-8 h-8 inline-flex items-center justify-center rounded-lg border border-[#e2e8f0] bg-white text-[#64748b] hover:text-[#0f172a] hover:bg-[#f8fafc] hover:border-[#cbd5e1] shadow-2xs transition cursor-pointer"
+                      title="Meeting options"
+                    >
+                      <MoreVertical className="w-3.5 h-3.5" />
+                    </button>
+                    {optionsMenuOpen && (
+                      <div className="absolute top-full mt-1.5 right-0 w-36 bg-white border border-[#e2e8f0] rounded-xl shadow-xl py-1 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
+                        <button
+                          onClick={() => {
+                            setOptionsMenuOpen(false);
+                            openRenameModal(activeMeeting);
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-left text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition font-medium cursor-pointer"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                          <span>Rename</span>
+                        </button>
+                        <div className="h-px bg-gray-100 my-0.5" />
+                        <button
+                          onClick={() => {
+                            setOptionsMenuOpen(false);
+                            openDeleteModal(activeMeeting);
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-left text-red-600 hover:bg-red-50 transition font-medium cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Delete</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
