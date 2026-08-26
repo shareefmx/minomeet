@@ -1,6 +1,1165 @@
 {
   "meetings": [
     {
+      "id": "meeting-a21a6463",
+      "title": "product marketing meeting weekly 2021 06 28 OgZHgTcR",
+      "createdAt": "2026-08-26T16:05:21.577Z",
+      "updatedAt": "2026-08-26T16:05:21.580Z",
+      "duration": "17:04",
+      "transcript": [
+        {
+          "id": "t-1-1c830f",
+          "time": "00:00",
+          "speaker": "Facilitator",
+          "text": "ranked. Yeah, I might, I might even constrain us as we're not going to highlight low segments,"
+        },
+        {
+          "id": "t-2-34f24a",
+          "time": "00:09",
+          "speaker": "Lead Architect",
+          "text": "but we want to see the full spectrum, especially in the case we have slim pickings. Alternately,"
+        },
+        {
+          "id": "t-3-4135d2",
+          "time": "00:15",
+          "speaker": "Product Lead",
+          "text": "if there are double digit entries, then we can stack rank."
+        },
+        {
+          "id": "t-4-ba76d5",
+          "time": "00:22",
+          "speaker": "Team Member",
+          "text": "So that's, that's kind of also helpful there. So if we have three for all of these that, I mean,"
+        },
+        {
+          "id": "t-5-603a6e",
+          "time": "00:29",
+          "speaker": "Facilitator",
+          "text": "it looks like we're going to get there and that's going to be quite a lot of features."
+        },
+        {
+          "id": "t-6-85b3df",
+          "time": "00:34",
+          "speaker": "Lead Architect",
+          "text": "So I might constrain it like this. Maybe you can only give out one, one, two or three"
+        },
+        {
+          "id": "t-7-7ed67c",
+          "time": "00:44",
+          "speaker": "Product Lead",
+          "text": "and, and treat it as a stack rank rather than just like a raw excitement level that doesn't necessarily"
+        },
+        {
+          "id": "t-8-825b8e",
+          "time": "00:50",
+          "speaker": "Team Member",
+          "text": "hard to somebody's one or somebody's three may be more important than somebody else's one."
+        },
+        {
+          "id": "t-9-d2eb97",
+          "time": "00:58",
+          "speaker": "Facilitator",
+          "text": "Agreed."
+        },
+        {
+          "id": "t-10-c221be",
+          "time": "00:59",
+          "speaker": "Lead Architect",
+          "text": "Depending on the..."
+        },
+        {
+          "id": "t-11-f5973a",
+          "time": "00:59",
+          "speaker": "Product Lead",
+          "text": "And I had, I started by just looking at what was considered a key feature over the past year"
+        },
+        {
+          "id": "t-12-b937da",
+          "time": "01:05",
+          "speaker": "Team Member",
+          "text": "from, from create. And, you know, there are at least a dozen things that I'm not mentioning"
+        },
+        {
+          "id": "t-13-048d7c",
+          "time": "01:12",
+          "speaker": "Facilitator",
+          "text": "that could be on the list. Like I could give you 10 things instead of three."
+        },
+        {
+          "id": "t-14-f87160",
+          "time": "01:15",
+          "speaker": "Lead Architect",
+          "text": "Yeah. Give it, give this just like the rough, like pass. And like a lot of things recently, I've been"
+        },
+        {
+          "id": "t-15-8f7123",
+          "time": "01:25",
+          "speaker": "Product Lead",
+          "text": "moving between docs and spreadsheet and the spreadsheet to docs. This, you know, this might,"
+        },
+        {
+          "id": "t-16-164a53",
+          "time": "01:30",
+          "speaker": "Team Member",
+          "text": "this might end up or some iteration of this might end up in a spreadsheet where we then try to stack"
+        },
+        {
+          "id": "t-17-3ce7bc",
+          "time": "01:34",
+          "speaker": "Facilitator",
+          "text": "rank and PR is like, okay, out of all of like the, you know, there's maybe 10 boxes here and three,"
+        },
+        {
+          "id": "t-18-79df0a",
+          "time": "01:41",
+          "speaker": "Lead Architect",
+          "text": "each out of the 30 items, which are the top five. Actually, let's just, let's actually just do that."
+        },
+        {
+          "id": "t-19-14cc4c",
+          "time": "01:48",
+          "speaker": "Product Lead",
+          "text": "Let's just do this like top, top five overall."
+        },
+        {
+          "id": "t-20-2c549b",
+          "time": "01:52",
+          "speaker": "Team Member",
+          "text": "We did."
+        },
+        {
+          "id": "t-21-d799e4",
+          "time": "01:53",
+          "speaker": "Facilitator",
+          "text": "So this one is a PR driven to some degree. What about like a Noop and Christie's product"
+        },
+        {
+          "id": "t-22-a2f5bc",
+          "time": "01:58",
+          "speaker": "Lead Architect",
+          "text": "keynote at commit? Are we dovetailing this with that?"
+        },
+        {
+          "id": "t-23-0093d3",
+          "time": "02:02",
+          "speaker": "Product Lead",
+          "text": "So this is exactly where this is headed to is the idea that during the product keynote, and then"
+        },
+        {
+          "id": "t-24-b0ff27",
+          "time": "02:10",
+          "speaker": "Team Member",
+          "text": "ideally during kid Sid's keynote as well, that there's some level of like an announcement that"
+        },
+        {
+          "id": "t-25-d36637",
+          "time": "02:16",
+          "speaker": "Facilitator",
+          "text": "we make that then the press cares about that announcement. Again, really tough to do at GitLab"
+        },
+        {
+          "id": "t-26-52d385",
+          "time": "02:23",
+          "speaker": "Lead Architect",
+          "text": "because it's all been around for a while. So this is, this is our attempt to head to that area is to say,"
+        },
+        {
+          "id": "t-27-27a17d",
+          "time": "02:29",
+          "speaker": "Product Lead",
+          "text": "like, these are the announcements of the event. And yeah, maybe it's some things that have been"
+        },
+        {
+          "id": "t-28-fde167",
+          "time": "02:34",
+          "speaker": "Team Member",
+          "text": "around for a while, but like now they're at a level of maturity. Now, you know, there's,"
+        },
+        {
+          "id": "t-29-f26484",
+          "time": "02:39",
+          "speaker": "Facilitator",
+          "text": "there's reason to be excited about this. So that's kind of where it's coming from. So I put a top five overall."
+        },
+        {
+          "id": "t-30-9324e3",
+          "time": "02:52",
+          "speaker": "Lead Architect",
+          "text": "Maybe we can just, you know,"
+        },
+        {
+          "id": "t-31-a02864",
+          "time": "02:59",
+          "speaker": "Product Lead",
+          "text": "I'm just going to go through the list of what's shipped in the last 12 months and re-bucket that."
+        },
+        {
+          "id": "t-32-d3b47c",
+          "time": "03:11",
+          "speaker": "Team Member",
+          "text": "So,"
+        },
+        {
+          "id": "t-33-3f6a94",
+          "time": "03:18",
+          "speaker": "Facilitator",
+          "text": "maybe we can do like five minutes, kind of like,"
+        },
+        {
+          "id": "t-34-0d2b3e",
+          "time": "03:22",
+          "speaker": "Lead Architect",
+          "text": "just, just time box and kind of look at these here. What do you, what do you all think is a top,"
+        },
+        {
+          "id": "t-35-87cf04",
+          "time": "03:29",
+          "speaker": "Product Lead",
+          "text": "would be a top five out of the list of, you know, 20 or 30?"
+        },
+        {
+          "id": "t-36-281f82",
+          "time": "03:39",
+          "speaker": "Team Member",
+          "text": "I would say if UX does end up being a flag that we fly, that's an easy one because there's more than"
+        },
+        {
+          "id": "t-37-e1f104",
+          "time": "03:45",
+          "speaker": "Facilitator",
+          "text": "just maps to the create stage that would be considered UX improvement. Okay."
+        },
+        {
+          "id": "t-38-e57973",
+          "time": "03:59",
+          "speaker": "Lead Architect",
+          "text": "What else?"
+        },
+        {
+          "id": "t-39-117ccd",
+          "time": "03:59",
+          "speaker": "Product Lead",
+          "text": "We need to have a security one in there. We could have either vulnerability management or"
+        },
+        {
+          "id": "t-40-bd0b87",
+          "time": "04:06",
+          "speaker": "Team Member",
+          "text": "I was, what I've been struggling with a little bit is I'd like to kind of group"
+        },
+        {
+          "id": "t-41-5342ba",
+          "time": "04:10",
+          "speaker": "Facilitator",
+          "text": "the, some of this, the proprietary scanning"
+        },
+        {
+          "id": "t-42-747a40",
+          "time": "04:20",
+          "speaker": "Lead Architect",
+          "text": "without making it sound like they're scanning improvements because that sounds like they"
+        },
+        {
+          "id": "t-43-0d8657",
+          "time": "04:25",
+          "speaker": "Product Lead",
+          "text": "weren't good before."
+        },
+        {
+          "id": "t-44-0a18a7",
+          "time": "04:26",
+          "speaker": "Team Member",
+          "text": "Yeah."
+        },
+        {
+          "id": "t-45-39e358",
+          "time": "04:30",
+          "speaker": "Facilitator",
+          "text": "Let's, let's go with vulnerability management for now. I, I, and I would agree on that one."
+        },
+        {
+          "id": "t-46-2f3793",
+          "time": "04:34",
+          "speaker": "Lead Architect",
+          "text": "And I would say that, um, some of these, we did do some press around and the, the fuzzing acquisitions"
+        },
+        {
+          "id": "t-47-9b7466",
+          "time": "04:40",
+          "speaker": "Product Lead",
+          "text": "was one thing. So we might not get a second chance at that."
+        },
+        {
+          "id": "t-48-d99169",
+          "time": "04:43",
+          "speaker": "Team Member",
+          "text": "Yeah, although that's kind of old. I, I was, I mean, we did the fuzzing acquisitions a long time ago."
+        },
+        {
+          "id": "t-49-ea2690",
+          "time": "04:52",
+          "speaker": "Facilitator",
+          "text": "Was it within the past year or longer? I thought it was within the past year."
+        },
+        {
+          "id": "t-50-d814e6",
+          "time": "04:58",
+          "speaker": "Lead Architect",
+          "text": "I think it was in the last six, little over six months or so."
+        },
+        {
+          "id": "t-51-8956c9",
+          "time": "05:02",
+          "speaker": "Product Lead",
+          "text": "It was last summer, right?"
+        },
+        {
+          "id": "t-52-35c98a",
+          "time": "05:04",
+          "speaker": "Team Member",
+          "text": "Or something around there."
+        },
+        {
+          "id": "t-53-2d5151",
+          "time": "05:05",
+          "speaker": "Facilitator",
+          "text": "It was like last spring or summer. And then we did another set of press around the integration of it"
+        },
+        {
+          "id": "t-54-ff2e38",
+          "time": "05:11",
+          "speaker": "Lead Architect",
+          "text": "because the PR team liked all the, I mean, we got a lot of attention on the acquisition."
+        },
+        {
+          "id": "t-55-541915",
+          "time": "05:16",
+          "speaker": "Product Lead",
+          "text": "So they had me do a follow-up, um, on the integration. I just feel like it's kind of worn out now, but."
+        },
+        {
+          "id": "t-56-b85324",
+          "time": "05:25",
+          "speaker": "Team Member",
+          "text": "Right. That's what I was saying is that the, the fuzzing we already did press on through,"
+        },
+        {
+          "id": "t-57-74852d",
+          "time": "05:29",
+          "speaker": "Facilitator",
+          "text": "probably will not get another chomp at that. So I think let's go with vulnerability management."
+        },
+        {
+          "id": "t-58-cd8af6",
+          "time": "05:34",
+          "speaker": "Lead Architect",
+          "text": "Unreviewed."
+        },
+        {
+          "id": "t-59-108664",
+          "time": "05:35",
+          "speaker": "Product Lead",
+          "text": "Well, we also have, in terms of proprietary stuff, we've also got, we replaced one of our scanners"
+        },
+        {
+          "id": "t-60-592abf",
+          "time": "05:42",
+          "speaker": "Team Member",
+          "text": "with Semgrip. And we did, um, we have our own proprietary DAST scanner now that's in, it's in beta,"
+        },
+        {
+          "id": "t-61-2b5b87",
+          "time": "05:51",
+          "speaker": "Facilitator",
+          "text": "uh, called Browserker. So it's our answer to scanning single page applications, which represent a unique"
+        },
+        {
+          "id": "t-62-3dd7d9",
+          "time": "06:00",
+          "speaker": "Lead Architect",
+          "text": "challenge. I think, I mean, if I could have to, it would be vulnerability management and Browserker,"
+        },
+        {
+          "id": "t-63-4d7478",
+          "time": "06:07",
+          "speaker": "Product Lead",
+          "text": "probably. Okay. Semgrip that get picked up as a online item in a couple of the pieces about get that 14."
+        },
+        {
+          "id": "t-64-bd4b8a",
+          "time": "06:20",
+          "speaker": "Team Member",
+          "text": "Which, uh, between, between the, the proprietary ships and the vulnerability management, which would"
+        },
+        {
+          "id": "t-65-bbf7cc",
+          "time": "06:25",
+          "speaker": "Facilitator",
+          "text": "you pick as the number one out of those two? Probably vulnerability management. Okay."
+        },
+        {
+          "id": "t-66-8b208c",
+          "time": "06:31",
+          "speaker": "Lead Architect",
+          "text": "Okay. I'm just kind of scanning the list. I would probably say like Kubernetes agent"
+        },
+        {
+          "id": "t-67-395ec3",
+          "time": "06:39",
+          "speaker": "Product Lead",
+          "text": "is something that we've made a lot of investment in. Although,"
+        },
+        {
+          "id": "t-68-6d5e1f",
+          "time": "06:47",
+          "speaker": "Team Member",
+          "text": "um, I think the Kubernetes agent and from an integration point of view,"
+        },
+        {
+          "id": "t-69-236e47",
+          "time": "06:53",
+          "speaker": "Facilitator",
+          "text": "uh, perhaps the Terraform integration, I think we have a lot of customers actually using that already."
+        },
+        {
+          "id": "t-70-1fab34",
+          "time": "07:02",
+          "speaker": "Lead Architect",
+          "text": "Mm-hmm. So I'm going to, I'm just going to call those GitOps and I'm going to put like KDS agent plus"
+        },
+        {
+          "id": "t-71-6800be",
+          "time": "07:14",
+          "speaker": "Product Lead",
+          "text": "Heshi corp integrations. It's like a bucket of capabilities that is probably worth talking about."
+        },
+        {
+          "id": "t-72-f97e16",
+          "time": "07:23",
+          "speaker": "Team Member",
+          "text": "Uh, cool. Well, let's, you know, let's try to, uh, this is due Tuesday. I think we want to try to get this done."
+        },
+        {
+          "id": "t-73-477b36",
+          "time": "07:41",
+          "speaker": "Facilitator",
+          "text": "Um, so maybe just, uh, review this kind of like, let's just kind of pick top five,"
+        },
+        {
+          "id": "t-74-e894d2",
+          "time": "07:48",
+          "speaker": "Lead Architect",
+          "text": "maybe something from plan and something from CICD."
+        },
+        {
+          "id": "t-75-a8767c",
+          "time": "07:51",
+          "speaker": "Product Lead",
+          "text": "Uh,"
+        },
+        {
+          "id": "t-76-da03d2",
+          "time": "07:52",
+          "speaker": "Team Member",
+          "text": "Yeah."
+        },
+        {
+          "id": "t-77-fb8847",
+          "time": "07:53",
+          "speaker": "Facilitator",
+          "text": "My plan editor is definitely an option for CICD."
+        },
+        {
+          "id": "t-78-a21648",
+          "time": "07:56",
+          "speaker": "Lead Architect",
+          "text": "Um,"
+        },
+        {
+          "id": "t-79-b84a28",
+          "time": "07:57",
+          "speaker": "Product Lead",
+          "text": "Yeah. And there might be a,"
+        },
+        {
+          "id": "t-80-ef3463",
+          "time": "08:00",
+          "speaker": "Team Member",
+          "text": "Sorry, Cormac."
+        },
+        {
+          "id": "t-81-95ffc6",
+          "time": "08:00",
+          "speaker": "Facilitator",
+          "text": "No, sorry. There might be a value stream analytics story in there too. Um,"
+        },
+        {
+          "id": "t-82-11d2e9",
+          "time": "08:05",
+          "speaker": "Lead Architect",
+          "text": "if we aggregate it all, it's, it's a bummer that customizable value stream analytics is 12.9."
+        },
+        {
+          "id": "t-83-e97e85",
+          "time": "08:11",
+          "speaker": "Product Lead",
+          "text": "But, uh, yeah, there might be."
+        },
+        {
+          "id": "t-84-200222",
+          "time": "08:15",
+          "speaker": "Team Member",
+          "text": "Cool. Now I'm just going to, I'm going to ping you on this Cormac to add, add a top five plan."
+        },
+        {
+          "id": "t-85-1ce9ab",
+          "time": "08:30",
+          "speaker": "Facilitator",
+          "text": "Cool. Uh, I think"
+        },
+        {
+          "id": "t-86-52cec9",
+          "time": "08:32",
+          "speaker": "Lead Architect",
+          "text": "That's a pretty heavy, pretty heavy list. Just looking at it, you know, it's pretty cool."
+        },
+        {
+          "id": "t-87-8bace6",
+          "time": "08:42",
+          "speaker": "Product Lead",
+          "text": "Yeah. And this is something we don't do, which I, I, I agree. Like we don't, we don't often"
+        },
+        {
+          "id": "t-88-e51a16",
+          "time": "08:47",
+          "speaker": "Team Member",
+          "text": "stop as a company and just kind of look at our wins."
+        },
+        {
+          "id": "t-89-98c8b2",
+          "time": "08:51",
+          "speaker": "Facilitator",
+          "text": "Nope."
+        },
+        {
+          "id": "t-90-bef1d2",
+          "time": "08:52",
+          "speaker": "Lead Architect",
+          "text": "Uh, I was really, I don't, did y'all, did anybody miss, uh, what do we call it? Assembly, the assembly."
+        },
+        {
+          "id": "t-91-b1f4eb",
+          "time": "09:01",
+          "speaker": "Product Lead",
+          "text": "Um, if you missed it, I recommend it. I laugh because like what assembly reminds me of is like"
+        },
+        {
+          "id": "t-92-32bd9c",
+          "time": "09:09",
+          "speaker": "Team Member",
+          "text": "when I was in like a young child in grade school, they'd have this big stack of like carpet. They're"
+        },
+        {
+          "id": "t-93-88de74",
+          "time": "09:15",
+          "speaker": "Facilitator",
+          "text": "like squares of carpet. And you go, like you go into the gym and you pull off this, a square of"
+        },
+        {
+          "id": "t-94-003fcd",
+          "time": "09:21",
+          "speaker": "Lead Architect",
+          "text": "carpet and all the children would sit on a square of carpet. And that was like, you'd have an assembly."
+        },
+        {
+          "id": "t-95-39e7ca",
+          "time": "09:26",
+          "speaker": "Product Lead",
+          "text": "Yeah. So that's what I remember that too. Put everyone in the gym or like convert the half"
+        },
+        {
+          "id": "t-96-91213f",
+          "time": "09:32",
+          "speaker": "Team Member",
+          "text": "cafeteria gym, you know, take away the big barrier between it so that we can have more room and then"
+        },
+        {
+          "id": "t-97-acd4ac",
+          "time": "09:38",
+          "speaker": "Facilitator",
+          "text": "take those carpets that have never been cleaned and just, you know, sit on them and it'll be, it'll be"
+        },
+        {
+          "id": "t-98-2ead2d",
+          "time": "09:43",
+          "speaker": "Lead Architect",
+          "text": "great. Aside, aside from the goofy name, I thought that, um, and of course we can't talk about any of it"
+        },
+        {
+          "id": "t-99-af0db5",
+          "time": "09:49",
+          "speaker": "Product Lead",
+          "text": "on YouTube, but man, that was like a really awesome look back at like, here's some wins and here's"
+        },
+        {
+          "id": "t-100-556453",
+          "time": "09:55",
+          "speaker": "Team Member",
+          "text": "some exciting things that we've done. Um, and so I think we just need to get better at this as a"
+        },
+        {
+          "id": "t-101-6e803c",
+          "time": "10:00",
+          "speaker": "Facilitator",
+          "text": "company. I think this exercise is an opportunity that, um, I think we do a little bit of that,"
+        },
+        {
+          "id": "t-102-66d358",
+          "time": "10:04",
+          "speaker": "Lead Architect",
+          "text": "but this is doing it more so, uh, Samia, you have some questions here"
+        },
+        {
+          "id": "t-103-ada2d6",
+          "time": "10:11",
+          "speaker": "Product Lead",
+          "text": "for Alita? Yes."
+        },
+        {
+          "id": "t-104-83293a",
+          "time": "10:15",
+          "speaker": "Team Member",
+          "text": "So in the competitive sheet, I was, I mean, I've already identified the features for CD configure,"
+        },
+        {
+          "id": "t-105-b18d7c",
+          "time": "10:22",
+          "speaker": "Facilitator",
+          "text": "as well as, uh, monitor, uh, getting it reviewed from PM. My guess was, or my understanding was that"
+        },
+        {
+          "id": "t-106-90816b",
+          "time": "10:30",
+          "speaker": "Lead Architect",
+          "text": "we wouldn't have the same set of competitors that we're going to compare to, but the right"
+        },
+        {
+          "id": "t-107-c89f1a",
+          "time": "10:35",
+          "speaker": "Product Lead",
+          "text": "competitors for that particular stage, right? So for example, for, uh, for monitor, uh, we may not have"
+        },
+        {
+          "id": "t-108-4e8cea",
+          "time": "10:43",
+          "speaker": "Team Member",
+          "text": "like a GitHub or something like that. We would have monitor based competitors."
+        },
+        {
+          "id": "t-109-3d3bce",
+          "time": "10:47",
+          "speaker": "Facilitator",
+          "text": "Yeah. Or was that the understanding because we identified that entire list of competitors and"
+        },
+        {
+          "id": "t-110-a2b061",
+          "time": "10:54",
+          "speaker": "Lead Architect",
+          "text": "partners for every single stage. I thought we were going to be using those competitors to compare"
+        },
+        {
+          "id": "t-111-d4ba45",
+          "time": "11:02",
+          "speaker": "Product Lead",
+          "text": "against. So I just wanted your, your input on what, because I saw, uh, some of you have compared with"
+        },
+        {
+          "id": "t-112-8d0c6b",
+          "time": "11:09",
+          "speaker": "Team Member",
+          "text": "the five competitors already listed over there. Um, so they may not be relevant. For example,"
+        },
+        {
+          "id": "t-113-8809b8",
+          "time": "11:15",
+          "speaker": "Facilitator",
+          "text": "cloud beats may not be relevant for monitor stage at all. Um, so that's what I wanted to check with you."
+        },
+        {
+          "id": "t-114-c06646",
+          "time": "11:21",
+          "speaker": "Lead Architect",
+          "text": "Yeah. That's the case. I need to go back and look at the spreadsheet. I mean, if the competitor"
+        },
+        {
+          "id": "t-115-48307d",
+          "time": "11:26",
+          "speaker": "Product Lead",
+          "text": "does not apply to that particular stage, they shouldn't be on that tab in the spreadsheet."
+        },
+        {
+          "id": "t-116-3d5076",
+          "time": "11:30",
+          "speaker": "Team Member",
+          "text": "So are you saying that you see competitors on that tab for a stage where they don't apply?"
+        },
+        {
+          "id": "t-117-6010d1",
+          "time": "11:37",
+          "speaker": "Facilitator",
+          "text": "Yeah. I think it was copy pasted. Each has the same."
+        },
+        {
+          "id": "t-118-30e6e9",
+          "time": "11:40",
+          "speaker": "Lead Architect",
+          "text": "Yeah. So each sheet has, uh, has, uh, ADO Atlassian GitHub, Jenkins, JFrog, and cloud piece."
+        },
+        {
+          "id": "t-119-563763",
+          "time": "11:47",
+          "speaker": "Product Lead",
+          "text": "Right. So that may not be relevant for monitor. For configure, it would be a different set of"
+        },
+        {
+          "id": "t-120-46e7db",
+          "time": "11:53",
+          "speaker": "Team Member",
+          "text": "competitors that we need to include, which I think we already identified a while back. I think we"
+        },
+        {
+          "id": "t-121-67fdc8",
+          "time": "11:58",
+          "speaker": "Facilitator",
+          "text": "identified top three competitors for every stage. Yeah. We tiered them. That's when we tiered them,"
+        },
+        {
+          "id": "t-122-3fff29",
+          "time": "12:04",
+          "speaker": "Lead Architect",
+          "text": "right? Tier one, tier two, tier three. So this, this, where we are right now is we're looking at just"
+        },
+        {
+          "id": "t-123-12b50d",
+          "time": "12:08",
+          "speaker": "Product Lead",
+          "text": "tier one competitors. That's probably why I cut and paste them because those are all tier ones."
+        },
+        {
+          "id": "t-124-03d455",
+          "time": "12:13",
+          "speaker": "Team Member",
+          "text": "So we're just focusing on tier one right now. So if they don't apply to that stage,"
+        },
+        {
+          "id": "t-125-a84937",
+          "time": "12:16",
+          "speaker": "Facilitator",
+          "text": "don't worry about it. Make sense. So just pick the ones out of that list that apply to our stage."
+        },
+        {
+          "id": "t-126-aa0ea1",
+          "time": "12:22",
+          "speaker": "Lead Architect",
+          "text": "Right. I just, we just use the tier one competitors. And if they're not,"
+        },
+        {
+          "id": "t-127-83a0f2",
+          "time": "12:28",
+          "speaker": "Product Lead",
+          "text": "if they don't are not applicable, then we don't have to fill out anything for that."
+        },
+        {
+          "id": "t-128-ea7691",
+          "time": "12:33",
+          "speaker": "Team Member",
+          "text": "Yeah, for now, but then we'll move to tier two and tier three. Then we'll look at those."
+        },
+        {
+          "id": "t-129-1c8282",
+          "time": "12:37",
+          "speaker": "Facilitator",
+          "text": "Okay. And do we need to add a line item for GitLab as well? Because I think that's the same over here."
+        },
+        {
+          "id": "t-130-10305b",
+          "time": "12:45",
+          "speaker": "Lead Architect",
+          "text": "Yeah, we should add a, I think you asked me that before, right? Or someone asked me."
+        },
+        {
+          "id": "t-131-c07889",
+          "time": "12:51",
+          "speaker": "Product Lead",
+          "text": "I'm just looking at it. Brian asked."
+        },
+        {
+          "id": "t-132-1ffd44",
+          "time": "12:56",
+          "speaker": "Team Member",
+          "text": "Because the way without it, you're basically putting all the things that we're better at."
+        },
+        {
+          "id": "t-133-986b91",
+          "time": "13:02",
+          "speaker": "Facilitator",
+          "text": "Yeah, for sure. For sure. Yeah."
+        },
+        {
+          "id": "t-134-d216a0",
+          "time": "13:05",
+          "speaker": "Lead Architect",
+          "text": "Right. So ideally when we pick like the 10 to 15 features,"
+        },
+        {
+          "id": "t-135-224111",
+          "time": "13:11",
+          "speaker": "Product Lead",
+          "text": "those, some of those were like GitLab only. Some of those were like GitLab didn't have."
+        },
+        {
+          "id": "t-136-0931d2",
+          "time": "13:18",
+          "speaker": "Team Member",
+          "text": "Well, I thought it was supposed to be, none of them should be GitLab only, right? It should be all"
+        },
+        {
+          "id": "t-137-dbd649",
+          "time": "13:21",
+          "speaker": "Facilitator",
+          "text": "through the lens of... Yeah. Yeah, exactly. Yeah. It should be like market lens. So in an ideal world,"
+        },
+        {
+          "id": "t-138-a2292e",
+          "time": "13:28",
+          "speaker": "Lead Architect",
+          "text": "most of them are like, this is what I'm shopping for, this solution. Some of them might be GitLab only."
+        },
+        {
+          "id": "t-139-6817b0",
+          "time": "13:33",
+          "speaker": "Product Lead",
+          "text": "Some of them might be like competitor only. So that it's a, somebody would look at it and be like,"
+        },
+        {
+          "id": "t-140-f58660",
+          "time": "13:38",
+          "speaker": "Team Member",
+          "text": "this looks honest and trustworthy and like a accurate assessment of the market."
+        },
+        {
+          "id": "t-141-f53f0a",
+          "time": "13:43",
+          "speaker": "Facilitator",
+          "text": "Fair. Yeah."
+        },
+        {
+          "id": "t-142-3959d6",
+          "time": "13:45",
+          "speaker": "Lead Architect",
+          "text": "And then, yeah, I think, Samia, for this, just to kind of reiterate for this one,"
+        },
+        {
+          "id": "t-143-cd5394",
+          "time": "13:50",
+          "speaker": "Product Lead",
+          "text": "we're only doing these five competitors. So we'll do the other ones in a later stage. And then"
+        },
+        {
+          "id": "t-144-7cc5d7",
+          "time": "13:56",
+          "speaker": "Team Member",
+          "text": "for if, if the vendor bills, like bills themselves as a platform, then we should specifically call out"
+        },
+        {
+          "id": "t-145-2e626f",
+          "time": "14:04",
+          "speaker": "Facilitator",
+          "text": "that they have zero. So GitHub bills itself as a platform. It sells itself that way. Same with Azure"
+        },
+        {
+          "id": "t-146-f2c5e1",
+          "time": "14:12",
+          "speaker": "Lead Architect",
+          "text": "DevOps, same with JFrog. Well, they all do for tier one, except Jenkins and Cloudbees. Yeah. Yeah."
+        },
+        {
+          "id": "t-147-94ec8d",
+          "time": "14:19",
+          "speaker": "Product Lead",
+          "text": "Jenkins and Cloudbees does not, but what is it, you know, Azure DevOps, GitHub,"
+        },
+        {
+          "id": "t-148-e69055",
+          "time": "14:26",
+          "speaker": "Team Member",
+          "text": "Atlassian. And although Atlassian's, we still need to figure something out there."
+        },
+        {
+          "id": "t-149-bfb119",
+          "time": "14:31",
+          "speaker": "Facilitator",
+          "text": "Yeah. As a matter of fact, did I go back and add Atlassian because I,"
+        },
+        {
+          "id": "t-150-3e482a",
+          "time": "14:34",
+          "speaker": "Lead Architect",
+          "text": "based on conversation, I think we have to do it. I don't think we can leave them off."
+        },
+        {
+          "id": "t-151-cbbba9",
+          "time": "14:39",
+          "speaker": "Product Lead",
+          "text": "I don't have to look at this question."
+        },
+        {
+          "id": "t-152-cb2d4d",
+          "time": "14:41",
+          "speaker": "Team Member",
+          "text": "Yeah. It is. Atlassian is on that sheet."
+        },
+        {
+          "id": "t-153-5f0582",
+          "time": "14:43",
+          "speaker": "Facilitator",
+          "text": "Okay. Yeah. I went back and added them because based on discussion, like my, my,"
+        },
+        {
+          "id": "t-154-d5cb07",
+          "time": "14:49",
+          "speaker": "Lead Architect",
+          "text": "I wanted to take them off completely and just leave them as a partner, but we can't do that."
+        },
+        {
+          "id": "t-155-db1495",
+          "time": "14:53",
+          "speaker": "Product Lead",
+          "text": "So, so yeah. So for, for those platform, you know, we should call out the fact that they don't have"
+        },
+        {
+          "id": "t-156-b686de",
+          "time": "15:01",
+          "speaker": "Team Member",
+          "text": "any monitoring. If they have like zero out of 15, we should call that out. Same with configure stuff"
+        },
+        {
+          "id": "t-157-94bff8",
+          "time": "15:07",
+          "speaker": "Facilitator",
+          "text": "for this, you know, any, those kinds of capabilities."
+        },
+        {
+          "id": "t-158-89d16d",
+          "time": "15:09",
+          "speaker": "Lead Architect",
+          "text": "Andy, I think if we took that a step further, it'd be good to even describe it in a way that"
+        },
+        {
+          "id": "t-159-213cc6",
+          "time": "15:16",
+          "speaker": "Product Lead",
+          "text": "doesn't just say our product stage and use like a value-based description of what monitor and"
+        },
+        {
+          "id": "t-160-ea3c18",
+          "time": "15:20",
+          "speaker": "Team Member",
+          "text": "configure mean. Cause otherwise we're just, no, that's not going to do any good for us."
+        },
+        {
+          "id": "t-161-ee447e",
+          "time": "15:25",
+          "speaker": "Facilitator",
+          "text": "Have you guys seen the new infographic that the design team has come up with?"
+        },
+        {
+          "id": "t-162-a0179a",
+          "time": "15:30",
+          "speaker": "Lead Architect",
+          "text": "Not yet. Oh, you haven't? No. Do we have a link to that quickly? William, I don't know."
+        },
+        {
+          "id": "t-163-ce6f98",
+          "time": "15:37",
+          "speaker": "Product Lead",
+          "text": "Or you can throw it in the, you can throw it in the notes if you find it."
+        },
+        {
+          "id": "t-164-23dc57",
+          "time": "15:43",
+          "speaker": "Team Member",
+          "text": "All right. Let's see who can find it faster."
+        },
+        {
+          "id": "t-165-e44abb",
+          "time": "15:46",
+          "speaker": "Facilitator",
+          "text": "I can guarantee it not with the amount of tabs I have open."
+        },
+        {
+          "id": "t-166-abd1a6",
+          "time": "15:49",
+          "speaker": "Lead Architect",
+          "text": "Oh my God. That's what I'm like. It probably won't be me."
+        },
+        {
+          "id": "t-167-1a42d2",
+          "time": "15:54",
+          "speaker": "Product Lead",
+          "text": "So I, this is why I send everything to a Google Gmail because the search is so fast. So I literally"
+        },
+        {
+          "id": "t-168-45a86b",
+          "time": "16:03",
+          "speaker": "Team Member",
+          "text": "have a folder where all of my GitLab pings go and I can just search for infographic."
+        },
+        {
+          "id": "t-169-1b060a",
+          "time": "16:09",
+          "speaker": "Facilitator",
+          "text": "Oh, I found it. I found it. I found it. Who could look at first?"
+        },
+        {
+          "id": "t-170-a9653b",
+          "time": "16:15",
+          "speaker": "Lead Architect",
+          "text": "I found it. I found it."
+        },
+        {
+          "id": "t-171-61296c",
+          "time": "16:16",
+          "speaker": "Product Lead",
+          "text": "Oh, so this is the one. So this, there's two, this is the one for the single tool comparison,"
+        },
+        {
+          "id": "t-172-421493",
+          "time": "16:22",
+          "speaker": "Team Member",
+          "text": "but then for the, um, but it's going to look the same, but then here's the one for, um, I just put it"
+        },
+        {
+          "id": "t-173-a2fc2f",
+          "time": "16:28",
+          "speaker": "Facilitator",
+          "text": "in chat for you guys. And here's the one for the platform players."
+        },
+        {
+          "id": "t-174-2623f9",
+          "time": "16:35",
+          "speaker": "Lead Architect",
+          "text": "So, so we made it, we made a couple of decisions along the way. So, um,"
+        },
+        {
+          "id": "t-175-ca4a67",
+          "time": "16:41",
+          "speaker": "Product Lead",
+          "text": "um, one of the decisions was to just go with stages. Um, it, it would have been like a whole nother layer"
+        },
+        {
+          "id": "t-176-f0aa36",
+          "time": "16:50",
+          "speaker": "Team Member",
+          "text": "of, okay, if we don't go with just the GitLab stages, the 10 stages, what, what do we use?"
+        },
+        {
+          "id": "t-177-aab640",
+          "time": "16:56",
+          "speaker": "Facilitator",
+          "text": "Um, that has to be determined, reconciled, all this kind of stuff. Like the, you know, we kind of"
+        },
+        {
+          "id": "t-178-b7f77d",
+          "time": "17:03",
+          "speaker": "Lead Architect",
+          "text": "we kind of"
+        },
+        {
+          "id": "t-179-42b8d5",
+          "time": "17:04",
+          "speaker": "Product Lead",
+          "text": "we kind of"
+        }
+      ],
+      "summary": {
+        "title": "product marketing meeting weekly 2021 06 28 OgZHgTcR",
+        "date": "Aug 26, 2026",
+        "attendees": [
+          "Facilitator (Participant)",
+          "Lead Architect (Participant)",
+          "Product Lead (Participant)",
+          "Team Member (Participant)"
+        ],
+        "summary": "The meeting focused on key project deliverables and strategic alignments. Topics discussed included ranked. yeah, i might, i might even constrain us as we're not going to highlight low segments,. The team reviewed current status and established concrete next steps.",
+        "keyDecisions": [
+          "Agreed.",
+          "Well, we also have, in terms of proprietary stuff, we've also got, we replaced one of our scanners"
+        ],
+        "actionItems": [
+          {
+            "id": "c59ad734-e0b8-4945-b89e-7295d01edc3e",
+            "owner": "Lead Architect",
+            "task": "Each out of the 30 items, which are the top five. Actually, let's just, let's actually just do that.",
+            "due": "By Friday",
+            "notes": "Mentioned at [01:41]",
+            "completed": false
+          },
+          {
+            "id": "8ea3adc7-b8cb-4c7d-b370-cf7de86a23fa",
+            "owner": "Product Lead",
+            "task": "Let's just do this like top, top five overall.",
+            "due": "By Friday",
+            "notes": "Mentioned at [01:48]",
+            "completed": false
+          },
+          {
+            "id": "019009f3-4536-4936-b04c-9906f4719b8a",
+            "owner": "Team Member",
+            "task": "I would say if UX does end up being a flag that we fly, that's an easy one because there's more than",
+            "due": "By Friday",
+            "notes": "Mentioned at [03:39]",
+            "completed": false
+          },
+          {
+            "id": "a3bfb52a-918c-4ddd-97a7-d6008794b3ed",
+            "owner": "Product Lead",
+            "task": "We need to have a security one in there. We could have either vulnerability management or",
+            "due": "By Friday",
+            "notes": "Mentioned at [03:59]",
+            "completed": false
+          },
+          {
+            "id": "3f49aaef-25b0-4546-a9f2-52208da2a99b",
+            "owner": "Facilitator",
+            "task": "Let's, let's go with vulnerability management for now. I, I, and I would agree on that one.",
+            "due": "By Friday",
+            "notes": "Mentioned at [04:30]",
+            "completed": false
+          }
+        ],
+        "discussionHighlights": [
+          "Facilitator noted: ranked. Yeah, I might, I might even constrain us as we're not going to highlight low segments,",
+          "Lead Architect noted: but we want to see the full spectrum, especially in the case we have slim pickings. Alternately,",
+          "Product Lead noted: if there are double digit entries, then we can stack rank.",
+          "Team Member noted: So that's, that's kind of also helpful there. So if we have three for all of these that, I mean,"
+        ],
+        "nextSteps": [
+          "Lead Architect to finish: Each out of the 30 items, which are the top five. Actually, let's just, let's actually just do that. (By Friday)",
+          "Product Lead to finish: Let's just do this like top, top five overall. (By Friday)"
+        ],
+        "template": "Project Sync / Status Update",
+        "language": "English",
+        "modelUsed": "Nimbus 4B (High Quality)",
+        "generatedAt": "2026-08-26T16:05:21.577Z"
+      },
+      "audioPath": "/Users/muhammedshraeef/Documents/GitHub/minomeet/server/uploads/1787760241084-781398292.mp3",
+      "tags": [
+        "Imported",
+        "Audio"
+      ]
+    },
+    {
       "id": "meeting-9cf3bc76",
       "title": "product marketing meeting weekly 2021 06 28 2s5PbELs",
       "createdAt": "2026-08-26T15:47:08.860Z",

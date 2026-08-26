@@ -103,12 +103,12 @@ export const ImportAudioModal: React.FC = () => {
   };
 
   const getPhaseDescription = (pct: number) => {
-    if (pct < 18) return 'Ingesting audio stream & normalizing audio channels…';
-    if (pct < 42) return 'Computing 128-band log-Mel Spectrogram…';
-    if (pct < 68) return 'Running Whisper neural transformer speech decoding…';
-    if (pct < 88) return 'Detecting timestamps, speaker cues & language…';
-    if (pct < 98) return 'Synthesizing structured AI Minutes of Meeting (MOM)…';
-    return 'Transcription complete! Finalizing workspace…';
+    if (pct < 20) return 'Ingesting audio stream & normalizing audio channels…';
+    if (pct < 45) return 'Computing 128-band log-Mel Spectrogram…';
+    if (pct < 75) return 'Running Whisper neural transformer speech decoding…';
+    if (pct < 95) return 'Synthesizing structured AI Minutes of Meeting (MOM)…';
+    if (pct < 100) return 'Finalizing transcript segments & workspace…';
+    return 'Transcription complete! Opening meeting…';
   };
 
   const handleImport = async () => {
@@ -121,23 +121,33 @@ export const ImportAudioModal: React.FC = () => {
     setProgressPercent(1);
     setProgressPhase('Ingesting audio stream & normalizing audio channels…');
 
-    // Dynamic 1 to 100% progress animation simulation
-    let currentPct = 1;
-    progressIntervalRef.current = setInterval(() => {
-      if (currentPct < 25) {
-        currentPct += Math.floor(Math.random() * 3) + 2; // Fast initial load
-      } else if (currentPct < 60) {
-        currentPct += Math.floor(Math.random() * 2) + 1; // Steady spectrogram & decode
-      } else if (currentPct < 85) {
-        currentPct += 1; // AI synthesis
-      } else if (currentPct < 96) {
-        if (Math.random() > 0.4) currentPct += 1; // Gradual approach to 96%
-      }
-      if (currentPct > 96) currentPct = 96;
+    const startTime = Date.now();
+    // Dynamically pace progress based on file size
+    const fileSizeMB = selectedFile.size / (1024 * 1024);
+    const estimatedTotalMs = Math.max(5000, Math.min(22000, 3500 + fileSizeMB * 1200));
 
-      setProgressPercent(currentPct);
-      setProgressPhase(getPhaseDescription(currentPct));
-    }, 75);
+    progressIntervalRef.current = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const progressRatio = elapsed / estimatedTotalMs;
+      
+      let nextPct: number;
+      if (progressRatio < 0.85) {
+        // Steady acceleration up to ~85%
+        nextPct = Math.round(progressRatio * 100);
+      } else {
+        // Continuous smooth incremental progression from 85% up to 99% without stalling
+        const extraRatio = 1 - Math.exp(-(elapsed - estimatedTotalMs * 0.85) / (estimatedTotalMs * 0.4));
+        nextPct = Math.min(99, Math.round(85 + extraRatio * 14));
+      }
+
+      nextPct = Math.max(1, Math.min(99, nextPct));
+
+      setProgressPercent((prev) => {
+        const val = Math.max(prev, nextPct);
+        setProgressPhase(getPhaseDescription(val));
+        return val;
+      });
+    }, 120);
 
     try {
       const meeting = await api.importAudio({
@@ -151,13 +161,13 @@ export const ImportAudioModal: React.FC = () => {
 
       if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
 
-      // Jump to 100% completion
+      // Hit 100% completion cleanly
       setProgressPercent(100);
       setProgressPhase('Transcription Complete! Opening Meeting…');
 
       await refreshMeetings();
 
-      // Brief delay to let the user see the satisfying 100% completed checkmark
+      // Brief pause to display the completed checkmark
       setTimeout(() => {
         setIsUploading(false);
         closeModal('import');
@@ -165,8 +175,8 @@ export const ImportAudioModal: React.FC = () => {
         setAudioDuration('00:00');
         setProgressPercent(0);
         selectMeeting(meeting);
-        showToast('Audio transcribed successfully!', `Meeting length: ${meeting.duration} • MOM ready.`, 'success');
-      }, 550);
+        showToast('Audio transcribed successfully!', `Meeting duration: ${meeting.duration} • MOM ready.`, 'success');
+      }, 450);
     } catch (err: any) {
       if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
       setIsUploading(false);
