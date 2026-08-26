@@ -47,6 +47,8 @@ interface MeetingContextType {
   deleteMeeting: (id: string) => Promise<void>;
   openDeleteModal: (meeting: Meeting) => void;
   closeDeleteModal: () => void;
+  openStorageFolder: () => Promise<void>;
+  purgeOldRecordings: (days: number) => Promise<void>;
   confirmDeleteMeeting: () => Promise<void>;
   openRenameModal: (meeting: Meeting) => void;
   closeRenameModal: () => void;
@@ -108,12 +110,37 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
     refreshTranscriptionModels();
   }, []);
 
-  // Enforce Clean Light Theme permanently
+  // Dynamic Theme Handler (System / Auto, Light, Dark)
   useEffect(() => {
+    const theme = settings?.theme || 'system';
     const root = document.documentElement;
-    root.classList.remove('dark');
-    root.setAttribute('data-theme', 'light');
-  }, []);
+
+    const applyTheme = (isDark: boolean) => {
+      if (isDark) {
+        root.classList.add('dark');
+        root.setAttribute('data-theme', 'dark');
+      } else {
+        root.classList.remove('dark');
+        root.setAttribute('data-theme', 'light');
+      }
+    };
+
+    if (theme === 'dark') {
+      applyTheme(true);
+    } else if (theme === 'light') {
+      applyTheme(false);
+    } else {
+      // System / Auto Mode
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      applyTheme(mediaQuery.matches);
+
+      const handleChange = (e: MediaQueryListEvent) => {
+        applyTheme(e.matches);
+      };
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+  }, [settings?.theme]);
 
   const refreshMeetings = async () => {
     try {
@@ -304,6 +331,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
     } else {
       showToast('Microphone Active', 'Capturing local voice', 'info');
     }
+    sendDesktopNotification('Minomeet Recording Active', 'Live meeting audio transcription in progress…');
   };
 
   const stopRecording = async () => {
@@ -335,6 +363,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
       setActiveMeeting(newMeeting);
       setCurrentScreen('notes');
       showToast('Recording saved successfully!', `${lines.length} transcript segments captured.`, 'success');
+      sendDesktopNotification('Meeting Saved Successfully', `Recorded ${duration} with ${lines.length} transcript lines.`);
     } catch (err: any) {
       showToast('Failed to save meeting', err.message, 'error');
     }
@@ -371,6 +400,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
       setActiveMeeting(updated);
       setMeetings(prev => prev.map(m => m.id === updated.id ? updated : m));
       showToast('Summary generated successfully!', 'Your meeting minutes are ready.', 'success');
+      sendDesktopNotification('AI Minutes of Meeting Ready', `Summary generated for "${activeMeeting.title}"`);
     } catch (err: any) {
       showToast('Generation failed', err.message, 'error');
     } finally {
@@ -461,8 +491,48 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
+  const sendDesktopNotification = (title: string, body: string) => {
+    if (!settings?.notifications) return;
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      if (Notification.permission === 'granted') {
+        new Notification(title, { body, icon: '/favicon.ico' });
+      } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission().then(permission => {
+          if (permission === 'granted') {
+            new Notification(title, { body, icon: '/favicon.ico' });
+          }
+        });
+      }
+    }
+  };
+
+  const openStorageFolder = async () => {
+    try {
+      const res = await api.openFolder(settings?.storagePath);
+      showToast('Storage Folder Opened', res.path, 'success');
+    } catch (err: any) {
+      showToast('Could not open folder', err.message, 'error');
+    }
+  };
+
+  const purgeOldRecordings = async (days: number) => {
+    try {
+      const res = await api.purgeRecordings(days);
+      showToast('Storage Optimized', `${res.deletedCount} old audio file(s) purged.`, 'info');
+    } catch (err: any) {
+      showToast('Purge Failed', err.message, 'error');
+    }
+  };
+
   const updateSettings = async (updates: Partial<AppSettings>) => {
     try {
+      // If user toggles notifications on, proactively request browser permission
+      if (updates.notifications && typeof window !== 'undefined' && 'Notification' in window) {
+        if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+          await Notification.requestPermission();
+        }
+      }
+
       const updated = await api.updateSettings(updates);
       setSettings(updated);
       showToast('Settings updated', 'Configuration saved.', 'success');
@@ -517,6 +587,8 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
         showToast,
         removeToast,
         updateSettings,
+        openStorageFolder,
+        purgeOldRecordings,
         refreshMeetings,
         refreshTranscriptionModels,
         downloadTranscriptionModel,

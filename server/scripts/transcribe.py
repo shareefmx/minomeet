@@ -128,7 +128,6 @@ def main():
         formatted_segments = []
 
         speakers = ["Team Member"]
-
         for idx, seg in enumerate(raw_segments):
             start_sec = seg.get("start", 0.0)
             text = seg.get("text", "").strip()
@@ -137,7 +136,6 @@ def main():
 
             speaker = "Team Member"
             formatted_segments.append({
-                "id": f"t-{idx+1}-{uuid.uuid4().hex[:6]}",
                 "time": format_timestamp(start_sec),
                 "speaker": speaker,
                 "text": text
@@ -150,7 +148,6 @@ def main():
                 "speaker": "Team Member",
                 "text": full_text
             })
-
         output = {
             "success": True,
             "engine": "OpenAI Whisper",
@@ -191,35 +188,30 @@ def main():
                     "text": f"Starting our recorded audio review regarding \"{base_name}\". Let's go over the core agenda items."
                 },
                 {
-                    "id": f"t-2-{uuid.uuid4().hex[:6]}",
                     "time": format_timestamp(t2),
                     "speaker": "Team Member",
                     "text": "The latest service build passed integration tests with no major regression warnings."
                 },
                 {
                     "id": f"t-3-{uuid.uuid4().hex[:6]}",
-                    "time": format_timestamp(t3),
                     "speaker": "Team Member",
                     "text": "Let’s verify telemetry metrics and alerting thresholds before public rollout."
                 },
                 {
                     "id": f"t-4-{uuid.uuid4().hex[:6]}",
                     "time": format_timestamp(t4),
-                    "speaker": "Team Member",
                     "text": "I will prepare the telemetry dashboards and email the staging link to the team by tomorrow."
                 },
                 {
                     "id": f"t-5-{uuid.uuid4().hex[:6]}",
                     "time": format_timestamp(t5),
                     "speaker": "Team Member",
-                    "text": "Excellent. Let’s reconvene on Thursday for the final sign-off."
                 }
             ]
         }
         print(json.dumps(output))
     except Exception as e:
         print(json.dumps({"success": False, "error": str(e)}))
-        sys.exit(1)
 
 if __name__ == "__main__":
     main()

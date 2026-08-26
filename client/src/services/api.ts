@@ -138,6 +138,28 @@ export const api = {
     return data.settings;
   },
 
+  async openFolder(customPath?: string): Promise<{ success: boolean; path: string }> {
+    const res = await fetch(`${API_BASE}/settings/open-folder`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: customPath })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed to open directory');
+    return data;
+  },
+
+  async purgeRecordings(days: number): Promise<{ success: boolean; deletedCount: number; message: string }> {
+    const res = await fetch(`${API_BASE}/settings/purge-recordings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ days })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed to purge recordings');
+    return data;
+  },
+
   // Transcription Models & Engine
   async getTranscriptionModels(): Promise<{ models: TranscriptionModel[]; activeModel: TranscriptionModel }> {
     const res = await fetch(`${API_BASE}/transcription/models`);

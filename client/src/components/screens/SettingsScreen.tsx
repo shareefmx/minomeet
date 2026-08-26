@@ -21,7 +21,11 @@ import {
   Activity,
   HardDrive,
   Loader2,
-  Cloud
+  Cloud,
+  Sun,
+  Moon,
+  Monitor,
+  Bell
 } from 'lucide-react';
 import { SettingsTab } from '../../types/meeting.js';
 
@@ -34,6 +38,8 @@ export const SettingsScreen: React.FC = () => {
     updateSettings,
     openModal,
     showToast,
+    openStorageFolder,
+    purgeOldRecordings,
     transcriptionModels,
     activeTranscriptionModel,
     engineStatus,
@@ -731,73 +737,219 @@ export const SettingsScreen: React.FC = () => {
 
         {/* 6. GENERAL & STORAGE TAB */}
         {settingsTab === 'general' && (
-          <div className="space-y-4">
+          <div className="space-y-5">
+            {/* Appearance & Themes */}
             <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <h4 className="text-sm font-bold text-[#111827]">Notifications</h4>
-                  <p className="text-xs text-[#6b7280] mt-0.5 max-w-lg">
-                    Enable system notifications for the start and completion of recorded meeting sessions.
-                  </p>
-                </div>
-                <div
-                  onClick={() => updateSettings({ notifications: !settings.notifications })}
-                  className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${
-                    settings.notifications ? 'bg-[#2563eb]' : 'bg-gray-300'
+              <div className="mb-3">
+                <h4 className="text-sm font-bold text-[#111827] flex items-center gap-2">
+                  <Sun className="w-4 h-4 text-[#2563eb]" />
+                  <span>Appearance &amp; Theme</span>
+                </h4>
+                <p className="text-xs text-[#6b7280] mt-0.5">
+                  Select your interface appearance preference across the Minomeet workspace.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* 1. Device / System Auto */}
+                <button
+                  onClick={() => updateSettings({ theme: 'system' })}
+                  className={`p-3.5 rounded-xl border-2 text-left transition cursor-pointer flex flex-col justify-between ${
+                    (settings.theme || 'system') === 'system'
+                      ? 'border-[#2563eb] bg-[#eff6ff]'
+                      : 'border-[#e5e7eb] hover:border-[#cbd5e1] bg-white'
                   }`}
                 >
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="w-8 h-8 rounded-lg bg-blue-100/70 text-[#2563eb] flex items-center justify-center">
+                        <Monitor className="w-4 h-4" />
+                      </div>
+                      {(settings.theme || 'system') === 'system' && (
+                        <span className="text-[#2563eb] text-xs font-black flex items-center gap-1">
+                          <Check className="w-4 h-4" /> Active
+                        </span>
+                      )}
+                    </div>
+                    <div className="font-extrabold text-xs text-[#111827]">Device Theme</div>
+                    <div className="text-[11px] text-[#6b7280] mt-0.5">
+                      Automatically syncs with macOS / OS system dark &amp; light mode.
+                    </div>
+                  </div>
+                </button>
+
+                {/* 2. Light Theme */}
+                <button
+                  onClick={() => updateSettings({ theme: 'light' })}
+                  className={`p-3.5 rounded-xl border-2 text-left transition cursor-pointer flex flex-col justify-between ${
+                    settings.theme === 'light'
+                      ? 'border-[#2563eb] bg-[#eff6ff]'
+                      : 'border-[#e5e7eb] hover:border-[#cbd5e1] bg-white'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center">
+                        <Sun className="w-4 h-4" />
+                      </div>
+                      {settings.theme === 'light' && (
+                        <span className="text-[#2563eb] text-xs font-black flex items-center gap-1">
+                          <Check className="w-4 h-4" /> Active
+                        </span>
+                      )}
+                    </div>
+                    <div className="font-extrabold text-xs text-[#111827]">Light Theme</div>
+                    <div className="text-[11px] text-[#6b7280] mt-0.5">
+                      High-contrast clean white canvases and clear typography.
+                    </div>
+                  </div>
+                </button>
+
+                {/* 3. Dark Theme */}
+                <button
+                  onClick={() => updateSettings({ theme: 'dark' })}
+                  className={`p-3.5 rounded-xl border-2 text-left transition cursor-pointer flex flex-col justify-between ${
+                    settings.theme === 'dark'
+                      ? 'border-[#2563eb] bg-[#eff6ff]'
+                      : 'border-[#e5e7eb] hover:border-[#cbd5e1] bg-white'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                        <Moon className="w-4 h-4" />
+                      </div>
+                      {settings.theme === 'dark' && (
+                        <span className="text-[#2563eb] text-xs font-black flex items-center gap-1">
+                          <Check className="w-4 h-4" /> Active
+                        </span>
+                      )}
+                    </div>
+                    <div className="font-extrabold text-xs text-[#111827]">Dark Theme</div>
+                    <div className="text-[11px] text-[#6b7280] mt-0.5">
+                      Obsidian dark interface engineered for reduced eye strain.
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Desktop Notifications */}
+            <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h4 className="text-sm font-bold text-[#111827] flex items-center gap-2">
+                    <Bell className="w-4 h-4 text-[#2563eb]" />
+                    <span>Desktop Notifications</span>
+                  </h4>
+                  <p className="text-xs text-[#6b7280] mt-0.5 max-w-lg">
+                    Receive on-device system notifications when recording starts, meetings are saved, or AI MOM summaries complete.
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  {settings.notifications && (
+                    <button
+                      onClick={() => {
+                        if (typeof window !== 'undefined' && 'Notification' in window) {
+                          Notification.requestPermission().then(p => {
+                            if (p === 'granted') {
+                              new Notification('Minomeet AI Notifications Active', {
+                                body: 'You will receive status updates when meetings and summaries finish.',
+                                icon: '/favicon.ico'
+                              });
+                              showToast('Test Notification Sent', 'Check your system notification center', 'success');
+                            } else {
+                              showToast('Permission needed', 'Please allow notifications in your browser settings.', 'warning');
+                            }
+                          });
+                        } else {
+                          showToast('Notifications Active', 'Native browser notification supported', 'info');
+                        }
+                      }}
+                      className="px-3 py-1.5 rounded-lg border border-[#bfdbfe] bg-[#eff6ff] text-[11px] font-bold text-[#1e3a8a] hover:bg-[#dbeafe] transition cursor-pointer"
+                    >
+                      Send Test
+                    </button>
+                  )}
                   <div
-                    className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
-                      settings.notifications ? 'translate-x-5' : 'translate-x-0'
+                    onClick={() => updateSettings({ notifications: !settings.notifications })}
+                    className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${
+                      settings.notifications ? 'bg-[#2563eb]' : 'bg-gray-300'
                     }`}
-                  />
+                  >
+                    <div
+                      className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                        settings.notifications ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
 
+            {/* Data Storage Locations & Folder Launcher */}
             <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs">
-              <h4 className="text-sm font-bold text-[#111827]">Data Storage Locations</h4>
+              <h4 className="text-sm font-bold text-[#111827] flex items-center gap-2">
+                <FolderOpen className="w-4 h-4 text-[#2563eb]" />
+                <span>Data Storage Locations</span>
+              </h4>
               <p className="text-xs text-[#6b7280] mt-0.5">
-                View and access where Minomeet stores your transcripts and audio — nothing ever leaves this device.
+                Local directory where Minomeet stores your transcripts, audio recordings, and AI indices.
               </p>
-              <div className="font-mono text-xs bg-[#f9fafb] border border-[#e5e7eb] px-3.5 py-2.5 rounded-xl my-3 text-[#374151]">
-                {settings.storagePath}
+              
+              <div className="flex items-center gap-2 my-3">
+                <div className="font-mono text-xs bg-[#f9fafb] border border-[#e5e7eb] px-3.5 py-2 rounded-xl text-[#374151] flex-1 truncate">
+                  {settings.storagePath || '/Users/you/Minomeet/recordings'}
+                </div>
+                <button
+                  onClick={openStorageFolder}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2563eb] text-white text-xs font-bold hover:bg-[#1d4ed8] shadow-xs transition cursor-pointer flex-none"
+                >
+                  <FolderOpen className="w-3.5 h-3.5" />
+                  <span>Open Folder in Finder</span>
+                </button>
               </div>
-              <button
-                onClick={() => showToast('Opening directory…', settings.storagePath, 'info')}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#d6dbe2] bg-white text-xs font-bold text-[#374151] hover:bg-[#f6f7f9] shadow-sm transition cursor-pointer"
-              >
-                <FolderOpen className="w-3.5 h-3.5" />
-                <span>Open Folder</span>
-              </button>
 
-              <div className="mt-4 p-3.5 rounded-xl bg-[#eff4ff] border border-[#c9dcff] flex items-start gap-2.5 text-xs text-[#1e3a8a]">
+              <div className="mt-3 p-3.5 rounded-xl bg-[#eff4ff] border border-[#c9dcff] flex items-start gap-2.5 text-xs text-[#1e3a8a]">
                 <ShieldCheck className="w-4 h-4 flex-none mt-0.5 text-[#2563eb]" />
                 <p>
-                  <b>Privacy Guarantee:</b> Database files and AI embeddings are stored locally in your application directory for unified offline security.
+                  <b>100% Privacy &bull; Local Storage Only:</b> Database files, models, and audio never leave this machine.
                 </p>
               </div>
             </div>
 
-            <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs">
-              <div className="flex items-center justify-between gap-4">
+            {/* Auto-delete Recordings & Purge Cleaner */}
+            <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h4 className="text-sm font-bold text-[#111827]">Auto-delete recordings</h4>
+                  <h4 className="text-sm font-bold text-[#111827] flex items-center gap-2">
+                    <Trash2 className="w-4 h-4 text-[#ef4444]" />
+                    <span>Auto-Delete Raw Audio Recordings</span>
+                  </h4>
                   <p className="text-xs text-[#6b7280] mt-0.5 max-w-lg">
-                    Automatically purge raw audio recordings {settings.autoDeleteRecordingsDays} days after a transcript + summary is verified.
+                    Automatically reclaim disk space by purging raw audio files after transcripts and summaries have been processed.
                   </p>
                 </div>
-                <div
-                  onClick={() => updateSettings({ autoDeleteRecordingsDays: settings.autoDeleteRecordingsDays > 0 ? 0 : 30 })}
-                  className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${
-                    settings.autoDeleteRecordingsDays > 0 ? 'bg-[#2563eb]' : 'bg-gray-300'
-                  }`}
-                >
-                  <div
-                    className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
-                      settings.autoDeleteRecordingsDays > 0 ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                  />
+
+                <div className="flex items-center gap-2">
+                  <select
+                    value={settings.autoDeleteRecordingsDays}
+                    onChange={(e) => updateSettings({ autoDeleteRecordingsDays: Number(e.target.value) })}
+                    className="text-xs font-bold px-3 py-1.5 border border-[#d6dbe2] rounded-xl bg-white text-[#111827] focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
+                  >
+                    <option value={0}>Never (Keep all audio recordings)</option>
+                    <option value={7}>After 7 Days</option>
+                    <option value={14}>After 14 Days</option>
+                    <option value={30}>After 30 Days</option>
+                    <option value={60}>After 60 Days</option>
+                  </select>
+
+                  <button
+                    onClick={() => purgeOldRecordings(settings.autoDeleteRecordingsDays)}
+                    className="px-3.5 py-1.5 rounded-xl border border-[#fee2e2] bg-[#fef2f2] text-[#ef4444] hover:bg-[#fee2e2] text-xs font-bold transition cursor-pointer flex-none"
+                  >
+                    Purge Now
+                  </button>
                 </div>
               </div>
             </div>

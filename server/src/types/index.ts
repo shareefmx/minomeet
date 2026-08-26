@@ -43,6 +43,7 @@ export interface Meeting {
 }
 
 export interface AppSettings {
+  theme?: 'system' | 'light' | 'dark';
   notifications: boolean;
   storagePath: string;
   autoDeleteRecordingsDays: number;
