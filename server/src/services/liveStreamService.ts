@@ -18,6 +18,7 @@ interface ClientSession {
   lookbackBuffer: Buffer;
   offsetSeconds: number;
   lastSpeaker: string;
+  activeSourceType?: 'mic' | 'system' | 'mixed';
   isProcessing: boolean;
   silenceCount: number;
   lastSentence: string;
@@ -124,6 +125,12 @@ export class LiveStreamService {
   }
 
   private determineSpeaker(session: ClientSession): string {
+    if (session.activeSourceType === 'mic') {
+      return 'You (Microphone)';
+    } else if (session.activeSourceType === 'system') {
+      return 'Meeting Participant';
+    }
+
     const samples = Math.max(1, session.energySampleCount);
     const avgMic = session.micEnergyAccum / samples;
     const avgSys = session.sysEnergyAccum / samples;
@@ -167,6 +174,7 @@ export class LiveStreamService {
         lookbackBuffer: Buffer.alloc(0),
         offsetSeconds: 0,
         lastSpeaker: 'You (Microphone)',
+        activeSourceType: 'mixed',
         isProcessing: false,
         silenceCount: 0,
         lastSentence: '',
@@ -242,6 +250,7 @@ export class LiveStreamService {
               if (typeof msg.sysLevel === 'number') session.sysEnergyAccum += msg.sysLevel;
               session.energySampleCount += 1;
             } else if (msg.type === 'metadata') {
+              if (msg.sourceType) session.activeSourceType = msg.sourceType;
               if (msg.speaker) session.lastSpeaker = msg.speaker;
               if (msg.offset !== undefined) session.offsetSeconds = msg.offset;
             } else if (msg.type === 'flush') {

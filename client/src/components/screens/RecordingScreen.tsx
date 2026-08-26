@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useMeeting } from '../../context/MeetingContext.js';
-import { Copy, Pause, Play, Square, X, Mic, Volume2, Layers, Cpu, Link2, AlertCircle } from 'lucide-react';
+import { Copy, Pause, Play, Square, X, Mic, Volume2, Layers, Link2, AlertCircle } from 'lucide-react';
 import { exportService } from '../../services/export.js';
 import { speechService } from '../../services/speech.js';
 
@@ -13,8 +13,7 @@ export const RecordingScreen: React.FC = () => {
     setAudioSource,
     stopRecording,
     cancelRecording,
-    showToast,
-    activeTranscriptionModel
+    showToast
   } = useMeeting();
 
   const [isPaused, setIsPaused] = useState(false);
@@ -79,16 +78,11 @@ export const RecordingScreen: React.FC = () => {
             <span>{isPaused ? 'Paused' : 'Recording'} &bull; {formatTimer(recordingTimer)}</span>
           </div>
 
-          {/* Engine Badge */}
-          <div className="hidden lg:flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f0fdf4] border border-[#bbf7d0] text-xs font-bold text-[#166534] shadow-xs">
-            <Cpu className="w-3.5 h-3.5 text-[#16a34a]" />
-            <span>Engine: {activeTranscriptionModel?.name || 'Parakeet TDT 1.1B Lightning (Real-Time)'}</span>
-          </div>
-
           {/* Audio Source Switcher Badge */}
           <div className="hidden sm:flex items-center bg-[#f3f4f6] rounded-lg p-0.5 border border-[#e5e7eb] text-xs">
             <button
               onClick={() => {
+                speechService.setAudioSource('mic');
                 setAudioSource('mic');
                 showToast('Audio Source: Microphone', 'Capturing local speech (You)', 'info');
               }}
@@ -100,8 +94,13 @@ export const RecordingScreen: React.FC = () => {
               <span>Microphone</span>
             </button>
             <button
-              onClick={() => {
+              onClick={async () => {
+                speechService.setAudioSource('system');
                 setAudioSource('system');
+                if (!hasSystemAudio) {
+                  const ok = await speechService.attachSystemAudioTab();
+                  if (ok) showToast('Chrome Tab Audio Connected!', 'Now capturing Google Meet sound.', 'success');
+                }
                 showToast('Audio Source: System Audio', 'Capturing meeting audio (Meeting Participant)', 'info');
               }}
               className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md font-bold transition cursor-pointer ${
@@ -112,8 +111,13 @@ export const RecordingScreen: React.FC = () => {
               <span>System Audio</span>
             </button>
             <button
-              onClick={() => {
+              onClick={async () => {
+                speechService.setAudioSource('mixed');
                 setAudioSource('mixed');
+                if (!hasSystemAudio) {
+                  const ok = await speechService.attachSystemAudioTab();
+                  if (ok) showToast('Chrome Tab Audio Connected!', 'Now capturing Google Meet sound.', 'success');
+                }
                 showToast('Audio Source: Mixed', 'Capturing You (Microphone) + Meeting Participant (System Audio)', 'info');
               }}
               className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md font-bold transition cursor-pointer ${
@@ -194,8 +198,8 @@ export const RecordingScreen: React.FC = () => {
               <span className="w-2.5 h-2.5 rounded-full bg-[#3b82f6] animate-ping" />
               <span>Listening in real-time with sub-50ms latency…</span>
             </div>
-            <p className="text-xs text-[#cbd5e1] mt-2">
-              Engine: <span className="font-semibold text-[#16a34a]">Parakeet Lightning Real-Time</span> &bull; Audio: <span className="font-semibold capitalize text-[#6b7280]">{audioSource}</span>
+            <p className="text-xs text-[#9aa2af] mt-2">
+              Ready to transcribe speech in real-time
             </p>
           </div>
         ) : (
@@ -249,7 +253,7 @@ export const RecordingScreen: React.FC = () => {
         {!isPaused && (liveTranscript.length > 0 || interimTranscript) && (
           <div className="flex items-center gap-2 text-xs text-[#9aa2af] pt-2 font-medium">
             <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse-dot" />
-            <span>Parakeet TDT streaming active…</span>
+            <span>Live transcription active…</span>
           </div>
         )}
       </div>

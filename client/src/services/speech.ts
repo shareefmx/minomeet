@@ -48,6 +48,17 @@ export class SpeechCaptureService {
     return this.hasSystemAudioTrack;
   }
 
+  public setAudioSource(sourceType: AudioSourceType) {
+    this.activeSourceType = sourceType;
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({
+        type: 'metadata',
+        sourceType: sourceType,
+        speaker: sourceType === 'system' ? 'Meeting Participant' : 'You (Microphone)'
+      }));
+    }
+  }
+
   /**
    * Starts live audio capture with default Mixed Mode (Microphone Voice + System/Meeting Audio)
    * and real-time sub-50ms WebSocket streaming to backend Parakeet/Whisper AI.
@@ -82,10 +93,14 @@ export class SpeechCaptureService {
             const text = s.text?.trim();
             if (text && !this.seenTexts.has(text) && text.length >= 3) {
               this.seenTexts.add(text);
+              const defaultSpeaker = this.activeSourceType === 'system'
+                ? 'Meeting Participant'
+                : (this.activeSourceType === 'mic' ? 'You (Microphone)' : (this.sysLevel > this.micLevel * 1.3 ? 'Meeting Participant' : 'You (Microphone)'));
+
               onTranscriptLine({
                 id: s.id || `line-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
                 time: s.time || '00:00',
-                speaker: s.speaker || (this.sysLevel > this.micLevel * 1.3 ? 'Meeting Participant' : 'You (Microphone)'),
+                speaker: s.speaker || defaultSpeaker,
                 text
               });
               if (onInterimText) onInterimText('');
@@ -111,23 +126,23 @@ export class SpeechCaptureService {
         await this.audioContext.resume();
       }
 
-      if (sourceType === 'mixed') {
-        // Microphone capture
-        try {
-          if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            this.micStream = await navigator.mediaDevices.getUserMedia({
-              audio: {
-                echoCancellation: true,
-                noiseSuppression: true,
-                autoGainControl: true
-              }
-            });
-          }
-        } catch (micErr) {
-          console.warn('Microphone permission notice:', micErr);
+      // Always obtain microphone if permitted
+      try {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          this.micStream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true
+            }
+          });
         }
+      } catch (micErr) {
+        console.warn('Microphone permission notice:', micErr);
+      }
 
-        // System Audio Capture (Chrome Tab)
+      // Obtain System Audio Capture (Chrome Tab) if in mixed or system mode
+      if (sourceType === 'mixed' || sourceType === 'system') {
         try {
           if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
             this.displayStream = await navigator.mediaDevices.getDisplayMedia({
@@ -154,118 +169,92 @@ export class SpeechCaptureService {
         } catch (sysErr) {
           console.warn('System audio prompt dismissed or not selected:', sysErr);
         }
+      }
 
-        // Mix Streams into AudioContext Destination & PCM Processor
-        if (this.audioContext) {
-          const destination = this.audioContext.createMediaStreamDestination();
-          const merger = this.audioContext.createChannelMerger(2);
+      // Mix Streams into AudioContext Destination & PCM Processor
+      if (this.audioContext) {
+        const destination = this.audioContext.createMediaStreamDestination();
+        const merger = this.audioContext.createChannelMerger(2);
 
-          if (this.micStream && this.micStream.getAudioTracks().length > 0) {
-            this.micSourceNode = this.audioContext.createMediaStreamSource(this.micStream);
-            this.micSourceNode.connect(destination);
-            this.micSourceNode.connect(merger, 0, 0);
-            streamObtained = true;
-          }
-
-          if (this.displayStream && this.displayStream.getAudioTracks().length > 0) {
-            this.sysSourceNode = this.audioContext.createMediaStreamSource(
-              new MediaStream(this.displayStream.getAudioTracks())
-            );
-            this.sysSourceNode.connect(destination);
-            this.sysSourceNode.connect(merger, 0, 1);
-            streamObtained = true;
-          }
-
-          if (streamObtained) {
-            this.audioStream = destination.stream;
-
-            let lastTelemetryTime = Date.now();
-
-            // ScriptProcessorNode for real-time 16kHz PCM streaming over WebSocket
-            this.processorNode = this.audioContext.createScriptProcessor(4096, 2, 1);
-            this.processorNode.onaudioprocess = (e) => {
-              const micInput = e.inputBuffer.getChannelData(0);
-              const sysInput = e.inputBuffer.numberOfChannels > 1 ? e.inputBuffer.getChannelData(1) : micInput;
-
-              // Calculate mic vs system audio energy for speaker classification
-              let micSum = 0;
-              let sysSum = 0;
-              for (let i = 0; i < micInput.length; i++) {
-                micSum += Math.abs(micInput[i]);
-                sysSum += Math.abs(sysInput[i]);
-              }
-              this.micLevel = micSum / micInput.length;
-              this.sysLevel = sysSum / sysInput.length;
-
-              // Send periodic telemetry every 250ms
-              const now = Date.now();
-              if (now - lastTelemetryTime > 250 && this.ws && this.ws.readyState === WebSocket.OPEN) {
-                lastTelemetryTime = now;
-                this.ws.send(JSON.stringify({
-                  type: 'telemetry',
-                  micLevel: this.micLevel,
-                  sysLevel: this.sysLevel
-                }));
-              }
-
-              // Mixed mono float array
-              const mixedMono = new Float32Array(micInput.length);
-              for (let i = 0; i < micInput.length; i++) {
-                mixedMono[i] = (micInput[i] + sysInput[i]) * 0.7;
-              }
-
-              // Convert Float32 to 16-bit PCM Linear Buffer
-              const pcm16 = new Int16Array(mixedMono.length);
-              for (let i = 0; i < mixedMono.length; i++) {
-                const s = Math.max(-1, Math.min(1, mixedMono[i]));
-                pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
-              }
-
-              // Stream binary PCM buffer over WebSocket
-              if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-                this.ws.send(pcm16.buffer);
-              }
-            };
-
-            merger.connect(this.processorNode);
-            this.processorNode.connect(this.audioContext.destination);
-          }
-        }
-      } else if (sourceType === 'system') {
-        if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
-          this.displayStream = await navigator.mediaDevices.getDisplayMedia({
-            video: { displaySurface: 'browser' },
-            audio: {
-              echoCancellation: false,
-              noiseSuppression: false,
-              autoGainControl: false
-            },
-            systemAudio: 'include',
-            selfBrowserSurface: 'include',
-            surfaceSwitching: 'include'
-          } as any);
-
-          const sysTracks = this.displayStream.getAudioTracks();
-          if (sysTracks.length > 0) {
-            this.audioStream = new MediaStream(sysTracks);
-            this.hasSystemAudioTrack = true;
-            streamObtained = true;
-          } else {
-            this.audioStream = this.displayStream;
-            streamObtained = true;
-          }
-        }
-      } else {
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-          this.micStream = await navigator.mediaDevices.getUserMedia({
-            audio: {
-              echoCancellation: true,
-              noiseSuppression: true,
-              autoGainControl: true
-            }
-          });
-          this.audioStream = this.micStream;
+        if (this.micStream && this.micStream.getAudioTracks().length > 0) {
+          this.micSourceNode = this.audioContext.createMediaStreamSource(this.micStream);
+          this.micSourceNode.connect(destination);
+          this.micSourceNode.connect(merger, 0, 0);
           streamObtained = true;
+        }
+
+        if (this.displayStream && this.displayStream.getAudioTracks().length > 0) {
+          this.sysSourceNode = this.audioContext.createMediaStreamSource(
+            new MediaStream(this.displayStream.getAudioTracks())
+          );
+          this.sysSourceNode.connect(destination);
+          this.sysSourceNode.connect(merger, 0, 1);
+          streamObtained = true;
+        }
+
+        if (streamObtained) {
+          this.audioStream = destination.stream;
+
+          let lastTelemetryTime = Date.now();
+
+          // ScriptProcessorNode for real-time 16kHz PCM streaming over WebSocket
+          this.processorNode = this.audioContext.createScriptProcessor(4096, 2, 1);
+          this.processorNode.onaudioprocess = (e) => {
+            const micInput = e.inputBuffer.getChannelData(0);
+            const sysInput = e.inputBuffer.numberOfChannels > 1 ? e.inputBuffer.getChannelData(1) : micInput;
+
+            const isMicOnly = this.activeSourceType === 'mic';
+            const isSysOnly = this.activeSourceType === 'system';
+
+            let micSum = 0;
+            let sysSum = 0;
+
+            // Dynamic mono audio routing depending on active source switcher
+            const mixedMono = new Float32Array(micInput.length);
+            for (let i = 0; i < micInput.length; i++) {
+              const m = isSysOnly ? 0 : micInput[i];
+              const s = isMicOnly ? 0 : sysInput[i];
+              micSum += Math.abs(m);
+              sysSum += Math.abs(s);
+
+              if (isMicOnly) {
+                mixedMono[i] = m;
+              } else if (isSysOnly) {
+                mixedMono[i] = s;
+              } else {
+                mixedMono[i] = (m + s) * 0.7;
+              }
+            }
+
+            this.micLevel = micSum / micInput.length;
+            this.sysLevel = sysSum / sysInput.length;
+
+            // Send periodic telemetry every 250ms
+            const now = Date.now();
+            if (now - lastTelemetryTime > 250 && this.ws && this.ws.readyState === WebSocket.OPEN) {
+              lastTelemetryTime = now;
+              this.ws.send(JSON.stringify({
+                type: 'telemetry',
+                micLevel: this.micLevel,
+                sysLevel: this.sysLevel
+              }));
+            }
+
+            // Convert Float32 to 16-bit PCM Linear Buffer
+            const pcm16 = new Int16Array(mixedMono.length);
+            for (let i = 0; i < mixedMono.length; i++) {
+              const s = Math.max(-1, Math.min(1, mixedMono[i]));
+              pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+            }
+
+            // Stream binary PCM buffer over WebSocket
+            if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+              this.ws.send(pcm16.buffer);
+            }
+          };
+
+          merger.connect(this.processorNode);
+          this.processorNode.connect(this.audioContext.destination);
         }
       }
 
