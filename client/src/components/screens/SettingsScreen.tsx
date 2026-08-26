@@ -738,7 +738,7 @@ export const SettingsScreen: React.FC = () => {
           <div className="space-y-5">
             {/* Desktop Notifications */}
             <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center justify-between gap-4">
                 <div>
                   <h4 className="text-sm font-bold text-[#111827] flex items-center gap-2">
                     <Bell className="w-4 h-4 text-[#2563eb]" />
@@ -748,41 +748,17 @@ export const SettingsScreen: React.FC = () => {
                     Receive native system notifications when recording starts, meetings are saved, or AI MOM summaries finish.
                   </p>
                 </div>
-                <div className="flex items-center gap-3">
-                  {settings.notifications && (
-                    <button
-                      onClick={() => {
-                        if (typeof window !== 'undefined' && 'Notification' in window) {
-                          Notification.requestPermission().then(p => {
-                            if (p === 'granted') {
-                              new Notification('Minomeet AI Notifications Active', {
-                                body: 'Status updates and summary alerts are enabled.',
-                                icon: '/favicon.ico'
-                              });
-                              showToast('Test Notification Sent', 'Check your system notification center', 'success');
-                            } else {
-                              showToast('Permission required', 'Please enable notifications in your browser settings.', 'warning');
-                            }
-                          });
-                        }
-                      }}
-                      className="px-3 py-1.5 rounded-lg border border-[#bfdbfe] bg-[#eff6ff] text-[11px] font-bold text-[#1e3a8a] hover:bg-[#dbeafe] transition cursor-pointer"
-                    >
-                      Send Test
-                    </button>
-                  )}
+                <div
+                  onClick={() => updateSettings({ notifications: !settings.notifications })}
+                  className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${
+                    settings.notifications ? 'bg-[#2563eb]' : 'bg-gray-300'
+                  }`}
+                >
                   <div
-                    onClick={() => updateSettings({ notifications: !settings.notifications })}
-                    className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${
-                      settings.notifications ? 'bg-[#2563eb]' : 'bg-gray-300'
+                    className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                      settings.notifications ? 'translate-x-5' : 'translate-x-0'
                     }`}
-                  >
-                    <div
-                      className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
-                        settings.notifications ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                    />
-                  </div>
+                  />
                 </div>
               </div>
             </div>
