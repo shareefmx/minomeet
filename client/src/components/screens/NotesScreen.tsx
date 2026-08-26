@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useMeeting } from '../../context/MeetingContext.js';
 import { exportService } from '../../services/export.js';
 import {
@@ -21,7 +21,8 @@ import {
   User,
   Edit3,
   Trash2,
-  MoreVertical
+  MoreVertical,
+  Loader2
 } from 'lucide-react';
 import { ActionItem } from '../../types/meeting.js';
 
@@ -45,6 +46,43 @@ export const NotesScreen: React.FC = () => {
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [optionsMenuOpen, setOptionsMenuOpen] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
+  const [summaryProgress, setSummaryProgress] = useState<number>(0);
+  const [summaryPhase, setSummaryPhase] = useState<string>('Reading meeting transcript…');
+  const summaryIntervalRef = useRef<any>(null);
+
+  // Dynamic 1-100% animation when generating summary
+  useEffect(() => {
+    if (isGeneratingSummary) {
+      setSummaryProgress(1);
+      setSummaryPhase('Reading and tokenizing transcript lines…');
+      let pct = 1;
+      summaryIntervalRef.current = setInterval(() => {
+        if (pct < 30) {
+          pct += Math.floor(Math.random() * 4) + 2;
+          setSummaryPhase('Analyzing topic shifts and discussion context…');
+        } else if (pct < 65) {
+          pct += Math.floor(Math.random() * 2) + 1;
+          setSummaryPhase('Extracting Key Decisions and strategic alignments…');
+        } else if (pct < 88) {
+          pct += 1;
+          setSummaryPhase('Formatting Action Items table with owners and due dates…');
+        } else if (pct < 96) {
+          if (Math.random() > 0.4) pct += 1;
+          setSummaryPhase('Synthesizing Executive Summary and Next Steps…');
+        }
+        if (pct > 96) pct = 96;
+        setSummaryProgress(pct);
+      }, 70);
+    } else {
+      if (summaryIntervalRef.current) clearInterval(summaryIntervalRef.current);
+      setSummaryProgress(100);
+      setSummaryPhase('MOM Synthesis Complete!');
+    }
+
+    return () => {
+      if (summaryIntervalRef.current) clearInterval(summaryIntervalRef.current);
+    };
+  }, [isGeneratingSummary]);
 
   if (!activeMeeting) {
     return (
@@ -226,14 +264,56 @@ export const NotesScreen: React.FC = () => {
           {!summary ? (
             <div className="flex-1 flex flex-col">
               <div className="px-5 py-3 border-b border-[#e5e7eb] font-extrabold text-[13.5px] text-[#111827]">
-                Summary
+                Minutes of Meeting Summary
               </div>
               <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
                 {isGeneratingSummary ? (
-                  <div className="flex flex-col items-center space-y-4">
-                    <div className="w-9 h-9 rounded-full border-3 border-[#e5e7eb] border-t-[#2563eb] animate-spin" />
-                    <p className="text-sm font-semibold text-[#4b5563]">Generating your MOM with on-device AI…</p>
-                    <p className="text-xs text-[#9aa2af]">Extracting key decisions, tasks, and discussion highlights</p>
+                  <div className="flex flex-col items-center space-y-5 max-w-sm w-full">
+                    {/* Equalizer animation */}
+                    <div className="flex items-center justify-center gap-1.5 h-10">
+                      <span className="w-1 bg-[#2563eb] rounded-full animate-eq-1 shadow-xs" />
+                      <span className="w-1 bg-[#4f46e5] rounded-full animate-eq-2 shadow-xs" />
+                      <span className="w-1 bg-[#7c3aed] rounded-full animate-eq-3 shadow-xs" />
+                      <span className="w-1 bg-[#2563eb] rounded-full animate-eq-4 shadow-xs" />
+                      <span className="w-1 bg-[#3b82f6] rounded-full animate-eq-5 shadow-xs" />
+                      <span className="w-1 bg-[#7c3aed] rounded-full animate-eq-6 shadow-xs" />
+                    </div>
+
+                    {/* Progress percentage */}
+                    <div className="space-y-1">
+                      <div className="flex items-baseline justify-center gap-1">
+                        <span className="text-4xl font-black text-[#111827] tabular-nums font-sans">
+                          {summaryProgress}
+                        </span>
+                        <span className="text-xl font-extrabold text-[#2563eb]">%</span>
+                      </div>
+                      <p className="text-xs font-bold text-[#4b5563] flex items-center justify-center gap-1.5">
+                        <Loader2 className="w-3.5 h-3.5 text-[#2563eb] animate-spin" />
+                        <span>{summaryPhase}</span>
+                      </p>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="w-full space-y-1.5">
+                      <div className="w-full h-2.5 bg-[#e2e8f0] rounded-full overflow-hidden p-0.5 relative">
+                        <div
+                          className="h-full bg-gradient-to-r from-[#2563eb] via-[#4f46e5] to-[#7c3aed] rounded-full transition-all duration-150 ease-out relative overflow-hidden"
+                          style={{ width: `${summaryProgress}%` }}
+                        >
+                          <div className="absolute inset-0 bg-white/30 animate-shimmer w-1/2" />
+                        </div>
+                      </div>
+                      <div className="flex justify-between text-[10px] font-mono text-[#9aa2af]">
+                        <span>Transcript</span>
+                        <span>Key Decisions</span>
+                        <span>Action Items</span>
+                        <span>MOM</span>
+                      </div>
+                    </div>
+
+                    <p className="text-[11px] text-[#9aa2af]">
+                      On-Device Neural Synthesis &bull; Zero Cloud Upload
+                    </p>
                   </div>
                 ) : (
                   <>
@@ -242,7 +322,7 @@ export const NotesScreen: React.FC = () => {
                     </div>
                     <h2 className="text-lg font-bold text-[#111827] mb-2">No Summary Generated Yet</h2>
                     <p className="text-xs text-[#6b7280] max-w-sm mb-6 leading-relaxed">
-                      Generate an on-device AI summary of this transcript to get key points, decisions and action items.
+                      Generate an on-device AI summary of this transcript to extract key decisions, action items and structured notes.
                     </p>
                     <button
                       onClick={() => generateSummaryForActive(activeTemplate, activeLang)}
@@ -451,6 +531,27 @@ export const NotesScreen: React.FC = () => {
                   )}
                 </div>
               </div>
+
+              {/* Regenerating 1% - 100% Progress Banner */}
+              {isGeneratingSummary && (
+                <div className="bg-[#eff6ff] border-b border-[#bfdbfe] px-6 py-3 space-y-2 animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="flex items-center justify-between text-xs font-bold text-[#1e3a8a]">
+                    <span className="flex items-center gap-1.5">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-[#2563eb]" />
+                      <span>{summaryPhase}</span>
+                    </span>
+                    <span className="font-mono text-[#2563eb] text-sm tabular-nums font-black">{summaryProgress}%</span>
+                  </div>
+                  <div className="w-full h-2 bg-[#dbeafe] rounded-full overflow-hidden relative">
+                    <div
+                      className="h-full bg-gradient-to-r from-[#2563eb] via-[#4f46e5] to-[#7c3aed] rounded-full transition-all duration-150 relative overflow-hidden"
+                      style={{ width: `${summaryProgress}%` }}
+                    >
+                      <div className="absolute inset-0 bg-white/30 animate-shimmer w-1/2" />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Editable Document Body */}
               <div className="flex-1 overflow-y-auto p-8 space-y-6">

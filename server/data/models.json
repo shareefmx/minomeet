@@ -26,8 +26,10 @@
       "ramRequired": "~4 GB VRAM / 6 GB RAM",
       "speedRating": "2x Real-Time",
       "accuracyScore": 5,
-      "status": "not_downloaded",
-      "downloadProgress": 0
+      "status": "downloaded",
+      "downloadProgress": 100,
+      "localPath": "/Users/muhammedshraeef/Documents/GitHub/minomeet/server/models/whisper-large-v3.pt",
+      "downloadedAt": "2026-08-26T07:13:23.812Z"
     },
     {
       "id": "whisper-large-v3-compressed",
@@ -52,8 +54,10 @@
       "ramRequired": "~2 GB RAM",
       "speedRating": "4x Real-Time",
       "accuracyScore": 4,
-      "status": "not_downloaded",
-      "downloadProgress": 0
+      "status": "downloaded",
+      "downloadProgress": 100,
+      "localPath": "/Users/muhammedshraeef/Documents/GitHub/minomeet/server/models/whisper-medium.pt",
+      "downloadedAt": "2026-08-26T07:13:43.921Z"
     },
     {
       "id": "whisper-small",
@@ -124,9 +128,11 @@
       "ramRequired": "~800 MB RAM",
       "speedRating": "Real-Time (<30ms)",
       "accuracyScore": 4,
-      "status": "not_downloaded",
-      "downloadProgress": 0
+      "status": "downloaded",
+      "downloadProgress": 100,
+      "localPath": "/Users/muhammedshraeef/Documents/GitHub/minomeet/server/models/parakeet-compact.pt",
+      "downloadedAt": "2026-08-26T07:13:06.898Z"
     }
   ],
-  "activeModelId": "whisper-large-v3-turbo"
+  "activeModelId": "parakeet-tdt-lightning"
 }
