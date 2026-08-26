@@ -223,18 +223,18 @@ export const NotesScreen: React.FC = () => {
         {/* ================= LEFT PANE: TRANSCRIPT ================= */}
         <div className="flex-1 flex flex-col min-w-0 bg-[#fafafa]/50">
           {/* Transcript Toolbar */}
-          <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-[#e5e7eb] bg-white min-h-[52px] flex-none">
+          <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-[#e5e7eb] bg-white h-[53px] flex-none">
             <div className="flex items-center gap-2">
               <button
                 onClick={handleCopyTranscript}
-                className="inline-flex items-center gap-1.5 px-3 h-8.5 rounded-xl border border-[#e2e8f0] bg-white text-xs font-semibold text-[#374151] hover:bg-[#f8fafc] hover:border-[#cbd5e1] shadow-2xs transition cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-[#e2e8f0] bg-white text-xs font-semibold text-[#374151] hover:bg-[#f8fafc] hover:border-[#cbd5e1] shadow-2xs transition cursor-pointer"
               >
                 <Copy className="w-3.5 h-3.5 text-[#64748b]" />
                 <span>Copy</span>
               </button>
               <button
                 onClick={() => showToast('Recordings folder', '/Users/you/Minomeet/recordings', 'info')}
-                className="inline-flex items-center gap-1.5 px-3 h-8.5 rounded-xl border border-[#e2e8f0] bg-white text-xs font-semibold text-[#374151] hover:bg-[#f8fafc] hover:border-[#cbd5e1] shadow-2xs transition cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-[#e2e8f0] bg-white text-xs font-semibold text-[#374151] hover:bg-[#f8fafc] hover:border-[#cbd5e1] shadow-2xs transition cursor-pointer"
               >
                 <FolderOpen className="w-3.5 h-3.5 text-[#64748b]" />
                 <span>Recording</span>
@@ -242,7 +242,7 @@ export const NotesScreen: React.FC = () => {
               <button
                 onClick={handleEnhanceAudio}
                 disabled={isEnhancing}
-                className={`inline-flex items-center gap-1.5 px-3 h-8.5 rounded-xl border text-xs font-semibold shadow-2xs transition cursor-pointer ${
+                className={`inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border text-xs font-semibold shadow-2xs transition cursor-pointer ${
                   isEnhancing
                     ? 'bg-blue-50 border-blue-200 text-blue-600 animate-pulse'
                     : 'bg-white border-[#e2e8f0] text-[#374151] hover:bg-[#f8fafc] hover:border-[#cbd5e1]'
@@ -292,40 +292,40 @@ export const NotesScreen: React.FC = () => {
 
         {/* ================= RIGHT PANE: MOM DOCUMENT ================= */}
         <div className="flex-1 flex flex-col min-w-0 bg-white">
-          {/* Universal MOM Top Toolbar */}
+          {/* 2-Row MOM Top Toolbar */}
           <div
             ref={toolbarRef}
-            className="flex items-center justify-between gap-2 px-3.5 py-2 border-b border-[#e5e7eb] bg-white min-h-[52px] flex-none z-20"
+            className="p-3 border-b border-[#e5e7eb] bg-white flex flex-col gap-2.5 flex-none z-20 shadow-2xs"
           >
-            {/* Left Controls: Synthesis, Template, Model & Language */}
-            <div className="flex items-center gap-1.5 min-w-0 flex-nowrap overflow-x-auto no-scrollbar">
+            {/* ROW 1: AI Generation & Model Settings */}
+            <div className="grid grid-cols-4 gap-2.5 w-full">
               {/* 1. Generate / Regenerate MOM Button */}
               <button
                 onClick={() => generateSummaryForActive(activeTemplate, activeLang)}
                 disabled={isGeneratingSummary}
-                className={`inline-flex items-center gap-1.5 px-3 h-8.5 rounded-xl text-xs font-bold transition shadow-2xs cursor-pointer flex-none active:scale-95 disabled:opacity-75 ${
+                className={`w-full h-9 px-3 rounded-xl text-xs font-bold inline-flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-[0.98] disabled:opacity-75 ${
                   isGeneratingSummary
                     ? 'bg-blue-100 text-blue-700 border border-blue-200'
                     : summary
-                    ? 'bg-[#eff6ff] hover:bg-[#dbeafe] text-[#1d4ed8] border border-[#bfdbfe]'
+                    ? 'bg-[#eff6ff] hover:bg-[#dbeafe] text-[#1d4ed8] border border-[#bfdbfe] shadow-2xs'
                     : 'bg-[#2563eb] hover:bg-[#1d4ed8] text-white shadow-xs'
                 }`}
                 title={summary ? 'Regenerate AI Minutes of Meeting' : 'Generate AI Minutes of Meeting'}
               >
                 {isGeneratingSummary ? (
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin flex-none" />
                 ) : summary ? (
-                  <RefreshCw className="w-3.5 h-3.5" />
+                  <RefreshCw className="w-3.5 h-3.5 flex-none" />
                 ) : (
-                  <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
+                  <Sparkles className="w-3.5 h-3.5 text-yellow-300 flex-none" />
                 )}
-                <span className="whitespace-nowrap">
-                  {isGeneratingSummary ? 'Generating…' : summary ? 'Regenerate' : 'Generate MOM'}
+                <span className="truncate">
+                  {isGeneratingSummary ? 'Generating…' : summary ? 'Regenerate MOM' : 'Generate MOM'}
                 </span>
               </button>
 
               {/* 2. MOM Template Selector */}
-              <div className="relative flex-none">
+              <div className="relative w-full">
                 <button
                   onClick={() => {
                     setTemplateMenuOpen(!templateMenuOpen);
@@ -333,15 +333,17 @@ export const NotesScreen: React.FC = () => {
                     setExportMenuOpen(false);
                     setOptionsMenuOpen(false);
                   }}
-                  className="inline-flex items-center gap-1.5 px-2.5 h-8.5 rounded-xl border border-[#e2e8f0] bg-white text-xs font-semibold text-[#374151] hover:bg-[#f8fafc] hover:border-[#cbd5e1] shadow-2xs transition cursor-pointer max-w-[175px]"
-                  title={`Current Template: ${activeTemplate}`}
+                  className="w-full h-9 px-2.5 rounded-xl border border-[#e2e8f0] bg-white text-xs font-semibold text-[#374151] hover:bg-[#f8fafc] hover:border-[#cbd5e1] shadow-2xs transition cursor-pointer inline-flex items-center justify-between gap-1.5"
+                  title={`Active Template: ${activeTemplate}`}
                 >
-                  <FileText className="w-3.5 h-3.5 text-[#2563eb] flex-none" />
-                  <span className="truncate">{activeTemplate}</span>
-                  <ChevronDown className="w-3 h-3 text-[#94a3b8] flex-none" />
+                  <div className="inline-flex items-center gap-1.5 min-w-0 truncate">
+                    <FileText className="w-3.5 h-3.5 text-[#2563eb] flex-none" />
+                    <span className="truncate">{activeTemplate}</span>
+                  </div>
+                  <ChevronDown className="w-3.5 h-3.5 text-[#94a3b8] flex-none" />
                 </button>
                 {templateMenuOpen && (
-                  <div className="absolute top-full mt-1.5 left-0 w-72 bg-white border border-[#e2e8f0] rounded-2xl shadow-xl py-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-100 max-h-80 overflow-y-auto">
+                  <div className="absolute top-full mt-1.5 left-0 w-80 bg-white border border-[#e2e8f0] rounded-2xl shadow-xl py-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-100 max-h-80 overflow-y-auto">
                     <div className="px-3 py-1 text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider">MOM Templates</div>
                     {templateList.map((tpl) => {
                       const isSelected = activeTemplate === tpl.name;
@@ -368,15 +370,15 @@ export const NotesScreen: React.FC = () => {
               {/* 3. AI Model Selector */}
               <button
                 onClick={() => openModal('model')}
-                className="inline-flex items-center gap-1.5 px-2.5 h-8.5 rounded-xl border border-[#e2e8f0] bg-white text-xs font-semibold text-[#374151] hover:bg-[#f8fafc] hover:border-[#cbd5e1] shadow-2xs transition cursor-pointer flex-none"
+                className="w-full h-9 px-2.5 rounded-xl border border-[#e2e8f0] bg-white text-xs font-semibold text-[#374151] hover:bg-[#f8fafc] hover:border-[#cbd5e1] shadow-2xs transition cursor-pointer inline-flex items-center justify-center gap-1.5 truncate"
                 title={`AI Inference Model: ${settings?.selectedModel || 'Nimbus 4B'}. Click to configure.`}
               >
-                <Cpu className="w-3.5 h-3.5 text-[#7c3aed]" />
-                <span className="whitespace-nowrap max-w-[100px] truncate">{settings?.selectedModel ? settings.selectedModel.split(' ')[0] : 'AI Model'}</span>
+                <Cpu className="w-3.5 h-3.5 text-[#7c3aed] flex-none" />
+                <span className="truncate">{settings?.selectedModel ? `Model: ${settings.selectedModel.split(' ')[0]}` : 'AI Model'}</span>
               </button>
 
               {/* 4. Language Selector */}
-              <div className="relative flex-none">
+              <div className="relative w-full">
                 <button
                   onClick={() => {
                     setLangMenuOpen(!langMenuOpen);
@@ -384,15 +386,17 @@ export const NotesScreen: React.FC = () => {
                     setExportMenuOpen(false);
                     setOptionsMenuOpen(false);
                   }}
-                  className="inline-flex items-center gap-1.5 px-2.5 h-8.5 rounded-xl border border-[#e2e8f0] bg-white text-xs font-semibold text-[#374151] hover:bg-[#f8fafc] hover:border-[#cbd5e1] shadow-2xs transition cursor-pointer"
+                  className="w-full h-9 px-2.5 rounded-xl border border-[#e2e8f0] bg-white text-xs font-semibold text-[#374151] hover:bg-[#f8fafc] hover:border-[#cbd5e1] shadow-2xs transition cursor-pointer inline-flex items-center justify-between gap-1.5"
                   title="Transcription and MOM language"
                 >
-                  <Globe className="w-3.5 h-3.5 text-[#15803d]" />
-                  <span>{activeLang}</span>
-                  <ChevronDown className="w-3 h-3 text-[#94a3b8]" />
+                  <div className="inline-flex items-center gap-1.5 min-w-0 truncate">
+                    <Globe className="w-3.5 h-3.5 text-[#15803d] flex-none" />
+                    <span className="truncate">{activeLang}</span>
+                  </div>
+                  <ChevronDown className="w-3.5 h-3.5 text-[#94a3b8] flex-none" />
                 </button>
                 {langMenuOpen && (
-                  <div className="absolute top-full mt-1.5 left-0 w-44 bg-white border border-[#e2e8f0] rounded-xl shadow-xl py-1 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
+                  <div className="absolute top-full mt-1.5 right-0 w-44 bg-white border border-[#e2e8f0] rounded-xl shadow-xl py-1 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
                     {languages.map((lang) => (
                       <div
                         key={lang}
@@ -410,20 +414,20 @@ export const NotesScreen: React.FC = () => {
               </div>
             </div>
 
-            {/* Right Controls: Email Draft, Export, Save & Menu */}
-            <div className="flex items-center gap-1.5 flex-none pl-2">
+            {/* ROW 2: Document Actions, Export & Save */}
+            <div className="grid grid-cols-4 gap-2.5 w-full">
               {/* 5. Follow-up Email Draft */}
               <button
                 onClick={() => openModal('email')}
-                className="inline-flex items-center gap-1.5 px-2.5 h-8.5 rounded-xl border border-[#e9d5ff] bg-[#faf5ff] text-[#7e22ce] text-xs font-bold hover:bg-[#f3e8ff] shadow-2xs transition cursor-pointer flex-none"
+                className="w-full h-9 px-2.5 rounded-xl border border-[#e9d5ff] bg-[#faf5ff] text-[#7e22ce] text-xs font-bold hover:bg-[#f3e8ff] shadow-2xs transition cursor-pointer inline-flex items-center justify-center gap-1.5 truncate"
                 title="Generate follow-up email draft"
               >
-                <Mail className="w-3.5 h-3.5" />
-                <span className="whitespace-nowrap">Email Draft</span>
+                <Mail className="w-3.5 h-3.5 flex-none" />
+                <span className="truncate">Email Draft</span>
               </button>
 
               {/* 6. Export Menu */}
-              <div className="relative flex-none">
+              <div className="relative w-full">
                 <button
                   onClick={() => {
                     setExportMenuOpen(!exportMenuOpen);
@@ -431,15 +435,17 @@ export const NotesScreen: React.FC = () => {
                     setTemplateMenuOpen(false);
                     setOptionsMenuOpen(false);
                   }}
-                  className="inline-flex items-center gap-1.5 px-2.5 h-8.5 rounded-xl border border-[#e2e8f0] bg-white text-xs font-bold text-[#374151] hover:bg-[#f8fafc] hover:border-[#cbd5e1] shadow-2xs transition cursor-pointer"
+                  className="w-full h-9 px-2.5 rounded-xl border border-[#e2e8f0] bg-white text-xs font-bold text-[#374151] hover:bg-[#f8fafc] hover:border-[#cbd5e1] shadow-2xs transition cursor-pointer inline-flex items-center justify-between gap-1.5"
                   title="Export document"
                 >
-                  <Download className="w-3.5 h-3.5 text-[#64748b]" />
-                  <span>Export</span>
-                  <ChevronDown className="w-3 h-3 text-[#94a3b8]" />
+                  <div className="inline-flex items-center gap-1.5 min-w-0 truncate">
+                    <Download className="w-3.5 h-3.5 text-[#64748b] flex-none" />
+                    <span className="truncate">Export MOM</span>
+                  </div>
+                  <ChevronDown className="w-3.5 h-3.5 text-[#94a3b8] flex-none" />
                 </button>
                 {exportMenuOpen && (
-                  <div className="absolute top-full mt-1.5 right-0 w-56 bg-white border border-[#e2e8f0] rounded-2xl shadow-xl py-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
+                  <div className="absolute top-full mt-1.5 left-0 w-60 bg-white border border-[#e2e8f0] rounded-2xl shadow-xl py-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
                     <div
                       onClick={() => {
                         exportService.downloadFile(exportService.toMarkdown(activeMeeting), `${activeMeeting.title}.md`, 'text/markdown');
@@ -478,15 +484,15 @@ export const NotesScreen: React.FC = () => {
               {/* 7. Save Button */}
               <button
                 onClick={() => showToast('Saved', 'Your changes have been saved.', 'success')}
-                className="inline-flex items-center gap-1.5 px-3 h-8.5 rounded-xl bg-[#0f172a] text-white text-xs font-bold hover:bg-[#1e293b] shadow-2xs transition cursor-pointer flex-none"
+                className="w-full h-9 px-3 rounded-xl bg-[#0f172a] text-white text-xs font-bold hover:bg-[#1e293b] shadow-2xs transition cursor-pointer inline-flex items-center justify-center gap-1.5 truncate"
                 title="Save meeting document"
               >
-                <Save className="w-3.5 h-3.5" />
-                <span>Save</span>
+                <Save className="w-3.5 h-3.5 flex-none" />
+                <span className="truncate">Save Document</span>
               </button>
 
               {/* 8. More Options Dropdown */}
-              <div className="relative flex-none">
+              <div className="relative w-full">
                 <button
                   onClick={() => {
                     setOptionsMenuOpen(!optionsMenuOpen);
@@ -494,13 +500,17 @@ export const NotesScreen: React.FC = () => {
                     setTemplateMenuOpen(false);
                     setExportMenuOpen(false);
                   }}
-                  className="w-8.5 h-8.5 inline-flex items-center justify-center rounded-xl border border-[#e2e8f0] bg-white text-[#64748b] hover:text-[#0f172a] hover:bg-[#f8fafc] hover:border-[#cbd5e1] shadow-2xs transition cursor-pointer"
+                  className="w-full h-9 px-2.5 rounded-xl border border-[#e2e8f0] bg-white text-xs font-semibold text-[#64748b] hover:text-[#0f172a] hover:bg-[#f8fafc] hover:border-[#cbd5e1] shadow-2xs transition cursor-pointer inline-flex items-center justify-between gap-1.5"
                   title="Meeting options"
                 >
-                  <MoreVertical className="w-3.5 h-3.5" />
+                  <div className="inline-flex items-center gap-1.5 min-w-0 truncate">
+                    <MoreVertical className="w-3.5 h-3.5 flex-none" />
+                    <span className="truncate">More Actions</span>
+                  </div>
+                  <ChevronDown className="w-3.5 h-3.5 text-[#94a3b8] flex-none" />
                 </button>
                 {optionsMenuOpen && (
-                  <div className="absolute top-full mt-1.5 right-0 w-44 bg-white border border-[#e2e8f0] rounded-xl shadow-xl py-1 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
+                  <div className="absolute top-full mt-1.5 right-0 w-48 bg-white border border-[#e2e8f0] rounded-xl shadow-xl py-1 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
                     <button
                       onClick={() => {
                         setOptionsMenuOpen(false);
