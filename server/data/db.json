@@ -4,7 +4,7 @@
       "id": "meeting-059eae13",
       "title": "Meeting 2026-08-26_01-59",
       "createdAt": "2026-08-26T16:19:16.337Z",
-      "updatedAt": "2026-08-26T16:56:13.876Z",
+      "updatedAt": "2026-08-26T17:06:08.353Z",
       "duration": "01:59",
       "transcript": [
         {
@@ -228,13 +228,13 @@
           "You (Microphone) (Participant)",
           "Meeting Participant (Participant)"
         ],
-        "summary": "The meeting focused on key project deliverables and strategic alignments. Topics discussed included my name is mom sharif.. The team reviewed current status and established concrete next steps.",
+        "summary": "Daily Standup Summary: The engineering team synced on active work streams and sprint deliverables. Key updates centered on my name is mom sharif.. Active blockers were triaged and peer pairing sessions aligned.",
         "keyDecisions": [
           "Agreed on milestones outlined in My name is Mom Sharif...."
         ],
         "actionItems": [
           {
-            "id": "9a6f09e8-9ed7-4ce3-86cc-b4c97ce43140",
+            "id": "9355e449-8436-40ee-9272-170f89ed8be1",
             "owner": "Meeting Participant",
             "task": "Can I please send this?",
             "due": "By Friday",
@@ -251,10 +251,10 @@
         "nextSteps": [
           "Meeting Participant to finish: Can I please send this? (By Friday)"
         ],
-        "template": "Standard Meeting Notes",
+        "template": "Engineering & Daily Standup",
         "language": "Auto",
         "modelUsed": "Nimbus 1B (Fast)",
-        "generatedAt": "2026-08-26T16:56:06.109Z"
+        "generatedAt": "2026-08-26T17:06:08.326Z"
       }
     },
     {
@@ -1807,7 +1807,7 @@
       "id": "meeting-9cf3bc76",
       "title": "product marketing meeting weekly 2021 06 28 2s5PbELs",
       "createdAt": "2026-08-26T15:47:08.860Z",
-      "updatedAt": "2026-08-26T15:47:08.860Z",
+      "updatedAt": "2026-08-26T17:10:42.923Z",
       "duration": "05:59",
       "transcript": [
         {
@@ -2145,18 +2145,15 @@
         "title": "product marketing meeting weekly 2021 06 28 2s5PbELs",
         "date": "Aug 26, 2026",
         "attendees": [
-          "Facilitator (Participant)",
-          "Lead Architect (Participant)",
-          "Product Lead (Participant)",
           "Team Member (Participant)"
         ],
-        "summary": "The meeting focused on key project deliverables and strategic alignments. Topics discussed included i can record and we don't have a ton of items to get to and i might be able to do one that. The team reviewed current status and established concrete next steps.",
+        "summary": "Executive Meeting Summary: The meeting focused on key project deliverables and strategic alignments. Topics discussed included i can record and we don't have a ton of items to get to and i might be able to do one that. The team reviewed current status and established concrete next steps.",
         "keyDecisions": [
           "Agreed on milestones outlined in I can record and we don't have a ton of items to get to and ..."
         ],
         "actionItems": [
           {
-            "id": "dbc10c4a-9cf4-4dbe-b93e-e31836a0abec",
+            "id": "3ba6702f-949c-4bba-991c-7aa8c2c66afb",
             "owner": "Team Member",
             "task": "Let's see, need support from GTM teams. So I guess the ask would be",
             "due": "By Friday",
@@ -2164,7 +2161,7 @@
             "completed": false
           },
           {
-            "id": "d217e5eb-2caf-404f-ae2e-802116a42683",
+            "id": "29076180-5c30-423e-8964-5a713b2d0fb8",
             "owner": "Team Member",
             "task": "Product announcements. So I appreciate Brian for adding this. I, I probably should have added it,",
             "due": "By Friday",
@@ -2173,19 +2170,19 @@
           }
         ],
         "discussionHighlights": [
-          "Facilitator noted: I can record and we don't have a ton of items to get to and I might be able to do one that",
-          "Lead Architect noted: might be fun if we have a little bit of time. So corporate events, they, I think I saw a little,",
-          "Product Lead noted: I put this in Slack and I saw a little bit of kind of noise around it, which was good.",
+          "Team Member noted: I can record and we don't have a ton of items to get to and I might be able to do one that",
+          "Team Member noted: might be fun if we have a little bit of time. So corporate events, they, I think I saw a little,",
+          "Team Member noted: I put this in Slack and I saw a little bit of kind of noise around it, which was good.",
           "Team Member noted: You know, the, the nutshell here is as we've kind of restructured and tried different things,"
         ],
         "nextSteps": [
-          "Facilitator to finish: Let's see, need support from GTM teams. So I guess the ask would be (By Friday)",
-          "Facilitator to finish: Product announcements. So I appreciate Brian for adding this. I, I probably should have added it, (By Friday)"
+          "Team Member to finish: Let's see, need support from GTM teams. So I guess the ask would be (By Friday)",
+          "Team Member to finish: Product announcements. So I appreciate Brian for adding this. I, I probably should have added it, (By Friday)"
         ],
-        "template": "Standard Meeting Notes",
+        "template": "Standard Meeting Notes & MOM",
         "language": "English",
         "modelUsed": "Nimbus 4B (High Quality)",
-        "generatedAt": "2026-08-26T15:47:08.860Z"
+        "generatedAt": "2026-08-26T17:10:42.899Z"
       },
       "audioPath": "/Users/muhammedshraeef/Documents/GitHub/minomeet/server/uploads/1787759199607-857700694.mp3",
       "tags": [
