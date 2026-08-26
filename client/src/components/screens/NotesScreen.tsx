@@ -32,7 +32,8 @@ import {
   Zap,
   Layers,
   Flag,
-  Code
+  Code,
+  X
 } from 'lucide-react';
 import { ActionItem } from '../../types/meeting.js';
 
@@ -217,6 +218,26 @@ export const NotesScreen: React.FC = () => {
     if (!summary) return;
     const updated = [...summary.discussionHighlights, 'Topic discussion highlight.'];
     updateActiveSummary({ discussionHighlights: updated });
+  };
+
+  const handleAddAttendee = () => {
+    if (!summary) return;
+    const attendees = summary.attendees || [];
+    const updated = [...attendees, `Team Member ${attendees.length + 1}`];
+    updateActiveSummary({ attendees: updated });
+  };
+
+  const handleUpdateAttendee = (idx: number, name: string) => {
+    if (!summary) return;
+    const updated = [...(summary.attendees || [])];
+    updated[idx] = name;
+    updateActiveSummary({ attendees: updated });
+  };
+
+  const handleDeleteAttendee = (idx: number) => {
+    if (!summary) return;
+    const updated = (summary.attendees || []).filter((_, i) => i !== idx);
+    updateActiveSummary({ attendees: updated });
   };
 
   const handleLanguageSelect = async (lang: string) => {
@@ -716,36 +737,59 @@ export const NotesScreen: React.FC = () => {
                         <span className="flex items-center gap-1">
                           <Clock className="w-3 h-3 text-[#94a3b8]" /> {summary.date} &bull; {activeMeeting.duration}
                         </span>
-                        <span>&bull;</span>
-                        <span>On-Device Neural Synthesis ({summary.modelUsed})</span>
                       </div>
                     </div>
 
-                    {/* 2. Attendees */}
-                    {summary.attendees && summary.attendees.length > 0 && (
-                      <div className="flex items-center gap-2 flex-wrap text-xs text-[#4b5563]">
+                    {/* 2. Participants Section */}
+                    <div className="flex items-center gap-2 flex-wrap text-xs text-[#4b5563]">
+                      <div className="flex items-center gap-1.5 font-bold text-[#111827]">
                         <User className="w-3.5 h-3.5 text-[#6b7280]" />
-                        <span className="font-bold text-[#111827]">Participants:</span>
-                        {summary.attendees.map((att, idx) => (
+                        <span>Participants:</span>
+                      </div>
+
+                      {(summary.attendees || []).map((att, idx) => (
+                        <span
+                          key={idx}
+                          className={`inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-0.5 rounded-full text-xs font-medium border group transition ${
+                            templateStyle === 'executive'
+                              ? 'bg-indigo-50 text-indigo-900 border-indigo-200'
+                              : templateStyle === 'standup'
+                              ? 'bg-emerald-50 text-emerald-900 border-emerald-200 font-mono text-[11px]'
+                              : templateStyle === 'sales'
+                              ? 'bg-amber-50 text-amber-900 border-amber-200'
+                              : templateStyle === 'retrospective'
+                              ? 'bg-purple-50 text-purple-900 border-purple-200'
+                              : 'bg-[#f3f4f6] text-[#374151] border-[#e5e7eb]'
+                          }`}
+                        >
                           <span
-                            key={idx}
-                            className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                              templateStyle === 'executive'
-                                ? 'bg-indigo-50 text-indigo-900 border-indigo-200'
-                                : templateStyle === 'standup'
-                                ? 'bg-emerald-50 text-emerald-900 border-emerald-200 font-mono text-[11px]'
-                                : templateStyle === 'sales'
-                                ? 'bg-amber-50 text-amber-900 border-amber-200'
-                                : templateStyle === 'retrospective'
-                                ? 'bg-purple-50 text-purple-900 border-purple-200'
-                                : 'bg-[#f3f4f6] text-[#374151] border-[#e5e7eb]'
-                            }`}
+                            contentEditable
+                            suppressContentEditableWarning
+                            onBlur={(e) => handleUpdateAttendee(idx, e.currentTarget.textContent || '')}
+                            className="hover:bg-yellow-50/70 px-0.5 rounded transition cursor-text outline-none"
                           >
                             {att}
                           </span>
-                        ))}
-                      </div>
-                    )}
+                          <button
+                            onClick={() => handleDeleteAttendee(idx)}
+                            className="text-gray-400 hover:text-red-500 rounded-full p-0.5 transition cursor-pointer"
+                            title={`Remove ${att}`}
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))}
+
+                      {/* + Add Person Button */}
+                      <button
+                        onClick={handleAddAttendee}
+                        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border border-dashed border-gray-300 hover:border-blue-400 bg-white hover:bg-blue-50 text-[11px] font-bold text-gray-500 hover:text-blue-600 transition cursor-pointer"
+                        title="Add participant"
+                      >
+                        <Plus className="w-3 h-3" />
+                        <span>Add Person</span>
+                      </button>
+                    </div>
 
                     {/* 3. Summary Block - Adapts to Template */}
                     <div>

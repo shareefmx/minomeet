@@ -1807,7 +1807,7 @@
       "id": "meeting-9cf3bc76",
       "title": "product marketing meeting weekly 2021 06 28 2s5PbELs",
       "createdAt": "2026-08-26T15:47:08.860Z",
-      "updatedAt": "2026-08-26T17:10:42.923Z",
+      "updatedAt": "2026-08-26T17:12:55.590Z",
       "duration": "05:59",
       "transcript": [
         {
@@ -2153,7 +2153,7 @@
         ],
         "actionItems": [
           {
-            "id": "3ba6702f-949c-4bba-991c-7aa8c2c66afb",
+            "id": "143a0dfd-57fe-47ff-b177-6f4c2a517145",
             "owner": "Team Member",
             "task": "Let's see, need support from GTM teams. So I guess the ask would be",
             "due": "By Friday",
@@ -2161,7 +2161,7 @@
             "completed": false
           },
           {
-            "id": "29076180-5c30-423e-8964-5a713b2d0fb8",
+            "id": "a3017adf-65fe-4639-a4ee-8900463b4b52",
             "owner": "Team Member",
             "task": "Product announcements. So I appreciate Brian for adding this. I, I probably should have added it,",
             "due": "By Friday",
@@ -2182,7 +2182,7 @@
         "template": "Standard Meeting Notes & MOM",
         "language": "English",
         "modelUsed": "Nimbus 4B (High Quality)",
-        "generatedAt": "2026-08-26T17:10:42.899Z"
+        "generatedAt": "2026-08-26T17:12:55.543Z"
       },
       "audioPath": "/Users/muhammedshraeef/Documents/GitHub/minomeet/server/uploads/1787759199607-857700694.mp3",
       "tags": [
