@@ -200,51 +200,30 @@ export const RecordingScreen: React.FC = () => {
           </div>
         ) : (
           <>
-            {liveTranscript.map((line, idx) => {
-              const prevLine = idx > 0 ? liveTranscript[idx - 1] : null;
-              const isSameSpeakerAsPrev = prevLine && prevLine.speaker === line.speaker;
-
-              return (
-                <div
-                  key={line.id || idx}
-                  className={`flex items-start gap-3 text-[14.5px] leading-relaxed group ${
-                    isSameSpeakerAsPrev ? 'mt-1 pl-14' : 'mt-4'
-                  }`}
-                >
-                  {!isSameSpeakerAsPrev ? (
-                    <>
-                      <span className="text-xs text-[#9aa2af] font-mono select-none pt-0.5 min-w-[45px]">
-                        [{line.time}]
-                      </span>
-                      <div className="flex-1">
-                        {line.speaker && (
-                          <span className={`inline-flex items-center gap-1 font-extrabold mr-2 text-[11px] uppercase tracking-wide px-2 py-0.5 rounded-md shadow-2xs ${getSpeakerBadgeStyle(line.speaker)}`}>
-                            {line.speaker}
-                          </span>
-                        )}
-                        <span
-                          contentEditable
-                          suppressContentEditableWarning
-                          className="text-[#1f2937] hover:bg-yellow-50/70 p-0.5 rounded transition"
-                        >
-                          {line.text}
-                        </span>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="flex-1">
-                      <span
-                        contentEditable
-                        suppressContentEditableWarning
-                        className="text-[#1f2937] hover:bg-yellow-50/70 p-0.5 rounded transition"
-                      >
-                        {line.text}
-                      </span>
-                    </div>
+            {liveTranscript.map((line, idx) => (
+              <div
+                key={line.id || idx}
+                className="flex items-start gap-3 text-[14.5px] leading-relaxed group py-1"
+              >
+                <span className="text-xs text-[#9aa2af] font-mono select-none pt-0.5 min-w-[45px]">
+                  [{line.time}]
+                </span>
+                <div className="flex-1">
+                  {line.speaker && (
+                    <span className={`inline-flex items-center gap-1 font-extrabold mr-2 text-[11px] uppercase tracking-wide px-2 py-0.5 rounded-md shadow-2xs ${getSpeakerBadgeStyle(line.speaker)}`}>
+                      {line.speaker}
+                    </span>
                   )}
+                  <span
+                    contentEditable
+                    suppressContentEditableWarning
+                    className="text-[#1f2937] hover:bg-yellow-50/70 p-0.5 rounded transition"
+                  >
+                    {line.text}
+                  </span>
                 </div>
-              );
-            })}
+              </div>
+            ))}
 
             {/* Real-time Sub-50ms Interim Live Caption Bubble */}
             {interimTranscript && (
