@@ -1,6 +1,366 @@
 {
   "meetings": [
     {
+      "id": "meeting-96fe159b",
+      "title": "Meeting 2026-08-26_04-03",
+      "createdAt": "2026-08-26T15:34:26.745Z",
+      "updatedAt": "2026-08-26T15:34:26.745Z",
+      "duration": "04:03",
+      "transcript": [
+        {
+          "id": "line-1787758234523-dte2",
+          "time": "00:00",
+          "speaker": "You (Microphone)",
+          "text": "Hi, my name is Sponge."
+        },
+        {
+          "id": "line-1787758236947-e0p2",
+          "time": "00:03",
+          "speaker": "You (Microphone)",
+          "text": "Name is one, Sheriff."
+        },
+        {
+          "id": "line-1787758244586-uown",
+          "time": "00:10",
+          "speaker": "You (Microphone)",
+          "text": "My name is."
+        },
+        {
+          "id": "line-1787758252227-ikja",
+          "time": "00:18",
+          "speaker": "You (Microphone)",
+          "text": "Muhammad Sharif."
+        },
+        {
+          "id": "line-1787758257316-kv9z",
+          "time": "00:23",
+          "speaker": "You (Microphone)",
+          "text": "Yeah."
+        },
+        {
+          "id": "line-1787758262570-57a8",
+          "time": "00:28",
+          "speaker": "You (Microphone)",
+          "text": "We can check that is working."
+        },
+        {
+          "id": "line-1787758265138-0b8x",
+          "time": "00:31",
+          "speaker": "You (Microphone)",
+          "text": "Working or not working."
+        },
+        {
+          "id": "line-1787758272735-urnn",
+          "time": "00:38",
+          "speaker": "Meeting Participant",
+          "text": "It can record."
+        },
+        {
+          "id": "line-1787758275323-4shy",
+          "time": "00:41",
+          "speaker": "Meeting Participant",
+          "text": "And we don't,."
+        },
+        {
+          "id": "line-1787758278029-l9xz",
+          "time": "00:44",
+          "speaker": "Meeting Participant",
+          "text": "We don't have a ton of items."
+        },
+        {
+          "id": "line-1787758280481-k83n",
+          "time": "00:46",
+          "speaker": "Meeting Participant",
+          "text": "Of items to get to."
+        },
+        {
+          "id": "line-1787758283153-zszj",
+          "time": "00:49",
+          "speaker": "Meeting Participant",
+          "text": "And I might be able to do one that."
+        },
+        {
+          "id": "line-1787758285831-cucz",
+          "time": "00:51",
+          "speaker": "Meeting Participant",
+          "text": "I'm going to do one that might be fun."
+        },
+        {
+          "id": "line-1787758288319-f7uv",
+          "time": "00:54",
+          "speaker": "Meeting Participant",
+          "text": "We have a little bit of time."
+        },
+        {
+          "id": "line-1787758290652-sy5j",
+          "time": "00:56",
+          "speaker": "Meeting Participant",
+          "text": "So corporate events,."
+        },
+        {
+          "id": "line-1787758293156-m702",
+          "time": "00:59",
+          "speaker": "Meeting Participant",
+          "text": "They,."
+        },
+        {
+          "id": "line-1787758298674-ab0z",
+          "time": "01:04",
+          "speaker": "Meeting Participant",
+          "text": "I put this in Slack and I saw a little bit of."
+        },
+        {
+          "id": "line-1787758301321-kgcb",
+          "time": "01:07",
+          "speaker": "Meeting Participant",
+          "text": "I saw a little bit of kind of noise around it, which was good."
+        },
+        {
+          "id": "line-1787758306529-igk0",
+          "time": "01:12",
+          "speaker": "Meeting Participant",
+          "text": "You know, the nutshell here is as we've."
+        },
+        {
+          "id": "line-1787758309232-c6zx",
+          "time": "01:14",
+          "speaker": "Meeting Participant",
+          "text": "What I hear is as we've kind of restructured and tried different."
+        },
+        {
+          "id": "line-1787758311390-ikar",
+          "time": "01:17",
+          "speaker": "Meeting Participant",
+          "text": "Try different things."
+        },
+        {
+          "id": "line-1787758314255-95qj",
+          "time": "01:20",
+          "speaker": "Meeting Participant",
+          "text": "The event support that we need isn't as nailed."
+        },
+        {
+          "id": "line-1787758316696-w90f",
+          "time": "01:22",
+          "speaker": "Meeting Participant",
+          "text": "As nailed down as it needs to be."
+        },
+        {
+          "id": "line-1787758319156-r0vl",
+          "time": "01:25",
+          "speaker": "Meeting Participant",
+          "text": "So, the current tactic."
+        },
+        {
+          "id": "line-1787758321904-o7xj",
+          "time": "01:27",
+          "speaker": "Meeting Participant",
+          "text": "So the first tactic that we're going with is."
+        },
+        {
+          "id": "line-1787758324389-e73e",
+          "time": "01:30",
+          "speaker": "Meeting Participant",
+          "text": "Go to market team signs up and kind."
+        },
+        {
+          "id": "line-1787758326898-2uv8",
+          "time": "01:32",
+          "speaker": "Meeting Participant",
+          "text": "And kind of sponsors that event."
+        },
+        {
+          "id": "line-1787758329537-xp5k",
+          "time": "01:35",
+          "speaker": "Meeting Participant",
+          "text": "So you support as a PMM."
+        },
+        {
+          "id": "line-1787758332166-re9h",
+          "time": "01:38",
+          "speaker": "Meeting Participant",
+          "text": "Your campaign manager does the campaigns for that event."
+        },
+        {
+          "id": "line-1787758337190-2n0k",
+          "time": "01:43",
+          "speaker": "Meeting Participant",
+          "text": "I don't see anyone in the."
+        },
+        {
+          "id": "line-1787758339750-v6ea",
+          "time": "01:45",
+          "speaker": "Meeting Participant",
+          "text": "Maybe there are comments in the issue."
+        },
+        {
+          "id": "line-1787758342300-qfzp",
+          "time": "01:48",
+          "speaker": "Meeting Participant",
+          "text": "I don't see the header."
+        },
+        {
+          "id": "line-1787758345000-i9b3",
+          "time": "01:50",
+          "speaker": "Meeting Participant",
+          "text": "I don't know if we had the header updated yet."
+        },
+        {
+          "id": "line-1787758347624-u8di",
+          "time": "01:53",
+          "speaker": "Meeting Participant",
+          "text": "We had in Slack sort of farmed each one of them out."
+        },
+        {
+          "id": "line-1787758352671-ettl",
+          "time": "01:58",
+          "speaker": "Meeting Participant",
+          "text": "So I guess the next, so it looks like,."
+        },
+        {
+          "id": "line-1787758354849-i2db",
+          "time": "02:01",
+          "speaker": "Meeting Participant",
+          "text": "Three."
+        },
+        {
+          "id": "line-1787758357564-wyfw",
+          "time": "02:03",
+          "speaker": "Meeting Participant",
+          "text": "Put in some photos."
+        },
+        {
+          "id": "line-1787758360252-1sy8",
+          "time": "02:06",
+          "speaker": "Meeting Participant",
+          "text": "Some folks, it looks like this looks."
+        },
+        {
+          "id": "line-1787758362739-dxh2",
+          "time": "02:08",
+          "speaker": "Meeting Participant",
+          "text": "This looks good. So the."
+        },
+        {
+          "id": "line-1787758365227-aukj",
+          "time": "02:11",
+          "speaker": "Meeting Participant",
+          "text": "Let's see."
+        },
+        {
+          "id": "line-1787758370465-remv",
+          "time": "02:16",
+          "speaker": "Meeting Participant",
+          "text": "So I guess the ask would be,."
+        },
+        {
+          "id": "line-1787758375607-qhei",
+          "time": "02:21",
+          "speaker": "Meeting Participant",
+          "text": "To work with your GTM team,."
+        },
+        {
+          "id": "line-1787758378202-ayzf",
+          "time": "02:24",
+          "speaker": "Meeting Participant",
+          "text": "So let me ask, I saw some."
+        },
+        {
+          "id": "line-1787758380866-kzgp",
+          "time": "02:26",
+          "speaker": "Meeting Participant",
+          "text": "I saw some slack, I think in our slack,."
+        },
+        {
+          "id": "line-1787758383298-y98j",
+          "time": "02:29",
+          "speaker": "Meeting Participant",
+          "text": "But did you all, were you all able."
+        },
+        {
+          "id": "line-1787758386037-1xlx",
+          "time": "02:31",
+          "speaker": "Meeting Participant",
+          "text": "Were y'all able to connect with your GTM teams?"
+        },
+        {
+          "id": "line-1787758390863-frum",
+          "time": "02:36",
+          "speaker": "Meeting Participant",
+          "text": "On Slack only and on."
+        },
+        {
+          "id": "line-1787758393608-v0aw",
+          "time": "02:39",
+          "speaker": "Meeting Participant",
+          "text": "And on the issue actually. Yeah, same."
+        },
+        {
+          "id": "line-1787758396255-1gio",
+          "time": "02:42",
+          "speaker": "Meeting Participant",
+          "text": "Same, not in real time, but source feedback."
+        },
+        {
+          "id": "line-1787758398764-rsln",
+          "time": "02:44",
+          "speaker": "Meeting Participant",
+          "text": "I got one person to respond so far."
+        },
+        {
+          "id": "line-1787758401550-kxqr",
+          "time": "02:47",
+          "speaker": "Meeting Participant",
+          "text": "So it may end up, Cindy, being you and I just picking the one."
+        },
+        {
+          "id": "line-1787758404317-p0e2",
+          "time": "02:49",
+          "speaker": "Meeting Participant",
+          "text": "Just picking the one you want to do and then they can back us up."
+        },
+        {
+          "id": "line-1787758406792-5ty2",
+          "time": "02:52",
+          "speaker": "Meeting Participant",
+          "text": "If we don't."
+        },
+        {
+          "id": "line-1787758409367-mn9f",
+          "time": "02:55",
+          "speaker": "Meeting Participant",
+          "text": "Yeah, maybe."
+        },
+        {
+          "id": "line-1787758414559-q9q7",
+          "time": "03:00",
+          "speaker": "Meeting Participant",
+          "text": "Does anybody have like a regular."
+        },
+        {
+          "id": "line-1787758417138-4uhm",
+          "time": "03:03",
+          "speaker": "Meeting Participant",
+          "text": "A regular sync still, are those all?"
+        },
+        {
+          "id": "line-1787758419528-ddvt",
+          "time": "03:05",
+          "speaker": "You (Microphone)",
+          "text": "This could be."
+        },
+        {
+          "id": "line-1787758422171-mxc5",
+          "time": "03:08",
+          "speaker": "You (Microphone)",
+          "text": "Could be the meeting is over."
+        }
+      ],
+      "tags": [
+        "General"
+      ]
+    },
+    {
       "id": "meeting-837aa585",
       "title": "Meeting 2026-08-26_01-54",
       "createdAt": "2026-08-26T15:20:23.018Z",

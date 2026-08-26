@@ -85,7 +85,7 @@ export class AudioService {
   }
 
   /**
-   * Transcribes a short live audio chunk (e.g. from system audio / YouTube / Zoom)
+   * Transcribes a short live audio chunk (e.g. from system audio / Google Meet / Zoom)
    * using local Parakeet / Whisper.
    */
   public async transcribeLiveChunk(

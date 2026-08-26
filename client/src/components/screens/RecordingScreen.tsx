@@ -156,7 +156,7 @@ export const RecordingScreen: React.FC = () => {
             {hasSystemAudio ? (
               <>
                 <span className="w-2.5 h-2.5 rounded-full bg-[#16a34a] animate-pulse" />
-                <span className="font-bold">Live System Audio Connected (Zoom / YouTube / Meeting audio active)</span>
+                <span className="font-bold">Live System Audio Connected (Google Meet / Zoom / Teams audio active)</span>
               </>
             ) : (
               <>

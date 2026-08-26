@@ -81,7 +81,7 @@ router.post('/install-packages', async (_req: Request, res: Response) => {
   }
 });
 
-// POST /api/transcription/live-chunk - transcribes short live chunk from system audio / YouTube / Zoom
+// POST /api/transcription/live-chunk - transcribes short live chunk from system audio / Google Meet / Zoom
 router.post('/live-chunk', upload.single('audio'), async (req: Request, res: Response) => {
   const file = req.file;
   if (!file) {
