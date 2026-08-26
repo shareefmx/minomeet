@@ -6667,7 +6667,7 @@
   "settings": {
     "notifications": true,
     "storagePath": "/Users/muhammedshraeef/Documents/GitHub/minomeet/server/uploads",
-    "autoDeleteRecordingsDays": 30,
+    "autoDeleteRecordingsDays": 50,
     "saveAudio": true,
     "audioFormat": "MP4",
     "transcriptionEngine": "Parakeet TDT 1.1B Lightning (Real-Time)",

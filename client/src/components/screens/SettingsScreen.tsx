@@ -37,7 +37,6 @@ export const SettingsScreen: React.FC = () => {
     openModal,
     showToast,
     openStorageFolder,
-    purgeOldRecordings,
     transcriptionModels,
     activeTranscriptionModel,
     engineStatus,
@@ -862,38 +861,30 @@ export const SettingsScreen: React.FC = () => {
               </div>
             </div>
 
-            {/* Auto-delete Recordings & Instant Purge Tool */}
-            <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs space-y-3">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            {/* Auto-delete Recordings (50 Days Toggle) */}
+            <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs">
+              <div className="flex items-center justify-between gap-4">
                 <div>
                   <h4 className="text-sm font-bold text-[#111827] flex items-center gap-2">
                     <Trash2 className="w-4 h-4 text-[#ef4444]" />
-                    <span>Auto-Delete Raw Audio Recordings</span>
+                    <span>Auto-Delete Raw Audio Recordings (50 Days)</span>
                   </h4>
                   <p className="text-xs text-[#6b7280] mt-0.5 max-w-lg">
-                    Automatically reclaim disk space by purging raw audio files after transcripts and summaries have been processed.
+                    Automatically purge raw audio recordings 50 days after a transcript + summary is verified to reclaim disk space.
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <select
-                    value={settings.autoDeleteRecordingsDays}
-                    onChange={(e) => updateSettings({ autoDeleteRecordingsDays: Number(e.target.value) })}
-                    className="text-xs font-bold px-3 py-1.5 border border-[#d6dbe2] rounded-xl bg-white text-[#111827] focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
-                  >
-                    <option value={0}>Never (Keep all audio recordings)</option>
-                    <option value={7}>After 7 Days</option>
-                    <option value={14}>After 14 Days</option>
-                    <option value={30}>After 30 Days</option>
-                    <option value={60}>After 60 Days</option>
-                  </select>
-
-                  <button
-                    onClick={() => purgeOldRecordings(settings.autoDeleteRecordingsDays)}
-                    className="px-3.5 py-1.5 rounded-xl border border-[#fee2e2] bg-[#fef2f2] text-[#ef4444] hover:bg-[#fee2e2] text-xs font-bold transition cursor-pointer flex-none shadow-2xs"
-                  >
-                    Purge Now
-                  </button>
+                <div
+                  onClick={() => updateSettings({ autoDeleteRecordingsDays: settings.autoDeleteRecordingsDays > 0 ? 0 : 50 })}
+                  className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${
+                    settings.autoDeleteRecordingsDays > 0 ? 'bg-[#2563eb]' : 'bg-gray-300'
+                  }`}
+                >
+                  <div
+                    className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                      settings.autoDeleteRecordingsDays > 0 ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
                 </div>
               </div>
             </div>
