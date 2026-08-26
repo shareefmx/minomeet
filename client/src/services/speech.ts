@@ -1,5 +1,4 @@
 import { TranscriptLine } from '../types/meeting.js';
-import { api } from './api.js';
 
 const SAMPLE_DIALOGUE: { speaker: string; text: string }[] = [
   { speaker: 'Dev', text: "Alright, let's start with the scanner updates — we swapped our legacy static scanner for the new Argus engine last week." },
@@ -22,16 +21,20 @@ export class SpeechCaptureService {
   private audioContext: AudioContext | null = null;
   private micSourceNode: MediaStreamAudioSourceNode | null = null;
   private sysSourceNode: MediaStreamAudioSourceNode | null = null;
+  private processorNode: ScriptProcessorNode | null = null;
+  private ws: WebSocket | null = null;
   private recognition: any = null;
   private isSimulated = false;
   private simIndex = 0;
   private simInterval: any = null;
-  private chunkInterval: any = null;
   private audioChunks: Blob[] = [];
   private activeSourceType: AudioSourceType = 'mixed';
   private hasSystemAudioTrack = false;
-  private recordedSeconds = 0;
   private seenTexts = new Set<string>();
+
+  // Audio level monitoring
+  private micLevel = 0;
+  private sysLevel = 0;
 
   public getIsSimulationActive(): boolean {
     return this.isSimulated;
@@ -47,7 +50,7 @@ export class SpeechCaptureService {
 
   /**
    * Starts live audio capture with default Mixed Mode (Microphone Voice + System/Meeting Audio)
-   * and real-time sub-50ms streaming transcription.
+   * and real-time sub-50ms WebSocket streaming to backend Parakeet/Whisper AI.
    */
   public async startCapture(
     onTranscriptLine: (line: TranscriptLine) => void,
@@ -57,21 +60,58 @@ export class SpeechCaptureService {
   ): Promise<{ success: boolean; hasSystemAudio: boolean }> {
     this.audioChunks = [];
     this.simIndex = 0;
+    this.seenTexts.clear();
     this.activeSourceType = sourceType;
     this.hasSystemAudioTrack = false;
 
-    const SpeechRecognitionClass = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     let streamObtained = false;
 
+    // 1. Establish WebSocket Connection to Backend AI Streamer
+    try {
+      const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsHost = window.location.hostname || 'localhost';
+      const wsPort = '5001';
+      this.ws = new WebSocket(`${wsProtocol}//${wsHost}:${wsPort}/api/transcription/live-stream`);
+      this.ws.binaryType = 'arraybuffer';
+
+      this.ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === 'transcription' && Array.isArray(msg.segments)) {
+            for (const seg of msg.segments) {
+              const text = seg.text?.trim();
+              if (text && !this.seenTexts.has(text)) {
+                this.seenTexts.add(text);
+                onTranscriptLine({
+                  id: seg.id || `live-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                  time: seg.time || '00:00',
+                  speaker: seg.speaker || (this.sysLevel > this.micLevel ? 'Meeting Audio' : 'You (Microphone)'),
+                  text
+                });
+                if (onInterimText) onInterimText('');
+              }
+            }
+          }
+        } catch {}
+      };
+
+      this.ws.onerror = (e) => {
+        console.warn('WebSocket stream notice:', e);
+      };
+    } catch (wsErr) {
+      console.warn('WebSocket initialization notice:', wsErr);
+    }
+
+    // 2. AudioContext & Mixed Web Audio Pipeline
     try {
       const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
-      this.audioContext = new AudioCtxClass();
+      this.audioContext = new AudioCtxClass({ sampleRate: 16000 });
       if (this.audioContext.state === 'suspended') {
         await this.audioContext.resume();
       }
 
       if (sourceType === 'mixed') {
-        // ================= 1. DEFAULT: MIXED MIC VOICE + SYSTEM AUDIO =================
+        // Microphone capture
         try {
           if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             this.micStream = await navigator.mediaDevices.getUserMedia({
@@ -83,9 +123,10 @@ export class SpeechCaptureService {
             });
           }
         } catch (micErr) {
-          console.warn('Microphone permission not granted or unavailable:', micErr);
+          console.warn('Microphone permission notice:', micErr);
         }
 
+        // System Audio Capture (Chrome Tab)
         try {
           if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
             this.displayStream = await navigator.mediaDevices.getDisplayMedia({
@@ -105,21 +146,23 @@ export class SpeechCaptureService {
             if (sysTracks.length > 0) {
               this.hasSystemAudioTrack = true;
               sysTracks[0].onended = () => {
-                console.info('System audio sharing ended, continuing with microphone.');
                 this.hasSystemAudioTrack = false;
               };
             }
           }
         } catch (sysErr) {
-          console.warn('System audio sharing was dismissed or not selected, continuing with microphone:', sysErr);
+          console.warn('System audio prompt dismissed or not selected:', sysErr);
         }
 
+        // Mix Streams into AudioContext Destination & PCM Processor
         if (this.audioContext) {
           const destination = this.audioContext.createMediaStreamDestination();
+          const merger = this.audioContext.createChannelMerger(2);
 
           if (this.micStream && this.micStream.getAudioTracks().length > 0) {
             this.micSourceNode = this.audioContext.createMediaStreamSource(this.micStream);
             this.micSourceNode.connect(destination);
+            this.micSourceNode.connect(merger, 0, 0);
             streamObtained = true;
           }
 
@@ -128,16 +171,53 @@ export class SpeechCaptureService {
               new MediaStream(this.displayStream.getAudioTracks())
             );
             this.sysSourceNode.connect(destination);
+            this.sysSourceNode.connect(merger, 0, 1);
             streamObtained = true;
           }
 
           if (streamObtained) {
             this.audioStream = destination.stream;
+
+            // ScriptProcessorNode for real-time 16kHz PCM streaming over WebSocket
+            this.processorNode = this.audioContext.createScriptProcessor(4096, 2, 1);
+            this.processorNode.onaudioprocess = (e) => {
+              const micInput = e.inputBuffer.getChannelData(0);
+              const sysInput = e.inputBuffer.numberOfChannels > 1 ? e.inputBuffer.getChannelData(1) : micInput;
+
+              // Calculate mic vs system audio energy for speaker classification
+              let micSum = 0;
+              let sysSum = 0;
+              for (let i = 0; i < micInput.length; i++) {
+                micSum += Math.abs(micInput[i]);
+                sysSum += Math.abs(sysInput[i]);
+              }
+              this.micLevel = micSum / micInput.length;
+              this.sysLevel = sysSum / sysInput.length;
+
+              // Mixed mono float array
+              const mixedMono = new Float32Array(micInput.length);
+              for (let i = 0; i < micInput.length; i++) {
+                mixedMono[i] = (micInput[i] + sysInput[i]) * 0.7;
+              }
+
+              // Convert Float32 to 16-bit PCM Linear Buffer
+              const pcm16 = new Int16Array(mixedMono.length);
+              for (let i = 0; i < mixedMono.length; i++) {
+                const s = Math.max(-1, Math.min(1, mixedMono[i]));
+                pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+              }
+
+              // Stream binary PCM buffer over WebSocket
+              if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                this.ws.send(pcm16.buffer);
+              }
+            };
+
+            merger.connect(this.processorNode);
+            this.processorNode.connect(this.audioContext.destination);
           }
         }
-
       } else if (sourceType === 'system') {
-        // ================= 2. SYSTEM AUDIO ONLY =================
         if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
           this.displayStream = await navigator.mediaDevices.getDisplayMedia({
             video: { displaySurface: 'browser' },
@@ -162,7 +242,6 @@ export class SpeechCaptureService {
           }
         }
       } else {
-        // ================= 3. MICROPHONE VOICE ONLY =================
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
           this.micStream = await navigator.mediaDevices.getUserMedia({
             audio: {
@@ -176,7 +255,7 @@ export class SpeechCaptureService {
         }
       }
 
-      // Initialize MediaRecorder
+      // Initialize MediaRecorder for complete final audio file
       if (this.audioStream && streamObtained) {
         try {
           const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
@@ -189,7 +268,7 @@ export class SpeechCaptureService {
           };
           this.mediaRecorder.start(1000);
         } catch (recErr) {
-          console.warn('MediaRecorder initialization warning:', recErr);
+          console.warn('MediaRecorder notice:', recErr);
         }
 
         // Live Audio Visualizer Analyzer
@@ -213,54 +292,21 @@ export class SpeechCaptureService {
             };
             checkVol();
           } catch (e) {
-            console.warn('Web Audio meter visualizer notice:', e);
+            console.warn('Audio meter visualizer notice:', e);
           }
         }
-
-        // Live chunk transcription loop for system audio / Zoom / YouTube
-        let lastTranscribedOffset = 0;
-        this.chunkInterval = setInterval(async () => {
-          this.recordedSeconds += 4;
-          if (this.audioChunks.length > 2) {
-            const recentChunks = this.audioChunks.slice(Math.max(0, this.audioChunks.length - 5));
-            if (recentChunks.length > 0) {
-              const chunkBlob = new Blob(recentChunks, { type: 'audio/webm' });
-              const offset = lastTranscribedOffset;
-              lastTranscribedOffset = this.recordedSeconds;
-
-              try {
-                const segs = await api.transcribeLiveChunk({
-                  blob: chunkBlob,
-                  offsetSeconds: offset
-                });
-
-                if (segs && segs.length > 0) {
-                  for (const s of segs) {
-                    const text = s.text.trim();
-                    if (text && !this.seenTexts.has(text)) {
-                      this.seenTexts.add(text);
-                      onTranscriptLine({
-                        ...s,
-                        speaker: this.hasSystemAudioTrack ? 'Meeting Audio' : 'Speaker'
-                      });
-                    }
-                  }
-                }
-              } catch {}
-            }
-          }
-        }, 4500);
       }
     } catch (err) {
-      console.warn('Live audio capture notice, running with speech synthesis fallback:', err);
+      console.warn('Live audio capture setup notice:', err);
     }
 
-    // Real-Time Web Speech Recognition with Lightning Interim Results
+    // 3. Parallel Web Speech Recognition for Instant Local Speech Feedback
+    const SpeechRecognitionClass = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (SpeechRecognitionClass) {
       try {
         this.recognition = new SpeechRecognitionClass();
         this.recognition.continuous = true;
-        this.recognition.interimResults = true; // Real-time sub-50ms streaming!
+        this.recognition.interimResults = true;
         this.recognition.lang = 'en-US';
 
         let startTime = Date.now();
@@ -280,7 +326,7 @@ export class SpeechCaptureService {
                 onTranscriptLine({
                   id: 'line-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
                   time: `${m}:${s}`,
-                  speaker: this.hasSystemAudioTrack ? 'Voice & Meeting' : 'Speaker',
+                  speaker: this.sysLevel > this.micLevel + 0.05 ? 'Meeting Participant' : 'You (Microphone)',
                   text: transcript
                 });
               }
@@ -297,9 +343,6 @@ export class SpeechCaptureService {
 
         this.recognition.onerror = (e: any) => {
           console.warn('SpeechRecognition notice:', e.error);
-          if (!this.isSimulated && (!this.audioStream || !streamObtained)) {
-            this.fallbackToSimulation(onTranscriptLine, onInterimText);
-          }
         };
 
         this.recognition.onend = () => {
@@ -313,12 +356,13 @@ export class SpeechCaptureService {
         this.recognition.start();
         return { success: true, hasSystemAudio: this.hasSystemAudioTrack };
       } catch (err) {
-        console.warn('SpeechRecognition start failed, switching to simulation:', err);
+        console.warn('SpeechRecognition start notice:', err);
       }
     }
 
-    // Fallback dialogue simulation with real-time word streaming
-    this.fallbackToSimulation(onTranscriptLine, onInterimText);
+    if (!streamObtained) {
+      this.fallbackToSimulation(onTranscriptLine, onInterimText);
+    }
     return { success: true, hasSystemAudio: this.hasSystemAudioTrack };
   }
 
@@ -403,13 +447,24 @@ export class SpeechCaptureService {
       this.simInterval = null;
     }
 
-    if (this.chunkInterval) {
-      clearInterval(this.chunkInterval);
-      this.chunkInterval = null;
+    if (this.ws) {
+      try {
+        if (this.ws.readyState === WebSocket.OPEN) {
+          this.ws.send(JSON.stringify({ type: 'flush' }));
+          this.ws.close();
+        }
+      } catch (_) {}
+      this.ws = null;
     }
 
     this.seenTexts.clear();
-    this.recordedSeconds = 0;
+
+    if (this.processorNode) {
+      try {
+        this.processorNode.disconnect();
+      } catch (_) {}
+      this.processorNode = null;
+    }
 
     if (this.recognition) {
       try {

@@ -6,6 +6,7 @@ import meetingsRouter from './routes/meetings.js';
 import aiRouter from './routes/ai.js';
 import settingsRouter from './routes/settings.js';
 import transcriptionRouter from './routes/transcription.js';
+import { liveStreamService } from './services/liveStreamService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -267,6 +268,7 @@ app.use((req, res) => {
 
 const server = app.listen(Number(PORT), '0.0.0.0', () => {
   console.log(`🚀 Minomeet AI Server running on http://localhost:${PORT}`);
+  liveStreamService.initialize(server);
 });
 
 server.on('error', (err: NodeJS.ErrnoException) => {
