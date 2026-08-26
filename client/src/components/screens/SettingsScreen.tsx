@@ -20,11 +20,7 @@ import {
   Star,
   Activity,
   HardDrive,
-  Loader2,
-  Palette,
-  Sun,
-  Moon,
-  Laptop
+  Loader2
 } from 'lucide-react';
 import { SettingsTab } from '../../types/meeting.js';
 
@@ -50,10 +46,7 @@ export const SettingsScreen: React.FC = () => {
   const [customTemplateDesc, setCustomTemplateDesc] = useState('');
   const [modelFilter, setModelFilter] = useState<'all' | 'whisper' | 'parakeet'>('all');
 
-
   if (!settings) return null;
-
-  const currentTheme = settings.theme || 'system';
 
   const tabs: { id: SettingsTab; label: string; icon: any }[] = [
     { id: 'recording', label: '1. Recording', icon: Mic },
@@ -61,7 +54,6 @@ export const SettingsScreen: React.FC = () => {
     { id: 'model', label: '3. AI Model', icon: Cpu },
     { id: 'summary', label: '4. Summary', icon: Sparkles },
     { id: 'templates', label: '5. Templates', icon: FileText },
-    { id: 'appearance', label: '6. Appearance & Theme', icon: Palette },
     { id: 'general', label: 'General & Storage', icon: Sliders }
   ];
 
@@ -642,290 +634,9 @@ export const SettingsScreen: React.FC = () => {
           </div>
         )}
 
-        {/* 6. APPEARANCE & THEME TAB */}
-        {settingsTab === 'appearance' && (
-          <div className="space-y-5">
-            {/* Header Banner */}
-            <div className="border border-[#bfdbfe] bg-[#f0f7ff] rounded-2xl p-5 shadow-xs">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#dbeafe] text-[#1e3a8a] border border-[#bfdbfe]">
-                      <Palette className="w-3 h-3 text-[#2563eb]" />
-                      Active Theme
-                    </span>
-                    <span className="text-xs font-semibold text-[#4b5563]">
-                      {currentTheme === 'system' ? '💻 Device / System Default' : currentTheme === 'light' ? '☀️ Daylight Light Theme' : '🌙 Midnight Dark Theme'}
-                    </span>
-                  </div>
-                  <h3 className="text-base font-extrabold text-[#1e3a8a]">
-                    Application Visual Theme &amp; Styling
-                  </h3>
-                  <p className="text-xs text-[#4b5563] mt-1 max-w-xl">
-                    Select your preferred interface color mode. Changes take effect immediately across all screens and persist across sessions.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* 3-Card Theme Selector Grid */}
-            <div className="space-y-3">
-              <h4 className="text-sm font-bold text-[#111827]">Select Default Theme</h4>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {/* 1. Device Theme Card */}
-                <div
-                  onClick={() => {
-                    updateSettings({ theme: 'system' });
-                    showToast('Theme Changed', 'System / Device theme preference active', 'success');
-                  }}
-                  className={`group relative rounded-2xl border-2 p-4 cursor-pointer transition-all duration-200 flex flex-col justify-between ${
-                    currentTheme === 'system'
-                      ? 'border-[#2563eb] bg-[#f8faff] shadow-md ring-2 ring-[#2563eb]/20'
-                      : 'border-[#e5e7eb] bg-white hover:border-[#cbd5e1] hover:shadow-xs'
-                  }`}
-                >
-                  <div>
-                    {/* Header */}
-                    <div className="flex items-center justify-between mb-3">
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-                        currentTheme === 'system' ? 'bg-[#dbeafe] text-[#2563eb]' : 'bg-[#f3f4f6] text-[#4b5563]'
-                      }`}>
-                        <Laptop className="w-5 h-5" />
-                      </div>
-                      {currentTheme === 'system' ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-extrabold bg-[#2563eb] text-white px-2.5 py-0.5 rounded-full shadow-2xs">
-                          <Check className="w-3 h-3" /> Active
-                        </span>
-                      ) : (
-                        <span className="text-[11px] text-[#6b7280] font-medium bg-[#f3f4f6] px-2 py-0.5 rounded-full">
-                          Auto
-                        </span>
-                      )}
-                    </div>
-
-                    <h5 className="font-extrabold text-sm text-[#111827] mb-1">Device Theme</h5>
-                    <p className="text-xs text-[#6b7280] leading-relaxed mb-4">
-                      Follows your computer's OS Light / Dark mode setting automatically.
-                    </p>
-                  </div>
-
-                  {/* Visual Preview Graphic: Split Day & Night Mockup */}
-                  <div className="w-full h-24 rounded-xl border border-[#e5e7eb] overflow-hidden flex shadow-2xs">
-                    {/* Light Half */}
-                    <div className="w-1/2 bg-white p-2 flex flex-col justify-between border-r border-[#e5e7eb]">
-                      <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full bg-[#2563eb]" />
-                        <div className="w-8 h-1.5 bg-[#e5e7eb] rounded-full" />
-                      </div>
-                      <div className="space-y-1">
-                        <div className="w-full h-2 bg-[#f3f4f6] rounded" />
-                        <div className="w-3/4 h-2 bg-[#dbeafe] rounded" />
-                      </div>
-                      <div className="w-full h-3 bg-[#2563eb] rounded flex items-center justify-center text-[8px] text-white font-bold">
-                        Light
-                      </div>
-                    </div>
-                    {/* Dark Half */}
-                    <div className="w-1/2 bg-[#0f172a] p-2 flex flex-col justify-between">
-                      <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full bg-[#818cf8]" />
-                        <div className="w-8 h-1.5 bg-[#334155] rounded-full" />
-                      </div>
-                      <div className="space-y-1">
-                        <div className="w-full h-2 bg-[#1e293b] rounded" />
-                        <div className="w-3/4 h-2 bg-[#312e81] rounded" />
-                      </div>
-                      <div className="w-full h-3 bg-[#4f46e5] rounded flex items-center justify-center text-[8px] text-white font-bold">
-                        Dark
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 2. Light Theme Card */}
-                <div
-                  onClick={() => {
-                    updateSettings({ theme: 'light' });
-                    showToast('Theme Changed', 'Light theme preference active', 'success');
-                  }}
-                  className={`group relative rounded-2xl border-2 p-4 cursor-pointer transition-all duration-200 flex flex-col justify-between ${
-                    currentTheme === 'light'
-                      ? 'border-[#2563eb] bg-[#f8faff] shadow-md ring-2 ring-[#2563eb]/20'
-                      : 'border-[#e5e7eb] bg-white hover:border-[#cbd5e1] hover:shadow-xs'
-                  }`}
-                >
-                  <div>
-                    {/* Header */}
-                    <div className="flex items-center justify-between mb-3">
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-                        currentTheme === 'light' ? 'bg-amber-100 text-amber-600' : 'bg-[#f3f4f6] text-[#4b5563]'
-                      }`}>
-                        <Sun className="w-5 h-5" />
-                      </div>
-                      {currentTheme === 'light' ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-extrabold bg-[#2563eb] text-white px-2.5 py-0.5 rounded-full shadow-2xs">
-                          <Check className="w-3 h-3" /> Active
-                        </span>
-                      ) : (
-                        <span className="text-[11px] text-[#6b7280] font-medium bg-[#f3f4f6] px-2 py-0.5 rounded-full">
-                          Daylight
-                        </span>
-                      )}
-                    </div>
-
-                    <h5 className="font-extrabold text-sm text-[#111827] mb-1">Light Theme</h5>
-                    <p className="text-xs text-[#6b7280] leading-relaxed mb-4">
-                      Clean daylight palette with crisp white background and sharp contrast.
-                    </p>
-                  </div>
-
-                  {/* Visual Preview Graphic: Pure Light Theme Mockup */}
-                  <div className="w-full h-24 rounded-xl border border-[#d6dbe2] bg-[#f8fafc] p-2.5 flex flex-col justify-between shadow-2xs">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-2.5 h-2.5 rounded-full bg-[#2563eb]" />
-                        <div className="w-12 h-2 bg-[#cbd5e1] rounded-full" />
-                      </div>
-                      <div className="w-8 h-2 bg-[#93c5fd] rounded-full" />
-                    </div>
-                    <div className="space-y-1.5 bg-white p-2 rounded-lg border border-[#e2e8f0]">
-                      <div className="w-full h-2 bg-[#e2e8f0] rounded" />
-                      <div className="w-4/5 h-2 bg-[#bfdbfe] rounded" />
-                    </div>
-                    <div className="flex items-center justify-between text-[9px] font-bold text-[#1e3a8a]">
-                      <span>☀️ Daytime Clarity</span>
-                      <span className="text-[#2563eb]">100% Contrast</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 3. Dark Theme Card */}
-                <div
-                  onClick={() => {
-                    updateSettings({ theme: 'dark' });
-                    showToast('Theme Changed', 'Dark theme preference active', 'success');
-                  }}
-                  className={`group relative rounded-2xl border-2 p-4 cursor-pointer transition-all duration-200 flex flex-col justify-between ${
-                    currentTheme === 'dark'
-                      ? 'border-[#2563eb] bg-[#f8faff] shadow-md ring-2 ring-[#2563eb]/20'
-                      : 'border-[#e5e7eb] bg-white hover:border-[#cbd5e1] hover:shadow-xs'
-                  }`}
-                >
-                  <div>
-                    {/* Header */}
-                    <div className="flex items-center justify-between mb-3">
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-                        currentTheme === 'dark' ? 'bg-indigo-100 text-indigo-600' : 'bg-[#f3f4f6] text-[#4b5563]'
-                      }`}>
-                        <Moon className="w-5 h-5" />
-                      </div>
-                      {currentTheme === 'dark' ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-extrabold bg-[#2563eb] text-white px-2.5 py-0.5 rounded-full shadow-2xs">
-                          <Check className="w-3 h-3" /> Active
-                        </span>
-                      ) : (
-                        <span className="text-[11px] text-[#6b7280] font-medium bg-[#f3f4f6] px-2 py-0.5 rounded-full">
-                          Midnight
-                        </span>
-                      )}
-                    </div>
-
-                    <h5 className="font-extrabold text-sm text-[#111827] mb-1">Dark Theme</h5>
-                    <p className="text-xs text-[#6b7280] leading-relaxed mb-4">
-                      Deep slate aesthetic designed for low-glare focus and night meetings.
-                    </p>
-                  </div>
-
-                  {/* Visual Preview Graphic: Pure Dark Theme Mockup */}
-                  <div className="w-full h-24 rounded-xl border border-[#334155] bg-[#0f172a] p-2.5 flex flex-col justify-between shadow-2xs">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-2.5 h-2.5 rounded-full bg-[#818cf8]" />
-                        <div className="w-12 h-2 bg-[#334155] rounded-full" />
-                      </div>
-                      <div className="w-8 h-2 bg-[#4f46e5] rounded-full" />
-                    </div>
-                    <div className="space-y-1.5 bg-[#1e293b] p-2 rounded-lg border border-[#334155]">
-                      <div className="w-full h-2 bg-[#334155] rounded" />
-                      <div className="w-4/5 h-2 bg-[#4338ca] rounded" />
-                    </div>
-                    <div className="flex items-center justify-between text-[9px] font-bold text-[#c7d2fe]">
-                      <span>🌙 Midnight Focus</span>
-                      <span className="text-[#818cf8]">OLED Black</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Additional UI Styling & Density Preferences */}
-            <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs space-y-4">
-              <h4 className="text-sm font-bold text-[#111827]">Interface Customization</h4>
-
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <h5 className="text-xs font-bold text-[#111827]">Smooth Audio Waveform Visualizers</h5>
-                  <p className="text-[11px] text-[#6b7280] mt-0.5">
-                    Animate live decibel meter bars during active speech capture.
-                  </p>
-                </div>
-                <div
-                  onClick={() => updateSettings({ betaDiarization: !settings.betaDiarization })}
-                  className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${
-                    settings.betaDiarization ? 'bg-[#2563eb]' : 'bg-gray-300'
-                  }`}
-                >
-                  <div
-                    className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
-                      settings.betaDiarization ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 7. GENERAL & STORAGE TAB */}
+        {/* 6. GENERAL & STORAGE TAB */}
         {settingsTab === 'general' && (
           <div className="space-y-4">
-            {/* Quick Theme Selector in General */}
-            <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs">
-              <h4 className="text-sm font-bold text-[#111827]">Application Theme</h4>
-              <p className="text-xs text-[#6b7280] mt-0.5 mb-3">
-                Quickly switch between Device theme (System), Light theme, and Dark theme.
-              </p>
-              <div className="flex items-center gap-2 flex-wrap">
-                {[
-                  { key: 'system', label: 'Device Theme (Auto)', icon: Laptop },
-                  { key: 'light', label: 'Light Theme', icon: Sun },
-                  { key: 'dark', label: 'Dark Theme', icon: Moon }
-                ].map((t) => {
-                  const Icon = t.icon;
-                  const isSel = currentTheme === t.key;
-                  return (
-                    <button
-                      key={t.key}
-                      onClick={() => {
-                        updateSettings({ theme: t.key as any });
-                        showToast('Theme updated', `${t.label} active`, 'success');
-                      }}
-                      className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border transition cursor-pointer ${
-                        isSel
-                          ? 'bg-[#dbeafe] border-[#2563eb] text-[#1e3a8a] shadow-xs'
-                          : 'border-[#d6dbe2] bg-white text-[#374151] hover:bg-[#f6f7f9]'
-                      }`}
-                    >
-                      <Icon className="w-4 h-4" />
-                      <span>{t.label}</span>
-                      {isSel && <Check className="w-3.5 h-3.5 text-[#2563eb]" />}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
             <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs">
               <div className="flex items-center justify-between gap-4">
                 <div>

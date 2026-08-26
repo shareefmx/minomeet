@@ -85,7 +85,7 @@ export class SpeechCaptureService {
               onTranscriptLine({
                 id: s.id || `line-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
                 time: s.time || '00:00',
-                speaker: s.speaker || (this.sysLevel > this.micLevel * 1.3 ? 'Speaker 2' : 'Speaker 1'),
+                speaker: s.speaker || (this.sysLevel > this.micLevel * 1.3 ? 'Meeting Participant' : 'You (Microphone)'),
                 text
               });
               if (onInterimText) onInterimText('');
@@ -344,7 +344,7 @@ export class SpeechCaptureService {
                 onTranscriptLine({
                   id: 'line-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
                   time: `${m}:${s}`,
-                  speaker: this.sysLevel > this.micLevel * 1.3 ? 'Speaker 2' : 'Speaker 1',
+                  speaker: this.sysLevel > this.micLevel * 1.3 ? 'Meeting Participant' : 'You (Microphone)',
                   text: formatted
                 });
               }

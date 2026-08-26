@@ -128,14 +128,14 @@ export class LiveStreamService {
     const avgMic = session.micEnergyAccum / samples;
     const avgSys = session.sysEnergyAccum / samples;
 
-    if (avgMic > avgSys * 1.35 && avgMic > 0.005) {
-      return 'Speaker 1';
-    } else if (avgSys > avgMic * 1.35 && avgSys > 0.005) {
-      return 'Speaker 2';
-    } else if (avgSys > 0.005 && avgMic > 0.005) {
-      return 'Speaker 3';
+    if (avgMic > avgSys * 1.3 && avgMic > 0.005) {
+      return 'You (Microphone)';
+    } else if (avgSys > avgMic * 1.3 && avgSys > 0.005) {
+      return 'Meeting Participant';
+    } else if (avgSys > 0.005) {
+      return 'Meeting Participant';
     }
-    return session.lastSpeaker || 'Speaker 1';
+    return session.lastSpeaker || 'You (Microphone)';
   }
 
   private isDuplicateSentence(newText: string, lastText: string, lastTime: number): boolean {
@@ -166,7 +166,7 @@ export class LiveStreamService {
         bufferBytes: 0,
         lookbackBuffer: Buffer.alloc(0),
         offsetSeconds: 0,
-        lastSpeaker: 'Speaker 1',
+        lastSpeaker: 'You (Microphone)',
         isProcessing: false,
         silenceCount: 0,
         lastSentence: '',

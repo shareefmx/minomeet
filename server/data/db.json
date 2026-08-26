@@ -1,6 +1,192 @@
 {
   "meetings": [
     {
+      "id": "meeting-837aa585",
+      "title": "Meeting 2026-08-26_01-54",
+      "createdAt": "2026-08-26T15:20:23.018Z",
+      "updatedAt": "2026-08-26T15:20:23.018Z",
+      "duration": "01:54",
+      "transcript": [
+        {
+          "id": "line-1787757529840-253d",
+          "time": "00:03",
+          "speaker": "Speaker 1",
+          "text": "Hi, my name is Muhammad Sharif."
+        },
+        {
+          "id": "line-1787757534837-ixp0",
+          "time": "00:08",
+          "speaker": "Speaker 1",
+          "text": "Is this audible?"
+        },
+        {
+          "id": "line-1787757542550-vk1k",
+          "time": "00:15",
+          "speaker": "Speaker 1",
+          "text": "I know what I am speaking."
+        },
+        {
+          "id": "line-1787757552866-hz3e",
+          "time": "00:26",
+          "speaker": "Speaker 1",
+          "text": "Okay, I'm starting YouTube meeting."
+        },
+        {
+          "id": "line-1787757555310-mpyy",
+          "time": "00:28",
+          "speaker": "Speaker 1",
+          "text": "Meeting video."
+        },
+        {
+          "id": "line-1787757560803-obdr",
+          "time": "00:33",
+          "speaker": "Speaker 2",
+          "text": "The issue that yes, I can commit to this, et cetera."
+        },
+        {
+          "id": "line-1787757563375-25md",
+          "time": "00:36",
+          "speaker": "Speaker 2",
+          "text": "Et cetera, et cetera, et cetera."
+        },
+        {
+          "id": "line-1787757565896-iyc3",
+          "time": "00:39",
+          "speaker": "Speaker 2",
+          "text": "Just so that they can get that."
+        },
+        {
+          "id": "line-1787757568576-bajx",
+          "time": "00:41",
+          "speaker": "Speaker 2",
+          "text": "It's that event support, but that looks good."
+        },
+        {
+          "id": "line-1787757570941-s5qm",
+          "time": "00:44",
+          "speaker": "Speaker 2",
+          "text": "Good. And I appreciate."
+        },
+        {
+          "id": "line-1787757573829-w718",
+          "time": "00:46",
+          "speaker": "Speaker 2",
+          "text": "Thanks for the link too, Samia, on the rolls."
+        },
+        {
+          "id": "line-1787757575942-rkbq",
+          "time": "00:49",
+          "speaker": "Speaker 2",
+          "text": "Product analysis."
+        },
+        {
+          "id": "line-1787757578526-wgf5",
+          "time": "00:51",
+          "speaker": "Speaker 2",
+          "text": "Product announcements."
+        },
+        {
+          "id": "line-1787757581317-7t6v",
+          "time": "00:54",
+          "speaker": "Speaker 2",
+          "text": "So I appreciate Brian for adding this."
+        },
+        {
+          "id": "line-1787757583875-f5pr",
+          "time": "00:57",
+          "speaker": "Speaker 2",
+          "text": "I probably should have added it, but."
+        },
+        {
+          "id": "line-1787757586334-2uou",
+          "time": "00:59",
+          "speaker": "Speaker 2",
+          "text": "I had two questions about."
+        },
+        {
+          "id": "line-1787757588995-l0qp",
+          "time": "01:02",
+          "speaker": "Speaker 2",
+          "text": "Questions about that one. One is,."
+        },
+        {
+          "id": "line-1787757591636-7a4o",
+          "time": "01:04",
+          "speaker": "Speaker 2",
+          "text": "The question is over what timeframe are we looking at?"
+        },
+        {
+          "id": "line-1787757596576-7hf4",
+          "time": "01:09",
+          "speaker": "Speaker 2",
+          "text": "So in theory, this is."
+        },
+        {
+          "id": "line-1787757599361-r0cp",
+          "time": "01:12",
+          "speaker": "Speaker 2",
+          "text": "This could be the same as the GitLab 14 launch."
+        },
+        {
+          "id": "line-1787757601933-c4qm",
+          "time": "01:14",
+          "speaker": "Speaker 2",
+          "text": "F14 launch where we're saying basically since 13.0,."
+        },
+        {
+          "id": "line-1787757604407-83xq",
+          "time": "01:17",
+          "speaker": "Speaker 2",
+          "text": "13.0, what kind."
+        },
+        {
+          "id": "line-1787757606988-akbn",
+          "time": "01:20",
+          "speaker": "Speaker 2",
+          "text": "What kind of big improvements have we made?"
+        },
+        {
+          "id": "line-1787757609195-1dp5",
+          "time": "01:22",
+          "speaker": "Speaker 2",
+          "text": "Yeah."
+        },
+        {
+          "id": "line-1787757612138-z24k",
+          "time": "01:25",
+          "speaker": "Speaker 2",
+          "text": "Candidly, this is always a little bit tough."
+        },
+        {
+          "id": "line-1787757614573-f0gy",
+          "time": "01:27",
+          "speaker": "Speaker 2",
+          "text": "It's really tough."
+        },
+        {
+          "id": "line-1787757617197-5pra",
+          "time": "01:30",
+          "speaker": "Speaker 2",
+          "text": "I am not totally sure of all of the."
+        },
+        {
+          "id": "line-1787757619639-k8uv",
+          "time": "01:32",
+          "speaker": "Speaker 2",
+          "text": "Kind of the interplay here."
+        },
+        {
+          "id": "line-1787757622257-qnn6",
+          "time": "01:35",
+          "speaker": "Speaker 2",
+          "text": "But I think this is kind."
+        }
+      ],
+      "tags": [
+        "General"
+      ]
+    },
+    {
       "id": "meeting-4a9ca117",
       "title": "Meeting 2026-08-26_07-22",
       "createdAt": "2026-08-26T15:15:37.992Z",
@@ -3557,7 +3743,6 @@
     "defaultLanguage": "English",
     "defaultTemplate": "Standard Meeting Notes",
     "selectedModel": "Nimbus 1B (Fast)",
-    "theme": "system",
     "betaDiarization": true,
     "betaAskMeetings": true,
     "betaAutoFollowUp": true

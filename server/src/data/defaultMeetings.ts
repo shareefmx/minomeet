@@ -13,7 +13,6 @@ export const defaultSettings: AppSettings = {
   defaultLanguage: 'English',
   defaultTemplate: 'Standard Meeting Notes',
   selectedModel: 'Nimbus 4B (High Quality)',
-  theme: 'system',
   betaDiarization: true,
   betaAskMeetings: true,
   betaAutoFollowUp: true,
