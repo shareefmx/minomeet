@@ -23,28 +23,101 @@ import {
   Trash2,
   MoreVertical,
   Loader2,
-  Award,
-  Terminal,
-  Briefcase,
-  Target,
-  CheckCircle2,
-  TrendingUp,
-  Zap,
-  Layers,
-  Flag,
-  Code,
   X
 } from 'lucide-react';
 import { ActionItem } from '../../types/meeting.js';
 
-// Helper to determine document styling variant based on template name
-const getTemplateStyle = (tmpl: string): 'standard' | 'executive' | 'standup' | 'sales' | 'retrospective' => {
+interface TemplateConfig {
+  summaryLabel: string;
+  decisionsLabel: string;
+  actionItemsLabel: string;
+  tableCols: {
+    owner: string;
+    task: string;
+    due: string;
+    notes: string;
+  };
+  highlightsLabel: string;
+  nextStepsLabel: string;
+}
+
+// Configures template-specific variables and field titles without styling changes
+const getTemplateConfig = (tmpl: string): TemplateConfig => {
   const t = (tmpl || '').toLowerCase();
-  if (t.includes('executive') || t.includes('board') || t.includes('leadership')) return 'executive';
-  if (t.includes('standup') || t.includes('engineering') || t.includes('developer') || t.includes('agile') || t.includes('daily')) return 'standup';
-  if (t.includes('sales') || t.includes('client') || t.includes('commercial')) return 'sales';
-  if (t.includes('retro') || t.includes('milestone') || t.includes('retrospective') || t.includes('project')) return 'retrospective';
-  return 'standard';
+  if (t.includes('executive') || t.includes('board') || t.includes('leadership')) {
+    return {
+      summaryLabel: 'Strategic Executive Briefing',
+      decisionsLabel: 'Board Decisions & Strategic Directives',
+      actionItemsLabel: 'Strategic Deliverables & Ownership',
+      tableCols: {
+        owner: 'Strategic Lead',
+        task: 'Executive Deliverable',
+        due: 'Target Horizon',
+        notes: 'Strategic Impact & Notes'
+      },
+      highlightsLabel: 'Strategic Deliberations & Key Observations',
+      nextStepsLabel: 'Strategic Horizon Roadmap'
+    };
+  }
+  if (t.includes('standup') || t.includes('engineering') || t.includes('developer') || t.includes('agile') || t.includes('daily')) {
+    return {
+      summaryLabel: 'Sprint Status & Daily Sync Summary',
+      decisionsLabel: 'Architectural Decisions (ADR) & Consensus',
+      actionItemsLabel: 'Sprint Tasks & Backlog Assignments',
+      tableCols: {
+        owner: 'Dev Assignee',
+        task: 'Sprint Task / Ticket',
+        due: 'Sprint ETA',
+        notes: 'Branch / PR Notes'
+      },
+      highlightsLabel: 'Tech Debates & Blockers Resolved',
+      nextStepsLabel: 'Next 24-48h Sprint Goals'
+    };
+  }
+  if (t.includes('sales') || t.includes('client') || t.includes('commercial')) {
+    return {
+      summaryLabel: 'Client Opportunity & Meeting Overview',
+      decisionsLabel: 'Agreed Scope, Commercials & Client Terms',
+      actionItemsLabel: 'Commercial Deliverables & Account Tasks',
+      tableCols: {
+        owner: 'Account Lead',
+        task: 'Commercial Deliverable',
+        due: 'Client Target Date',
+        notes: 'Deal Terms / Notes'
+      },
+      highlightsLabel: 'Client Pain Points & Core Needs',
+      nextStepsLabel: 'Commercial Follow-Up Timeline'
+    };
+  }
+  if (t.includes('retro') || t.includes('milestone') || t.includes('retrospective') || t.includes('project')) {
+    return {
+      summaryLabel: 'Milestone Review & Retrospective Summary',
+      decisionsLabel: 'Milestones Reached & Consensus Items',
+      actionItemsLabel: 'Process Improvements & Action Plan',
+      tableCols: {
+        owner: 'Process Owner',
+        task: 'Improvement Task',
+        due: 'Target Milestone',
+        notes: 'Success Criteria'
+      },
+      highlightsLabel: 'Retrospective Learnings & Team Feedback',
+      nextStepsLabel: 'Upcoming Milestone Release Plan'
+    };
+  }
+  // Default Base Standard MOM
+  return {
+    summaryLabel: 'Executive Summary',
+    decisionsLabel: 'Key Decisions',
+    actionItemsLabel: 'Action Items & Ownership',
+    tableCols: {
+      owner: 'Owner',
+      task: 'Task Deliverable',
+      due: 'Due Date',
+      notes: 'Notes'
+    },
+    highlightsLabel: 'Discussion Highlights',
+    nextStepsLabel: 'Immediate Next Steps'
+  };
 };
 
 export const NotesScreen: React.FC = () => {
@@ -683,40 +756,18 @@ export const NotesScreen: React.FC = () => {
                 </div>
               )}
 
-              {/* Editable Document Body - Adapts Style Based on activeTemplate */}
+              {/* Editable Document Body */}
               {(() => {
-                const templateStyle = getTemplateStyle(activeTemplate);
+                const tmpl = getTemplateConfig(activeTemplate);
                 return (
-                  <div className="flex-1 overflow-y-auto p-8 space-y-7">
-                    {/* 1. Header & Title Block */}
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {templateStyle === 'standard' && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200">
-                            <FileText className="w-3.5 h-3.5 text-blue-600" /> Standard MOM
-                          </span>
-                        )}
-                        {templateStyle === 'executive' && (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-extrabold uppercase tracking-widest bg-slate-900 text-amber-300 border border-slate-700 shadow-xs">
-                            <Award className="w-3.5 h-3.5 text-amber-400" /> Executive Board Briefing
-                          </span>
-                        )}
-                        {templateStyle === 'standup' && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold uppercase tracking-wider bg-emerald-950 text-emerald-400 border border-emerald-800 shadow-xs">
-                            <Terminal className="w-3.5 h-3.5 text-emerald-400" /> Sprint Sync &amp; Standup Log
-                          </span>
-                        )}
-                        {templateStyle === 'sales' && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300">
-                            <Briefcase className="w-3.5 h-3.5 text-amber-700" /> Client &amp; Commercial Sync
-                          </span>
-                        )}
-                        {templateStyle === 'retrospective' && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wider bg-purple-100 text-purple-900 border border-purple-300">
-                            <Target className="w-3.5 h-3.5 text-purple-700" /> Milestone &amp; Retrospective
-                          </span>
-                        )}
-                        <span className="text-[11px] text-gray-400 font-mono">Template: {activeTemplate}</span>
+                  <div className="flex-1 overflow-y-auto p-8 space-y-6">
+                    {/* 1. Header & Title */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#f3f4f6] text-[#374151] border border-[#e5e7eb]">
+                          <FileText className="w-3.5 h-3.5 text-[#64748b]" />
+                          <span>{activeTemplate}</span>
+                        </span>
                       </div>
 
                       <h1
@@ -726,9 +777,7 @@ export const NotesScreen: React.FC = () => {
                           const newTitle = e.currentTarget.textContent || activeMeeting.title;
                           updateActiveMeeting({ title: newTitle });
                         }}
-                        className={`text-2xl font-black text-[#111827] hover:bg-yellow-50/70 p-1 -ml-1 rounded transition ${
-                          templateStyle === 'executive' ? 'font-serif text-slate-900 tracking-tight' : ''
-                        }`}
+                        className="text-2xl font-black text-[#111827] hover:bg-yellow-50/70 p-1 -ml-1 rounded transition"
                       >
                         {activeMeeting.title}
                       </h1>
@@ -740,7 +789,7 @@ export const NotesScreen: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* 2. Participants Section */}
+                    {/* 2. Participants */}
                     <div className="flex items-center gap-2 flex-wrap text-xs text-[#4b5563]">
                       <div className="flex items-center gap-1.5 font-bold text-[#111827]">
                         <User className="w-3.5 h-3.5 text-[#6b7280]" />
@@ -750,17 +799,7 @@ export const NotesScreen: React.FC = () => {
                       {(summary.attendees || []).map((att, idx) => (
                         <span
                           key={idx}
-                          className={`inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-0.5 rounded-full text-xs font-medium border group transition ${
-                            templateStyle === 'executive'
-                              ? 'bg-indigo-50 text-indigo-900 border-indigo-200'
-                              : templateStyle === 'standup'
-                              ? 'bg-emerald-50 text-emerald-900 border-emerald-200 font-mono text-[11px]'
-                              : templateStyle === 'sales'
-                              ? 'bg-amber-50 text-amber-900 border-amber-200'
-                              : templateStyle === 'retrospective'
-                              ? 'bg-purple-50 text-purple-900 border-purple-200'
-                              : 'bg-[#f3f4f6] text-[#374151] border-[#e5e7eb]'
-                          }`}
+                          className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-0.5 rounded-full text-xs font-medium bg-[#f3f4f6] text-[#374151] border border-[#e5e7eb] group transition"
                         >
                           <span
                             contentEditable
@@ -780,7 +819,6 @@ export const NotesScreen: React.FC = () => {
                         </span>
                       ))}
 
-                      {/* + Add Person Button */}
                       <button
                         onClick={handleAddAttendee}
                         className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border border-dashed border-gray-300 hover:border-blue-400 bg-white hover:bg-blue-50 text-[11px] font-bold text-gray-500 hover:text-blue-600 transition cursor-pointer"
@@ -791,105 +829,26 @@ export const NotesScreen: React.FC = () => {
                       </button>
                     </div>
 
-                    {/* 3. Summary Block - Adapts to Template */}
+                    {/* 3. Summary Block */}
                     <div>
-                      {templateStyle === 'standard' && (
-                        <div className="bg-[#f8fafc] border border-[#e2e8f0] border-l-4 border-l-[#2563eb] p-4 rounded-r-xl shadow-2xs">
-                          <div className="text-[11px] font-bold text-[#2563eb] uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                            <FileText className="w-3.5 h-3.5 text-[#2563eb]" /> Executive Summary
-                          </div>
-                          <p
-                            contentEditable
-                            suppressContentEditableWarning
-                            onBlur={(e) => updateActiveSummary({ summary: e.currentTarget.textContent || '' })}
-                            className="text-[14px] leading-relaxed text-[#374151] hover:bg-yellow-50/70 p-1.5 -ml-1.5 rounded transition"
-                          >
-                            {summary.summary}
-                          </p>
-                        </div>
-                      )}
-
-                      {templateStyle === 'executive' && (
-                        <div className="bg-gradient-to-br from-slate-900 via-[#1e1b4b] to-slate-900 text-white p-5 rounded-2xl shadow-md border border-slate-800">
-                          <div className="text-[11px] font-extrabold text-amber-300 uppercase tracking-widest mb-1.5 flex items-center gap-2">
-                            <Award className="w-4 h-4 text-amber-400" /> Strategic Executive Overview &amp; Mandate
-                          </div>
-                          <p
-                            contentEditable
-                            suppressContentEditableWarning
-                            onBlur={(e) => updateActiveSummary({ summary: e.currentTarget.textContent || '' })}
-                            className="text-[14px] leading-relaxed text-slate-100 font-normal hover:bg-white/10 p-1.5 rounded transition"
-                          >
-                            {summary.summary}
-                          </p>
-                        </div>
-                      )}
-
-                      {templateStyle === 'standup' && (
-                        <div className="bg-[#0f172a] text-slate-200 p-4 rounded-xl font-mono border border-slate-800 shadow-md">
-                          <div className="text-[11px] text-emerald-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
-                            <Terminal className="w-3.5 h-3.5 text-emerald-400" /> Sprint Summary &amp; Daily Sync Log
-                          </div>
-                          <p
-                            contentEditable
-                            suppressContentEditableWarning
-                            onBlur={(e) => updateActiveSummary({ summary: e.currentTarget.textContent || '' })}
-                            className="text-[13px] leading-relaxed text-slate-300 font-mono hover:bg-slate-800/70 p-1 rounded transition"
-                          >
-                            {summary.summary}
-                          </p>
-                        </div>
-                      )}
-
-                      {templateStyle === 'sales' && (
-                        <div className="bg-gradient-to-r from-amber-50/90 via-orange-50/40 to-white p-5 rounded-2xl border border-amber-200/90 shadow-2xs">
-                          <div className="text-[11px] font-black text-amber-800 uppercase tracking-wider mb-1 flex items-center gap-2">
-                            <Briefcase className="w-4 h-4 text-amber-600" /> Client Opportunity &amp; Commercial Overview
-                          </div>
-                          <p
-                            contentEditable
-                            suppressContentEditableWarning
-                            onBlur={(e) => updateActiveSummary({ summary: e.currentTarget.textContent || '' })}
-                            className="text-[14px] leading-relaxed text-amber-950 font-medium hover:bg-amber-100/50 p-1.5 rounded transition"
-                          >
-                            {summary.summary}
-                          </p>
-                        </div>
-                      )}
-
-                      {templateStyle === 'retrospective' && (
-                        <div className="bg-gradient-to-br from-purple-50 via-fuchsia-50/30 to-white p-5 rounded-2xl border border-purple-200 shadow-2xs">
-                          <div className="text-[11px] font-black text-purple-800 uppercase tracking-wider mb-1 flex items-center gap-2">
-                            <Target className="w-4 h-4 text-purple-600" /> Milestone Review &amp; Team Retrospective Summary
-                          </div>
-                          <p
-                            contentEditable
-                            suppressContentEditableWarning
-                            onBlur={(e) => updateActiveSummary({ summary: e.currentTarget.textContent || '' })}
-                            className="text-[14px] leading-relaxed text-[#2e1065] font-medium hover:bg-purple-100/50 p-1.5 rounded transition"
-                          >
-                            {summary.summary}
-                          </p>
-                        </div>
-                      )}
+                      <h3 className="text-xs font-black text-[#111827] mb-2 uppercase tracking-wide">
+                        {tmpl.summaryLabel}
+                      </h3>
+                      <p
+                        contentEditable
+                        suppressContentEditableWarning
+                        onBlur={(e) => updateActiveSummary({ summary: e.currentTarget.textContent || '' })}
+                        className="text-[14.5px] leading-relaxed text-[#374151] hover:bg-yellow-50/70 p-1.5 -ml-1.5 rounded transition"
+                      >
+                        {summary.summary}
+                      </p>
                     </div>
 
-                    {/* 4. Key Decisions Block - Adapts to Template */}
-                    <div className="space-y-2.5">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-xs font-black text-[#111827] uppercase tracking-wider flex items-center gap-1.5">
-                          {templateStyle === 'executive' && <Award className="w-3.5 h-3.5 text-indigo-600" />}
-                          {templateStyle === 'standup' && <Code className="w-3.5 h-3.5 text-emerald-600" />}
-                          {templateStyle === 'sales' && <CheckCircle2 className="w-3.5 h-3.5 text-amber-600" />}
-                          {templateStyle === 'retrospective' && <Flag className="w-3.5 h-3.5 text-purple-600" />}
-                          {templateStyle === 'standard' && <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />}
-                          <span>
-                            {templateStyle === 'executive' && 'Strategic Directives & Board Alignments'}
-                            {templateStyle === 'standup' && 'Architectural & Technical Consensus (ADR)'}
-                            {templateStyle === 'sales' && 'Agreed Scope, Commercials & Client Terms'}
-                            {templateStyle === 'retrospective' && 'Milestones Reached & Consensus Items'}
-                            {templateStyle === 'standard' && 'Key Decisions'}
-                          </span>
+                    {/* 4. Key Decisions */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-xs font-black text-[#111827] uppercase tracking-wide">
+                          {tmpl.decisionsLabel}
                         </h3>
                         <button
                           onClick={handleAddDecision}
@@ -898,135 +857,31 @@ export const NotesScreen: React.FC = () => {
                           <Plus className="w-3 h-3" /> Add item
                         </button>
                       </div>
-
-                      {templateStyle === 'standard' && (
-                        <ul className="list-disc pl-5 space-y-1.5 text-[14px] text-[#374151]">
-                          {summary.keyDecisions.map((decision, idx) => (
-                            <li key={idx} className="leading-relaxed">
-                              <span
-                                contentEditable
-                                suppressContentEditableWarning
-                                onBlur={(e) => {
-                                  const updated = [...summary.keyDecisions];
-                                  updated[idx] = e.currentTarget.textContent || '';
-                                  updateActiveSummary({ keyDecisions: updated });
-                                }}
-                                className="hover:bg-yellow-50/70 p-0.5 rounded transition"
-                              >
-                                {decision}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-
-                      {templateStyle === 'executive' && (
-                        <div className="grid gap-2">
-                          {summary.keyDecisions.map((dec, idx) => (
-                            <div key={idx} className="bg-[#faf5ff] border border-[#e9d5ff] p-3 rounded-xl flex items-start gap-3 shadow-2xs">
-                              <span className="bg-[#7c3aed] text-white text-[10px] font-black px-2 py-0.5 rounded-md flex-none uppercase">
-                                DIR-{idx + 1}
-                              </span>
-                              <span
-                                contentEditable
-                                suppressContentEditableWarning
-                                onBlur={(e) => {
-                                  const updated = [...summary.keyDecisions];
-                                  updated[idx] = e.currentTarget.textContent || '';
-                                  updateActiveSummary({ keyDecisions: updated });
-                                }}
-                                className="text-[13.5px] font-semibold text-[#1e1b4b] flex-1 hover:bg-yellow-50/70 p-0.5 rounded transition"
-                              >
-                                {dec}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {templateStyle === 'standup' && (
-                        <div className="grid gap-2">
-                          {summary.keyDecisions.map((dec, idx) => (
-                            <div key={idx} className="bg-[#f0fdf4] border border-[#bbf7d0] p-3 rounded-xl flex items-start gap-3 shadow-2xs font-mono text-xs">
-                              <span className="bg-emerald-800 text-emerald-100 text-[10px] font-bold px-2 py-0.5 rounded flex-none">
-                                [ADR-CONFIRMED]
-                              </span>
-                              <span
-                                contentEditable
-                                suppressContentEditableWarning
-                                onBlur={(e) => {
-                                  const updated = [...summary.keyDecisions];
-                                  updated[idx] = e.currentTarget.textContent || '';
-                                  updateActiveSummary({ keyDecisions: updated });
-                                }}
-                                className="text-[#065f46] font-medium flex-1 hover:bg-yellow-50/70 p-0.5 rounded transition font-mono"
-                              >
-                                {dec}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {templateStyle === 'sales' && (
-                        <div className="grid gap-2">
-                          {summary.keyDecisions.map((dec, idx) => (
-                            <div key={idx} className="bg-white border-l-4 border-l-amber-500 border border-gray-200 p-3 rounded-r-xl flex items-start gap-3 shadow-2xs">
-                              <CheckCircle2 className="w-4 h-4 text-amber-600 flex-none mt-0.5" />
-                              <span
-                                contentEditable
-                                suppressContentEditableWarning
-                                onBlur={(e) => {
-                                  const updated = [...summary.keyDecisions];
-                                  updated[idx] = e.currentTarget.textContent || '';
-                                  updateActiveSummary({ keyDecisions: updated });
-                                }}
-                                className="text-[13.5px] font-semibold text-amber-950 flex-1 hover:bg-yellow-50/70 p-0.5 rounded transition"
-                              >
-                                {dec}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {templateStyle === 'retrospective' && (
-                        <div className="grid gap-2">
-                          {summary.keyDecisions.map((dec, idx) => (
-                            <div key={idx} className="bg-purple-50/60 border border-purple-200 p-3 rounded-xl flex items-start gap-3 shadow-2xs">
-                              <span className="bg-purple-600 text-white text-[10px] font-black px-2 py-0.5 rounded-md flex-none uppercase">
-                                WIN-{idx + 1}
-                              </span>
-                              <span
-                                contentEditable
-                                suppressContentEditableWarning
-                                onBlur={(e) => {
-                                  const updated = [...summary.keyDecisions];
-                                  updated[idx] = e.currentTarget.textContent || '';
-                                  updateActiveSummary({ keyDecisions: updated });
-                                }}
-                                className="text-[13.5px] font-medium text-purple-950 flex-1 hover:bg-yellow-50/70 p-0.5 rounded transition"
-                              >
-                                {dec}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      <ul className="list-disc pl-5 space-y-1.5 text-[14px] text-[#374151]">
+                        {summary.keyDecisions.map((decision, idx) => (
+                          <li key={idx} className="leading-relaxed">
+                            <span
+                              contentEditable
+                              suppressContentEditableWarning
+                              onBlur={(e) => {
+                                const updated = [...summary.keyDecisions];
+                                updated[idx] = e.currentTarget.textContent || '';
+                                updateActiveSummary({ keyDecisions: updated });
+                              }}
+                              className="hover:bg-yellow-50/70 p-0.5 rounded transition"
+                            >
+                              {decision}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
 
-                    {/* 5. Action Items Table - Adapts to Template */}
-                    <div className="space-y-2.5">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-xs font-black text-[#111827] uppercase tracking-wider flex items-center gap-1.5">
-                          <Layers className="w-3.5 h-3.5 text-slate-700" />
-                          <span>
-                            {templateStyle === 'executive' && 'Strategic Deliverables & Executive Ownership'}
-                            {templateStyle === 'standup' && 'Sprint Backlog & Ticket Assignments'}
-                            {templateStyle === 'sales' && 'Account Deliverables & Commercial Tasks'}
-                            {templateStyle === 'retrospective' && 'Process Improvements & Action Plan'}
-                            {templateStyle === 'standard' && 'Action Items & Ownership'}
-                          </span>
+                    {/* 5. Action Items Table */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-xs font-black text-[#111827] uppercase tracking-wide">
+                          {tmpl.actionItemsLabel}
                         </h3>
                         <button
                           onClick={handleAddActionItem}
@@ -1038,33 +893,13 @@ export const NotesScreen: React.FC = () => {
 
                       <div className="border border-[#e5e7eb] rounded-xl overflow-hidden shadow-xs">
                         <table className="w-full text-left text-xs border-collapse">
-                          <thead
-                            className={`border-b font-bold uppercase tracking-wider ${
-                              templateStyle === 'executive'
-                                ? 'bg-slate-900 text-amber-300 border-slate-700'
-                                : templateStyle === 'standup'
-                                ? 'bg-slate-900 text-emerald-400 border-slate-700 font-mono'
-                                : templateStyle === 'sales'
-                                ? 'bg-amber-100 text-amber-900 border-amber-200'
-                                : templateStyle === 'retrospective'
-                                ? 'bg-purple-100 text-purple-900 border-purple-200'
-                                : 'bg-[#f9fafb] text-[#6b7280] border-[#e5e7eb]'
-                            }`}
-                          >
+                          <thead className="bg-[#f9fafb] border-b border-[#e5e7eb] text-[#6b7280] font-bold uppercase tracking-wider">
                             <tr>
                               <th className="p-3 w-10 text-center">Done</th>
-                              <th className="p-3 w-32">
-                                {templateStyle === 'executive' ? 'Strategic Lead' : templateStyle === 'standup' ? 'Dev Assignee' : templateStyle === 'sales' ? 'Account Lead' : templateStyle === 'retrospective' ? 'Process Owner' : 'Owner'}
-                              </th>
-                              <th className="p-3">
-                                {templateStyle === 'executive' ? 'Executive Deliverable' : templateStyle === 'standup' ? 'Sprint Ticket / Task' : templateStyle === 'sales' ? 'Commercial Deliverable' : templateStyle === 'retrospective' ? 'Improvement Task' : 'Task Deliverable'}
-                              </th>
-                              <th className="p-3 w-32">
-                                {templateStyle === 'executive' ? 'Horizon / Date' : templateStyle === 'standup' ? 'Sprint ETA' : templateStyle === 'sales' ? 'Target Date' : templateStyle === 'retrospective' ? 'Target Sprint' : 'Due Date'}
-                              </th>
-                              <th className="p-3 w-36">
-                                {templateStyle === 'executive' ? 'Strategic Notes' : templateStyle === 'standup' ? 'PR / Branch' : templateStyle === 'sales' ? 'Deal Terms' : templateStyle === 'retrospective' ? 'Success Criteria' : 'Notes'}
-                              </th>
+                              <th className="p-3 w-32">{tmpl.tableCols.owner}</th>
+                              <th className="p-3">{tmpl.tableCols.task}</th>
+                              <th className="p-3 w-32">{tmpl.tableCols.due}</th>
+                              <th className="p-3 w-40">{tmpl.tableCols.notes}</th>
                               <th className="p-3 w-10 text-center"></th>
                             </tr>
                           </thead>
@@ -1093,9 +928,7 @@ export const NotesScreen: React.FC = () => {
                                       updated[idx].owner = e.currentTarget.textContent || '';
                                       updateActiveSummary({ actionItems: updated });
                                     }}
-                                    className={`hover:bg-yellow-50/70 p-1 rounded transition block ${
-                                      templateStyle === 'standup' ? 'font-mono text-xs text-emerald-800' : ''
-                                    }`}
+                                    className="hover:bg-yellow-50/70 p-1 rounded transition block"
                                   >
                                     {act.owner}
                                   </span>
@@ -1148,7 +981,7 @@ export const NotesScreen: React.FC = () => {
                                   <button
                                     onClick={() => handleDeleteActionItem(idx)}
                                     className="text-gray-400 hover:text-red-600 transition p-1 cursor-pointer"
-                                    title="Delete row"
+                                    title="Delete task"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </button>
@@ -1160,18 +993,11 @@ export const NotesScreen: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* 6. Discussion Highlights - Adapts to Template */}
-                    <div className="space-y-2.5">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-xs font-black text-[#111827] uppercase tracking-wider flex items-center gap-1.5">
-                          <TrendingUp className="w-3.5 h-3.5 text-slate-700" />
-                          <span>
-                            {templateStyle === 'executive' && 'Strategic Deliberations & Governance Observations'}
-                            {templateStyle === 'standup' && 'Tech Debates, PRs & Blockers Resolved'}
-                            {templateStyle === 'sales' && 'Client Pain Points, Requirements & Value Props'}
-                            {templateStyle === 'retrospective' && 'Retrospective Insights & Team Learnings'}
-                            {templateStyle === 'standard' && 'Discussion Highlights'}
-                          </span>
+                    {/* 6. Discussion Highlights */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-xs font-black text-[#111827] uppercase tracking-wide">
+                          {tmpl.highlightsLabel}
                         </h3>
                         <button
                           onClick={handleAddHighlight}
@@ -1180,7 +1006,6 @@ export const NotesScreen: React.FC = () => {
                           <Plus className="w-3 h-3" /> Add highlight
                         </button>
                       </div>
-
                       <ul className="list-disc pl-5 space-y-1.5 text-[14px] text-[#374151]">
                         {summary.discussionHighlights.map((highlight, idx) => (
                           <li key={idx} className="leading-relaxed">
@@ -1201,20 +1026,13 @@ export const NotesScreen: React.FC = () => {
                       </ul>
                     </div>
 
-                    {/* 7. Next Steps - Adapts to Template */}
+                    {/* 7. Next Steps */}
                     {summary.nextSteps && summary.nextSteps.length > 0 && (
-                      <div className="space-y-2.5">
-                        <h3 className="text-xs font-black text-[#111827] uppercase tracking-wider flex items-center gap-1.5">
-                          <Zap className="w-3.5 h-3.5 text-amber-500" />
-                          <span>
-                            {templateStyle === 'executive' && 'Strategic Horizon Roadmap & Milestones'}
-                            {templateStyle === 'standup' && 'Next 24-48h Sprint Goals'}
-                            {templateStyle === 'sales' && 'Commercial Follow-Up Timeline & Next Sync'}
-                            {templateStyle === 'retrospective' && 'Upcoming Sprint Milestones & Release Plan'}
-                            {templateStyle === 'standard' && 'Immediate Next Steps'}
-                          </span>
+                      <div>
+                        <h3 className="text-xs font-black text-[#111827] mb-2 uppercase tracking-wide">
+                          {tmpl.nextStepsLabel}
                         </h3>
-                        <ul className="list-disc pl-5 space-y-1.5 text-[13.5px] text-[#4b5563]">
+                        <ul className="list-disc pl-5 space-y-1 text-[13.5px] text-[#4b5563]">
                           {summary.nextSteps.map((step, idx) => (
                             <li key={idx}>
                               <span
