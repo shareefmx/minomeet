@@ -1,6 +1,377 @@
 {
   "meetings": [
     {
+      "id": "meeting-4a9ca117",
+      "title": "Meeting 2026-08-26_07-22",
+      "createdAt": "2026-08-26T15:15:37.992Z",
+      "updatedAt": "2026-08-26T15:16:27.805Z",
+      "duration": "07:22",
+      "transcript": [
+        {
+          "id": "line-1787756904358-0qnt",
+          "time": "00:04",
+          "speaker": "You (Microphone)",
+          "text": "Hello my name is sharif."
+        },
+        {
+          "id": "line-1787756904431-fh08",
+          "time": "00:00",
+          "speaker": "Speaker",
+          "text": "Hello, my name is Momo Sharif."
+        },
+        {
+          "id": "line-1787756912244-fdq5",
+          "time": "00:12",
+          "speaker": "You (Microphone)",
+          "text": "Is this audible."
+        },
+        {
+          "id": "line-1787756913370-ifcc",
+          "time": "00:09",
+          "speaker": "Speaker",
+          "text": "Is this audible?"
+        },
+        {
+          "id": "line-1787756919518-mv8p",
+          "time": "00:15",
+          "speaker": "Speaker",
+          "text": "So,."
+        },
+        {
+          "id": "line-1787756922656-khku",
+          "time": "00:22",
+          "speaker": "You (Microphone)",
+          "text": "So what I am talking that will be."
+        },
+        {
+          "id": "line-1787756922779-vq2m",
+          "time": "00:18",
+          "speaker": "Speaker",
+          "text": "What I am talking that will be."
+        },
+        {
+          "id": "line-1787756928906-0t40",
+          "time": "00:25",
+          "speaker": "Speaker",
+          "text": "We'll see you next time."
+        },
+        {
+          "id": "line-1787756931840-ogd4",
+          "time": "00:28",
+          "speaker": "Speaker",
+          "text": "We'll be right back."
+        },
+        {
+          "id": "line-1787756941088-eo9k",
+          "time": "00:37",
+          "speaker": "Speaker",
+          "text": "What is that?"
+        },
+        {
+          "id": "line-1787756944191-htac",
+          "time": "00:40",
+          "speaker": "Speaker",
+          "text": "Does that sound right? Yeah. Yep."
+        },
+        {
+          "id": "line-1787756944838-p55i",
+          "time": "00:45",
+          "speaker": "You (Microphone)",
+          "text": "Sunrise."
+        },
+        {
+          "id": "line-1787756947194-z4ox",
+          "time": "00:43",
+          "speaker": "Speaker",
+          "text": "Last I heard. Cool."
+        },
+        {
+          "id": "line-1787756950301-z6oh",
+          "time": "00:46",
+          "speaker": "Speaker",
+          "text": "I don't know, but I think."
+        },
+        {
+          "id": "line-1787756953484-0qhm",
+          "time": "00:49",
+          "speaker": "Speaker",
+          "text": "I think we can help the core prevention."
+        },
+        {
+          "id": "line-1787756956606-h6wm",
+          "time": "00:52",
+          "speaker": "Speaker",
+          "text": "They do a lot of like cat herding,."
+        },
+        {
+          "id": "line-1787756959630-kqsm",
+          "time": "00:55",
+          "speaker": "Speaker",
+          "text": "We'll keep going. We'll keep on tracking."
+        },
+        {
+          "id": "line-1787756962693-q02h",
+          "time": "00:58",
+          "speaker": "Speaker",
+          "text": "So I think if this team can take the mission."
+        },
+        {
+          "id": "line-1787756965687-a5hj",
+          "time": "01:01",
+          "speaker": "Speaker",
+          "text": "Like try to help people."
+        },
+        {
+          "id": "line-1787756968745-svya",
+          "time": "01:05",
+          "speaker": "Speaker",
+          "text": "Track that down. So if you,."
+        },
+        {
+          "id": "line-1787756971747-yw71",
+          "time": "01:08",
+          "speaker": "Speaker",
+          "text": "Get the commitment specifically from your."
+        },
+        {
+          "id": "line-1787756975077-nr8m",
+          "time": "01:11",
+          "speaker": "Speaker",
+          "text": "Hey, we're signing up for KubeCon."
+        },
+        {
+          "id": "line-1787756978037-n0iz",
+          "time": "01:14",
+          "speaker": "Speaker",
+          "text": "Can you comment on that?"
+        },
+        {
+          "id": "line-1787756980987-mtob",
+          "time": "01:17",
+          "speaker": "Speaker",
+          "text": "Thank you."
+        },
+        {
+          "id": "line-1787756986955-7h53",
+          "time": "01:23",
+          "speaker": "Speaker",
+          "text": "Bye-bye."
+        },
+        {
+          "id": "line-1787756990128-gvep",
+          "time": "01:26",
+          "speaker": "Speaker",
+          "text": "Tchau."
+        },
+        {
+          "id": "line-1787756999319-r919",
+          "time": "01:35",
+          "speaker": "Speaker",
+          "text": "Tchau, tchau."
+        },
+        {
+          "id": "line-1787757008380-urae",
+          "time": "01:44",
+          "speaker": "Speaker",
+          "text": "Bye."
+        },
+        {
+          "id": "line-1787757011600-m2im",
+          "time": "01:48",
+          "speaker": "Speaker",
+          "text": "Bye. Bye. Bye."
+        },
+        {
+          "id": "line-1787757020919-1hfx",
+          "time": "01:57",
+          "speaker": "Speaker",
+          "text": "Tchau! Tchau!"
+        },
+        {
+          "id": "line-1787757023885-cq7t",
+          "time": "02:00",
+          "speaker": "Speaker",
+          "text": "Obrigado."
+        },
+        {
+          "id": "line-1787757030136-8cyw",
+          "time": "02:06",
+          "speaker": "Speaker",
+          "text": "Продолжение следует..."
+        },
+        {
+          "id": "line-1787757033069-d1f4",
+          "time": "02:09",
+          "speaker": "Speaker",
+          "text": "Gracias."
+        },
+        {
+          "id": "line-1787757042286-pg6r",
+          "time": "02:18",
+          "speaker": "Speaker",
+          "text": "Gracias por ver el video."
+        },
+        {
+          "id": "line-1787757051628-rhon",
+          "time": "02:27",
+          "speaker": "Speaker",
+          "text": "Legenda por Sônia Ruberti."
+        },
+        {
+          "id": "line-1787757076010-c7h6",
+          "time": "02:52",
+          "speaker": "Speaker",
+          "text": "You know."
+        },
+        {
+          "id": "line-1787757097615-z03x",
+          "time": "03:14",
+          "speaker": "Speaker",
+          "text": "E aí E aí E aí."
+        },
+        {
+          "id": "line-1787757100649-a72b",
+          "time": "03:17",
+          "speaker": "Speaker",
+          "text": "Oh, my God."
+        },
+        {
+          "id": "line-1787757122134-8p8e",
+          "time": "03:38",
+          "speaker": "Speaker",
+          "text": "Yeah."
+        },
+        {
+          "id": "line-1787757125173-yxtq",
+          "time": "03:41",
+          "speaker": "Speaker",
+          "text": ". . ."
+        },
+        {
+          "id": "line-1787757131471-uvvj",
+          "time": "03:47",
+          "speaker": "Speaker",
+          "text": "Мама, папе, мама."
+        },
+        {
+          "id": "line-1787757146958-0dbs",
+          "time": "04:03",
+          "speaker": "Speaker",
+          "text": "Yeah. Yeah, it's done."
+        },
+        {
+          "id": "line-1787757149990-57pk",
+          "time": "04:06",
+          "speaker": "Speaker",
+          "text": "I don't know."
+        },
+        {
+          "id": "line-1787757189957-3rjs",
+          "time": "04:46",
+          "speaker": "Speaker",
+          "text": "Kvíði."
+        },
+        {
+          "id": "line-1787757214293-rhb6",
+          "time": "05:10",
+          "speaker": "Speaker",
+          "text": "Bye. Bye."
+        },
+        {
+          "id": "line-1787757259664-zudw",
+          "time": "05:59",
+          "speaker": "You (Microphone)",
+          "text": "Hello."
+        },
+        {
+          "id": "line-1787757266623-2452",
+          "time": "06:02",
+          "speaker": "Speaker",
+          "text": "Yeah, he's."
+        },
+        {
+          "id": "line-1787757268260-8rv6",
+          "time": "06:08",
+          "speaker": "You (Microphone)",
+          "text": "Yeah is really interesting."
+        },
+        {
+          "id": "line-1787757269790-w5ca",
+          "time": "06:06",
+          "speaker": "Speaker",
+          "text": "Really interesting."
+        },
+        {
+          "id": "line-1787757273007-0sgw",
+          "time": "06:09",
+          "speaker": "Speaker",
+          "text": "What I am saying that we will be testing."
+        },
+        {
+          "id": "line-1787757274595-uyi3",
+          "time": "06:14",
+          "speaker": "You (Microphone)",
+          "text": "What I am saying that will be testing to the artist."
+        },
+        {
+          "id": "line-1787757275989-kdur",
+          "time": "06:12",
+          "speaker": "Speaker",
+          "text": "Do that test."
+        },
+        {
+          "id": "line-1787757282132-4038",
+          "time": "06:18",
+          "speaker": "Speaker",
+          "text": "Amém."
+        },
+        {
+          "id": "line-1787757331182-9dvu",
+          "time": "07:07",
+          "speaker": "Speaker",
+          "text": "All right."
+        }
+      ],
+      "summary": {
+        "title": "Meeting 2026-08-26_07-22",
+        "date": "Aug 26, 2026",
+        "attendees": [
+          "You (Microphone) (Participant)",
+          "Speaker (Participant)"
+        ],
+        "summary": "The meeting focused on key project deliverables and strategic alignments. Topics discussed included my name is sharif.. The team reviewed current status and established concrete next steps.",
+        "keyDecisions": [
+          "Agreed on milestones outlined in Hello my name is sharif...."
+        ],
+        "actionItems": [
+          {
+            "id": "d7b12988-1de9-4bfa-9e3d-3823bf9a2fb5",
+            "owner": "You (Microphone)",
+            "task": "Follow up on discussion items from this meeting",
+            "due": "By next sync",
+            "notes": "Review shared minutes",
+            "completed": false
+          }
+        ],
+        "discussionHighlights": [
+          "You (Microphone) noted: Hello my name is sharif.",
+          "Speaker noted: Hello, my name is Momo Sharif.",
+          "You (Microphone) noted: Is this audible.",
+          "Speaker noted: Is this audible?"
+        ],
+        "nextSteps": [
+          "Schedule follow-up review sync."
+        ],
+        "template": "Standard Meeting Notes",
+        "language": "Auto",
+        "modelUsed": "Nimbus 1B (Fast)",
+        "generatedAt": "2026-08-26T15:15:42.283Z"
+      },
+      "tags": [
+        "General"
+      ]
+    },
+    {
       "id": "meeting-24ce8a49",
       "title": "Meeting 2026-08-26_00-39",
       "createdAt": "2026-08-26T08:28:07.383Z",

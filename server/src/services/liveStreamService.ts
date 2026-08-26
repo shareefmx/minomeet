@@ -15,11 +15,16 @@ interface ClientSession {
   ws: WebSocket;
   buffer: Buffer[];
   bufferBytes: number;
+  lookbackBuffer: Buffer;
   offsetSeconds: number;
   lastSpeaker: string;
   isProcessing: boolean;
   silenceCount: number;
   lastSentence: string;
+  lastSentenceTime: number;
+  micEnergyAccum: number;
+  sysEnergyAccum: number;
+  energySampleCount: number;
 }
 
 export class LiveStreamService {
@@ -53,7 +58,7 @@ export class LiveStreamService {
             const parsed = JSON.parse(trimmed);
             if (parsed.status === 'ready') {
               this.isWorkerReady = true;
-              console.log(`⚡ High-Accuracy Sentence Transcriber Ready (Device: ${parsed.device})`);
+              console.log(`⚡ High-Accuracy Real-Time Streaming Transcriber Ready (Device: ${parsed.device})`);
             } else if (parsed.id && this.pendingRequests.has(parsed.id)) {
               const cb = this.pendingRequests.get(parsed.id);
               this.pendingRequests.delete(parsed.id);
@@ -93,14 +98,14 @@ export class LiveStreamService {
         id: reqId,
         pcm_base64: pcmBuffer.toString('base64'),
         offset_seconds: offsetSeconds,
-        language
+        language: language || 'en'
       }) + '\n';
 
       return new Promise<any[]>((resolve) => {
         const timer = setTimeout(() => {
           this.pendingRequests.delete(reqId);
           resolve([]);
-        }, 4000);
+        }, 3500);
 
         this.pendingRequests.set(reqId, (res) => {
           clearTimeout(timer);
@@ -118,6 +123,37 @@ export class LiveStreamService {
     return [];
   }
 
+  private determineSpeaker(session: ClientSession): string {
+    const samples = Math.max(1, session.energySampleCount);
+    const avgMic = session.micEnergyAccum / samples;
+    const avgSys = session.sysEnergyAccum / samples;
+
+    if (avgMic > avgSys * 1.35 && avgMic > 0.005) {
+      return 'Speaker 1';
+    } else if (avgSys > avgMic * 1.35 && avgSys > 0.005) {
+      return 'Speaker 2';
+    } else if (avgSys > 0.005 && avgMic > 0.005) {
+      return 'Speaker 3';
+    }
+    return session.lastSpeaker || 'Speaker 1';
+  }
+
+  private isDuplicateSentence(newText: string, lastText: string, lastTime: number): boolean {
+    if (!lastText) return false;
+    const cleanNew = newText.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const cleanLast = lastText.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (cleanNew === cleanLast) return true;
+
+    // Check if one is a complete substring of the other within 4 seconds
+    const now = Date.now();
+    if (now - lastTime < 4000) {
+      if (cleanNew.includes(cleanLast) || cleanLast.includes(cleanNew)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public initialize(server: Server) {
     this.wss = new WebSocketServer({ server, path: '/api/transcription/live-stream' });
 
@@ -128,11 +164,16 @@ export class LiveStreamService {
         ws,
         buffer: [],
         bufferBytes: 0,
+        lookbackBuffer: Buffer.alloc(0),
         offsetSeconds: 0,
-        lastSpeaker: 'Speaker',
+        lastSpeaker: 'Speaker 1',
         isProcessing: false,
         silenceCount: 0,
-        lastSentence: ''
+        lastSentence: '',
+        lastSentenceTime: 0,
+        micEnergyAccum: 0,
+        sysEnergyAccum: 0,
+        energySampleCount: 0
       };
 
       ws.on('message', async (data: any, isBinary: boolean) => {
@@ -142,28 +183,42 @@ export class LiveStreamService {
           session.bufferBytes += chunk.length;
 
           // 16kHz 16-bit mono = 32,000 bytes/sec
-          // Accumulate ~3.0s to 4.0s of continuous natural sentence audio (96,000 to 128,000 bytes)
-          if (session.bufferBytes >= 96000 && !session.isProcessing) {
+          // Finalize sentence at ~2.5s (80,000 bytes)
+          if (session.bufferBytes >= 80000 && !session.isProcessing) {
             session.isProcessing = true;
-            const fullPcm = Buffer.concat(session.buffer);
+            const currentPcm = Buffer.concat(session.buffer);
+            const fullPcm = session.lookbackBuffer.length > 0
+              ? Buffer.concat([session.lookbackBuffer, currentPcm])
+              : currentPcm;
+
+            // Retain 600ms (19,200 bytes) sliding lookback buffer
+            session.lookbackBuffer = currentPcm.subarray(Math.max(0, currentPcm.length - 19200));
+
             const currentOffset = session.offsetSeconds;
-            session.offsetSeconds += fullPcm.length / 32000;
+            session.offsetSeconds += currentPcm.length / 32000;
             session.buffer = [];
             session.bufferBytes = 0;
 
+            const speaker = this.determineSpeaker(session);
+            session.lastSpeaker = speaker;
+            session.micEnergyAccum = 0;
+            session.sysEnergyAccum = 0;
+            session.energySampleCount = 0;
+
             try {
-              const segments = await this.transcribePcmBuffer(fullPcm, currentOffset);
+              const segments = await this.transcribePcmBuffer(fullPcm, currentOffset, 'en');
               if (segments && segments.length > 0) {
                 const seg = segments[0];
                 const text = seg.text?.trim();
 
-                // Ensure it's a complete sentence and not a duplicate
-                if (text && text !== session.lastSentence && text.length > 3) {
+                if (text && text.length >= 3 && !this.isDuplicateSentence(text, session.lastSentence, session.lastSentenceTime)) {
                   session.lastSentence = text;
+                  session.lastSentenceTime = Date.now();
+
                   const enriched = {
                     id: `line-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
                     time: seg.time || '00:00',
-                    speaker: session.lastSpeaker || 'Speaker',
+                    speaker: speaker,
                     text
                   };
 
@@ -182,23 +237,30 @@ export class LiveStreamService {
         } else {
           try {
             const msg = JSON.parse(data.toString());
-            if (msg.type === 'metadata') {
+            if (msg.type === 'telemetry') {
+              if (typeof msg.micLevel === 'number') session.micEnergyAccum += msg.micLevel;
+              if (typeof msg.sysLevel === 'number') session.sysEnergyAccum += msg.sysLevel;
+              session.energySampleCount += 1;
+            } else if (msg.type === 'metadata') {
               if (msg.speaker) session.lastSpeaker = msg.speaker;
               if (msg.offset !== undefined) session.offsetSeconds = msg.offset;
             } else if (msg.type === 'flush') {
-              if (session.bufferBytes > 8000 && !session.isProcessing) {
+              if (session.bufferBytes > 6400 && !session.isProcessing) {
                 session.isProcessing = true;
-                const fullPcm = Buffer.concat(session.buffer);
+                const currentPcm = Buffer.concat(session.buffer);
                 session.buffer = [];
                 session.bufferBytes = 0;
-                const segments = await this.transcribePcmBuffer(fullPcm, session.offsetSeconds);
-                if (segments.length > 0 && segments[0].text !== session.lastSentence) {
+                session.lookbackBuffer = Buffer.alloc(0);
+
+                const speaker = this.determineSpeaker(session);
+                const segments = await this.transcribePcmBuffer(currentPcm, session.offsetSeconds, 'en');
+                if (segments.length > 0 && segments[0].text && !this.isDuplicateSentence(segments[0].text, session.lastSentence, session.lastSentenceTime)) {
                   ws.send(JSON.stringify({
                     type: 'sentence',
                     sentence: {
                       id: `line-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
                       time: segments[0].time || '00:00',
-                      speaker: session.lastSpeaker || 'Speaker',
+                      speaker: speaker,
                       text: segments[0].text
                     }
                   }));
@@ -213,11 +275,12 @@ export class LiveStreamService {
       ws.on('close', () => {
         session.buffer = [];
         session.bufferBytes = 0;
+        session.lookbackBuffer = Buffer.alloc(0);
       });
 
       ws.send(JSON.stringify({
         type: 'ready',
-        message: 'High-Accuracy Sentence-Level Engine Ready'
+        message: 'High-Accuracy Real-Time Streaming Transcriber Ready'
       }));
     });
   }

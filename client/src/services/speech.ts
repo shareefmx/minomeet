@@ -80,17 +80,17 @@ export class SpeechCaptureService {
           if (msg.type === 'sentence' && msg.sentence) {
             const s = msg.sentence;
             const text = s.text?.trim();
-            if (text && !this.seenTexts.has(text) && text.length > 2) {
+            if (text && !this.seenTexts.has(text) && text.length >= 3) {
               this.seenTexts.add(text);
               onTranscriptLine({
                 id: s.id || `line-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
                 time: s.time || '00:00',
-                speaker: s.speaker || (this.sysLevel > this.micLevel + 0.05 ? 'Meeting Participant' : 'You (Microphone)'),
+                speaker: s.speaker || (this.sysLevel > this.micLevel * 1.3 ? 'Speaker 2' : 'Speaker 1'),
                 text
               });
               if (onInterimText) onInterimText('');
             }
-          } else if (msg.type === 'interim' && msg.text) {
+          } else if (msg.type === 'partial' && msg.text) {
             if (onInterimText) onInterimText(msg.text);
           }
         } catch {}
@@ -179,6 +179,8 @@ export class SpeechCaptureService {
           if (streamObtained) {
             this.audioStream = destination.stream;
 
+            let lastTelemetryTime = Date.now();
+
             // ScriptProcessorNode for real-time 16kHz PCM streaming over WebSocket
             this.processorNode = this.audioContext.createScriptProcessor(4096, 2, 1);
             this.processorNode.onaudioprocess = (e) => {
@@ -194,6 +196,17 @@ export class SpeechCaptureService {
               }
               this.micLevel = micSum / micInput.length;
               this.sysLevel = sysSum / sysInput.length;
+
+              // Send periodic telemetry every 250ms
+              const now = Date.now();
+              if (now - lastTelemetryTime > 250 && this.ws && this.ws.readyState === WebSocket.OPEN) {
+                lastTelemetryTime = now;
+                this.ws.send(JSON.stringify({
+                  type: 'telemetry',
+                  micLevel: this.micLevel,
+                  sysLevel: this.sysLevel
+                }));
+              }
 
               // Mixed mono float array
               const mixedMono = new Float32Array(micInput.length);
@@ -301,9 +314,9 @@ export class SpeechCaptureService {
       console.warn('Live audio capture setup notice:', err);
     }
 
-    // 3. Parallel Web Speech Recognition for Instant Local Speech Feedback
+    // 3. Fast Web Speech Recognition strictly for real-time live preview text
     const SpeechRecognitionClass = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (SpeechRecognitionClass) {
+    if (SpeechRecognitionClass && !this.ws) {
       try {
         this.recognition = new SpeechRecognitionClass();
         this.recognition.continuous = true;
@@ -331,7 +344,7 @@ export class SpeechCaptureService {
                 onTranscriptLine({
                   id: 'line-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
                   time: `${m}:${s}`,
-                  speaker: this.sysLevel > this.micLevel + 0.05 ? 'Meeting Participant' : 'You (Microphone)',
+                  speaker: this.sysLevel > this.micLevel * 1.3 ? 'Speaker 2' : 'Speaker 1',
                   text: formatted
                 });
               }
