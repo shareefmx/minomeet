@@ -23,6 +23,9 @@ export class AIService {
     const title = meetingTitle || (transcript.length > 0 ? `Meeting Sync — ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : 'Untitled Meeting');
     const dateFormatted = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
+    // Lookup matching template definition from storage
+    const templateDef = storageService.getTemplateById(template);
+
     // Extract action items intelligently based on text patterns
     const actionItems: ActionItem[] = this.extractActionItems(transcript, speakers);
     const keyDecisions: string[] = this.extractKeyDecisions(transcript, template);
@@ -34,30 +37,31 @@ export class AIService {
       executiveSummary = 'No dialogue recorded during this meeting session.';
     } else {
       const topicSentence = transcript[0]?.text || '';
-      executiveSummary = `The meeting focused on key project deliverables and strategic alignments. Topics discussed included ${topicSentence.toLowerCase().replace(/^(alright|hey|hi|hello|ok|let's start with)\s*/i, '')}. The team reviewed current status and established concrete next steps.`;
-    }
-
-    // MOM content in pure professional English
-    let translatedSummary = executiveSummary;
-    let translatedDecisions = keyDecisions;
-    let translatedHighlights = discussionHighlights;
-    let translatedNextSteps = nextSteps;
-
-    // Template specific structure tailoring
-    if (template === 'Daily Standup') {
-      translatedSummary = `Daily Standup: Quick alignment across work streams, blocking issues, and peer pairing commitments for today's sprint cycle.`;
-    } else if (template === 'Retrospective (Agile)') {
-      translatedSummary = `Sprint Retrospective: Analyzed what went smoothly in this sprint cycle, identified process friction points, and formulated actionable improvements.`;
-    } else if (template === 'Client / Sales Meeting') {
-      translatedSummary = `Client Alignment Session: Reviewed client requirements, timeline milestones, deliverables, and integration credentials.`;
+      const cleanedTopic = topicSentence.toLowerCase().replace(/^(alright|hey|hi|hello|ok|let's start with)\s*/i, '');
+      
+      if (templateDef) {
+        if (templateDef.id === 'template-executive' || template.toLowerCase().includes('executive') || template.toLowerCase().includes('board')) {
+          executiveSummary = `Strategic Executive Summary: The leadership team convened to evaluate roadmap progress and key governance deliverables. Strategic initiatives reviewed include ${cleanedTopic}. Concrete approvals and milestone directives were established.`;
+        } else if (templateDef.id === 'template-standup' || template.toLowerCase().includes('standup')) {
+          executiveSummary = `Daily Standup Summary: The engineering team synced on active work streams and sprint deliverables. Key updates centered on ${cleanedTopic}. Active blockers were triaged and peer pairing sessions aligned.`;
+        } else if (templateDef.id === 'template-sales' || template.toLowerCase().includes('sales') || template.toLowerCase().includes('client')) {
+          executiveSummary = `Client & Commercial Alignment: Aligned with client stakeholders on project scope, core pain points, and commercial deliverables regarding ${cleanedTopic}. Action matrix and milestone commitments were established.`;
+        } else if (templateDef.id === 'template-retrospective' || template.toLowerCase().includes('retrospective')) {
+          executiveSummary = `Milestone & Retrospective Review: Evaluated milestone deliverables and sprint performance relating to ${cleanedTopic}. The team identified key operational wins, triaged process friction points, and agreed on corrective action items.`;
+        } else {
+          executiveSummary = `Executive Meeting Summary: The meeting focused on key project deliverables and strategic alignments. Topics discussed included ${cleanedTopic}. The team reviewed current status and established concrete next steps.`;
+        }
+      } else {
+        executiveSummary = `The meeting focused on key project deliverables and strategic alignments. Topics discussed included ${cleanedTopic}. The team reviewed current status and established concrete next steps.`;
+      }
     }
 
     return {
       title,
       date: dateFormatted,
       attendees: attendeesList,
-      summary: translatedSummary,
-      keyDecisions: translatedDecisions.length > 0 ? translatedDecisions : ['Approved current project roadmap milestones.'],
+      summary: executiveSummary,
+      keyDecisions: keyDecisions.length > 0 ? keyDecisions : ['Approved current project roadmap milestones.'],
       actionItems: actionItems.length > 0 ? actionItems : [
         {
           id: uuidv4(),
@@ -68,12 +72,12 @@ export class AIService {
           completed: false
         }
       ],
-      discussionHighlights: translatedHighlights.length > 0 ? translatedHighlights : [
+      discussionHighlights: discussionHighlights.length > 0 ? discussionHighlights : [
         'Reviewed overall architecture and timelines.',
         'Confirmed team availability and key dependencies.'
       ],
-      nextSteps: translatedNextSteps,
-      template,
+      nextSteps: nextSteps,
+      template: templateDef ? templateDef.name : template,
       language,
       modelUsed: model,
       generatedAt: new Date().toISOString()

@@ -126,3 +126,16 @@ export interface TranscriptionEngineStatus {
   totalModelsDownloaded: number;
 }
 
+export interface MOMTemplate {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  sections: string[];
+  promptInstructions: string;
+  isDefault?: boolean;
+  isSystem?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+

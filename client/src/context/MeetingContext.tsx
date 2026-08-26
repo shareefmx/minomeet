@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Meeting, AppSettings, ScreenType, SettingsTab, ToastMessage, TranscriptLine, MOMSummary, TranscriptionModel, TranscriptionEngineStatus, StorageStats } from '../types/meeting.js';
+import { Meeting, AppSettings, ScreenType, SettingsTab, ToastMessage, TranscriptLine, MOMSummary, TranscriptionModel, TranscriptionEngineStatus, StorageStats, MOMTemplate } from '../types/meeting.js';
 import { api } from '../services/api.js';
 import { speechService } from '../services/speech.js';
 
@@ -23,6 +23,7 @@ interface MeetingContextType {
   transcriptionModels: TranscriptionModel[];
   activeTranscriptionModel: TranscriptionModel | null;
   engineStatus: TranscriptionEngineStatus | null;
+  templates: MOMTemplate[];
   modals: {
     import: boolean;
     model: boolean;
@@ -67,6 +68,11 @@ interface MeetingContextType {
   deleteTranscriptionModel: (id: string) => Promise<void>;
   selectTranscriptionModel: (id: string) => Promise<void>;
   installPythonPackages: () => Promise<void>;
+  refreshTemplates: () => Promise<void>;
+  createTemplate: (template: Partial<MOMTemplate>) => Promise<MOMTemplate | null>;
+  updateTemplate: (id: string, updates: Partial<MOMTemplate>) => Promise<MOMTemplate | null>;
+  deleteTemplate: (id: string) => Promise<boolean>;
+  setDefaultTemplate: (id: string) => Promise<void>;
 }
 
 const MeetingContext = createContext<MeetingContextType | undefined>(undefined);
@@ -91,6 +97,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [transcriptionModels, setTranscriptionModels] = useState<TranscriptionModel[]>([]);
   const [activeTranscriptionModel, setActiveTranscriptionModel] = useState<TranscriptionModel | null>(null);
   const [engineStatus, setEngineStatus] = useState<TranscriptionEngineStatus | null>(null);
+  const [templates, setTemplates] = useState<MOMTemplate[]>([]);
 
   const [meetingToDelete, setMeetingToDelete] = useState<Meeting | null>(null);
   const [meetingToRename, setMeetingToRename] = useState<Meeting | null>(null);
@@ -111,6 +118,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
     refreshMeetings();
     loadSettings();
     refreshTranscriptionModels();
+    refreshTemplates();
   }, []);
 
   // Enforce Clean Light Theme permanently across entire application
@@ -534,6 +542,68 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
+  const refreshTemplates = async () => {
+    try {
+      const list = await api.getTemplates();
+      setTemplates(list);
+    } catch (err) {
+      console.error('Failed to load templates:', err);
+    }
+  };
+
+  const createTemplate = async (templateData: Partial<MOMTemplate>): Promise<MOMTemplate | null> => {
+    try {
+      const created = await api.createTemplate(templateData);
+      setTemplates(prev => [...prev, created]);
+      showToast('Template Created', created.name, 'success');
+      return created;
+    } catch (err: any) {
+      showToast('Failed to create template', err.message, 'error');
+      return null;
+    }
+  };
+
+  const updateTemplate = async (id: string, updates: Partial<MOMTemplate>): Promise<MOMTemplate | null> => {
+    try {
+      const updated = await api.updateTemplate(id, updates);
+      setTemplates(prev => prev.map(t => t.id === id ? updated : t));
+      showToast('Template Updated', updated.name, 'success');
+      return updated;
+    } catch (err: any) {
+      showToast('Failed to update template', err.message, 'error');
+      return null;
+    }
+  };
+
+  const deleteTemplate = async (id: string): Promise<boolean> => {
+    try {
+      const target = templates.find(t => t.id === id);
+      const success = await api.deleteTemplate(id);
+      if (success) {
+        setTemplates(prev => prev.filter(t => t.id !== id));
+        showToast('Template Deleted', target?.name || '', 'info');
+        await loadSettings();
+      }
+      return success;
+    } catch (err: any) {
+      showToast('Failed to delete template', err.message, 'error');
+      return false;
+    }
+  };
+
+  const setDefaultTemplate = async (id: string): Promise<void> => {
+    try {
+      const updated = await api.setDefaultTemplate(id);
+      setTemplates(prev => prev.map(t => ({ ...t, isDefault: t.id === id })));
+      if (settings) {
+        setSettings({ ...settings, defaultTemplate: updated.name });
+      }
+      showToast('Default Template Set', updated.name, 'success');
+    } catch (err: any) {
+      showToast('Failed to set default template', err.message, 'error');
+    }
+  };
+
   return (
     <MeetingContext.Provider
       value={{
@@ -556,6 +626,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
         transcriptionModels,
         activeTranscriptionModel,
         engineStatus,
+        templates,
         modals,
         setCurrentScreen,
         setSettingsTab,
@@ -589,7 +660,12 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
         downloadTranscriptionModel,
         deleteTranscriptionModel,
         selectTranscriptionModel,
-        installPythonPackages
+        installPythonPackages,
+        refreshTemplates,
+        createTemplate,
+        updateTemplate,
+        deleteTemplate,
+        setDefaultTemplate
       }}
     >
       {children}

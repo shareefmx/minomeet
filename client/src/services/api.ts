@@ -1,8 +1,55 @@
-import { Meeting, AppSettings, MOMSummary, TranscriptLine, TranscriptionModel, TranscriptionEngineStatus, StorageStats } from '../types/meeting.js';
+import { Meeting, AppSettings, MOMSummary, TranscriptLine, TranscriptionModel, TranscriptionEngineStatus, StorageStats, MOMTemplate } from '../types/meeting.js';
 
 const API_BASE = '/api';
 
 export const api = {
+  // Templates
+  async getTemplates(): Promise<MOMTemplate[]> {
+    const res = await fetch(`${API_BASE}/templates`);
+    const data = await res.json();
+    return data.templates || [];
+  },
+
+  async createTemplate(payload: Partial<MOMTemplate>): Promise<MOMTemplate> {
+    const res = await fetch(`${API_BASE}/templates`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed to create template');
+    return data.template;
+  },
+
+  async updateTemplate(id: string, updates: Partial<MOMTemplate>): Promise<MOMTemplate> {
+    const res = await fetch(`${API_BASE}/templates/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates)
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed to update template');
+    return data.template;
+  },
+
+  async deleteTemplate(id: string): Promise<boolean> {
+    const res = await fetch(`${API_BASE}/templates/${encodeURIComponent(id)}`, {
+      method: 'DELETE'
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed to delete template');
+    return data.success;
+  },
+
+  async setDefaultTemplate(id: string): Promise<MOMTemplate> {
+    const res = await fetch(`${API_BASE}/templates/${encodeURIComponent(id)}/default`, {
+      method: 'POST'
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed to set default template');
+    return data.template;
+  },
+
   // Meetings
   async getMeetings(search?: string): Promise<Meeting[]> {
     const url = search ? `${API_BASE}/meetings?search=${encodeURIComponent(search)}` : `${API_BASE}/meetings`;

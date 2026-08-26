@@ -22,9 +22,12 @@ import {
   HardDrive,
   Loader2,
   Cloud,
-  Bell
+  Bell,
+  Edit2,
+  Layers,
+  X
 } from 'lucide-react';
-import { SettingsTab } from '../../types/meeting.js';
+import { SettingsTab, MOMTemplate } from '../../types/meeting.js';
 
 export const SettingsScreen: React.FC = () => {
   const {
@@ -40,15 +43,93 @@ export const SettingsScreen: React.FC = () => {
     transcriptionModels,
     activeTranscriptionModel,
     engineStatus,
+    templates,
     downloadTranscriptionModel,
     deleteTranscriptionModel,
     selectTranscriptionModel,
-    installPythonPackages
+    installPythonPackages,
+    createTemplate,
+    updateTemplate,
+    deleteTemplate,
+    setDefaultTemplate
   } = useMeeting();
 
-  const [customTemplateName, setCustomTemplateName] = useState('');
-  const [customTemplateDesc, setCustomTemplateDesc] = useState('');
   const [modelFilter, setModelFilter] = useState<'all' | 'whisper' | 'parakeet'>('all');
+
+  // Template Modal State
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
+  const [formName, setFormName] = useState('');
+  const [formCategory, setFormCategory] = useState('General & Operations');
+  const [formDescription, setFormDescription] = useState('');
+  const [formSections, setFormSections] = useState<string[]>([]);
+  const [formPromptInstructions, setFormPromptInstructions] = useState('');
+  const [newSectionInput, setNewSectionInput] = useState('');
+
+  const handleOpenCreateModal = () => {
+    setEditingTemplateId(null);
+    setFormName('');
+    setFormCategory('General & Operations');
+    setFormDescription('');
+    setFormSections([
+      'Executive Summary',
+      'Key Decisions Made',
+      'Action Items Matrix (Owner, Task, Due Date)',
+      'Discussion Highlights',
+      'Next Steps & Follow-ups'
+    ]);
+    setFormPromptInstructions('Generate structured Minutes of Meeting (MOM) according to defined sections.');
+    setNewSectionInput('');
+    setIsTemplateModalOpen(true);
+  };
+
+  const handleOpenEditModal = (tpl: MOMTemplate) => {
+    setEditingTemplateId(tpl.id);
+    setFormName(tpl.name);
+    setFormCategory(tpl.category || 'General & Operations');
+    setFormDescription(tpl.description || '');
+    setFormSections(tpl.sections && tpl.sections.length > 0 ? [...tpl.sections] : ['Executive Summary', 'Key Decisions', 'Action Items']);
+    setFormPromptInstructions(tpl.promptInstructions || '');
+    setNewSectionInput('');
+    setIsTemplateModalOpen(true);
+  };
+
+  const handleAddSection = () => {
+    if (newSectionInput.trim()) {
+      setFormSections(prev => [...prev, newSectionInput.trim()]);
+      setNewSectionInput('');
+    }
+  };
+
+  const handleRemoveSection = (idx: number) => {
+    setFormSections(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!formName.trim()) {
+      showToast('Name Required', 'Please enter a template name.', 'warning');
+      return;
+    }
+
+    if (editingTemplateId) {
+      await updateTemplate(editingTemplateId, {
+        name: formName.trim(),
+        category: formCategory,
+        description: formDescription.trim(),
+        sections: formSections.length > 0 ? formSections : ['Executive Summary', 'Action Items'],
+        promptInstructions: formPromptInstructions.trim()
+      });
+    } else {
+      await createTemplate({
+        name: formName.trim(),
+        category: formCategory,
+        description: formDescription.trim(),
+        sections: formSections.length > 0 ? formSections : ['Executive Summary', 'Action Items'],
+        promptInstructions: formPromptInstructions.trim()
+      });
+    }
+    setIsTemplateModalOpen(false);
+  };
 
   if (!settings) return null;
 
@@ -59,16 +140,6 @@ export const SettingsScreen: React.FC = () => {
     { id: 'summary', label: '4. Summary', icon: Sparkles },
     { id: 'templates', label: '5. Templates', icon: FileText },
     { id: 'general', label: 'General & Storage', icon: Sliders }
-  ];
-
-  const presetTemplates = [
-    { name: 'Standard Meeting Notes', desc: 'Summary, Key Decisions, Action Items table, Discussion Highlights, Next Steps.' },
-    { name: 'Daily Standup', desc: 'Yesterday accomplishments, Today plan, Blockers / Impediments, Peer pairing.' },
-    { name: 'Project Sync / Status Update', desc: 'Project Health, Milestone Progress, Decisions & Tradeoffs, Action Matrix, Risks.' },
-    { name: 'Retrospective (Agile)', desc: 'What Went Well, What Could Be Improved, Action Items & Process Adjustments.' },
-    { name: 'Client / Sales Meeting', desc: 'Client Objectives, Agreed Deliverables, Commercial Terms, Action Matrix.' },
-    { name: '1-on-1 Sync', desc: 'Career Goals, Project Feedback, Discussion Points, Personal Action Items.' },
-    { name: 'Board Meeting / Executive Summary', desc: 'Strategic Decisions, Financial & Metric Updates, Board Approvals, Executive Directives.' }
   ];
 
   return (
@@ -663,72 +734,262 @@ export const SettingsScreen: React.FC = () => {
 
         {/* 5. TEMPLATES TAB */}
         {settingsTab === 'templates' && (
-          <div className="space-y-4">
-            <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs">
-              <h4 className="text-sm font-bold text-[#111827]">Built-in MOM Prompt Templates</h4>
-              <p className="text-xs text-[#6b7280] mt-0.5 mb-3">
-                Select your default template format for new meeting summaries.
-              </p>
-              <div className="space-y-2">
-                {presetTemplates.map((t, idx) => {
-                  const isSelected = settings.defaultTemplate === t.name;
-                  return (
-                    <div
-                      key={idx}
-                      onClick={() => updateSettings({ defaultTemplate: t.name })}
-                      className={`p-3 rounded-xl border cursor-pointer transition ${
-                        isSelected
-                          ? 'border-[#2563eb] bg-[#f5f8ff]'
-                          : 'border-[#e5e7eb] hover:bg-[#f9fafb]'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between font-bold text-xs text-[#111827]">
-                        <span>{t.name}</span>
-                        {isSelected && <span className="text-[#2563eb] font-bold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Default</span>}
-                      </div>
-                      <p className="text-[11px] text-[#6b7280] mt-1">{t.desc}</p>
-                    </div>
-                  );
-                })}
+          <div className="space-y-6">
+            {/* Header & Add Button */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#e5e7eb] pb-4">
+              <div>
+                <h4 className="text-base font-extrabold text-[#111827] flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-[#2563eb]" />
+                  <span>Minutes of Meeting (MOM) Templates</span>
+                </h4>
+                <p className="text-xs text-[#6b7280] mt-0.5 max-w-xl">
+                  Configure the report templates used by local AI models when generating meeting minutes, summaries, and action item matrices.
+                </p>
               </div>
+
+              <button
+                onClick={handleOpenCreateModal}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer flex-none"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add New Template</span>
+              </button>
             </div>
 
-            {/* Custom Template Builder */}
-            <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs">
-              <h4 className="text-sm font-bold text-[#111827]">Add Custom Template</h4>
-              <p className="text-xs text-[#6b7280] mt-0.5 mb-3">
-                Define specialized MOM structures tailored to your company workflows.
-              </p>
-              <div className="space-y-3 text-xs">
-                <input
-                  type="text"
-                  placeholder="Template Name (e.g., Sprint Planning Sync)"
-                  value={customTemplateName}
-                  onChange={(e) => setCustomTemplateName(e.target.value)}
-                  className="w-full px-3.5 py-2 border border-[#d6dbe2] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
-                />
-                <textarea
-                  rows={3}
-                  placeholder="Sections to include (e.g. Scope, Story Points, Velocity, Action Matrix)..."
-                  value={customTemplateDesc}
-                  onChange={(e) => setCustomTemplateDesc(e.target.value)}
-                  className="w-full px-3.5 py-2 border border-[#d6dbe2] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#2563eb] resize-none"
-                />
-                <button
-                  onClick={() => {
-                    if (customTemplateName) {
-                      showToast('Custom Template created', customTemplateName, 'success');
-                      setCustomTemplateName('');
-                      setCustomTemplateDesc('');
-                    }
-                  }}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#2563eb] text-white font-bold rounded-xl hover:bg-[#1d4ed8] transition cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Save Custom Template</span>
-                </button>
-              </div>
+            {/* List of Templates */}
+            <div className="space-y-4">
+              {templates.map((tpl) => {
+                const isSelectedDefault = settings.defaultTemplate === tpl.name || tpl.isDefault;
+
+                return (
+                  <div
+                    key={tpl.id}
+                    className={`border-2 rounded-2xl p-5 bg-white transition ${
+                      isSelectedDefault
+                        ? 'border-[#2563eb] shadow-xs'
+                        : 'border-[#e5e7eb] hover:border-[#cbd5e1]'
+                    }`}
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-2">
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className="font-extrabold text-sm text-[#111827]">{tpl.name}</span>
+                          <span className="bg-[#eff6ff] text-[#1e40af] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-[#bfdbfe]">
+                            {tpl.category}
+                          </span>
+                          {isSelectedDefault && (
+                            <span className="bg-[#dcfce7] text-[#15803d] text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border border-[#86efac] flex items-center gap-1">
+                              <Check className="w-3 h-3" /> Active Default
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-[#4b5563] leading-relaxed mt-1">
+                          {tpl.description}
+                        </p>
+                      </div>
+
+                      {/* Top Action Buttons */}
+                      <div className="flex items-center gap-2 flex-none pt-1">
+                        {!isSelectedDefault && (
+                          <button
+                            onClick={() => setDefaultTemplate(tpl.id)}
+                            className="px-3 py-1.5 rounded-xl border border-[#d6dbe2] bg-[#fafbfc] hover:bg-[#f3f4f6] text-xs font-bold text-[#374151] transition cursor-pointer"
+                          >
+                            Set as Default
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleOpenEditModal(tpl)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[#bfdbfe] bg-[#eff6ff] text-[#1e40af] hover:bg-[#dbeafe] text-xs font-bold transition cursor-pointer"
+                          title="Edit template details"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                          <span>Edit</span>
+                        </button>
+                        {templates.length > 1 && (
+                          <button
+                            onClick={() => deleteTemplate(tpl.id)}
+                            className="p-1.5 rounded-xl border border-[#fee2e2] bg-[#fef2f2] text-[#ef4444] hover:bg-[#fee2e2] transition cursor-pointer"
+                            title="Delete template"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Extracted Sections Preview */}
+                    <div className="mt-3 pt-3 border-t border-[#f3f4f6]">
+                      <div className="text-[11px] font-bold text-[#6b7280] mb-2 uppercase tracking-wider flex items-center gap-1.5">
+                        <Layers className="w-3 h-3 text-[#2563eb]" />
+                        <span>Extracted Report Sections ({tpl.sections.length}):</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {tpl.sections.map((section, idx) => (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center px-2.5 py-1 rounded-lg bg-[#f3f4f6] text-[#374151] text-[11px] font-medium border border-[#e5e7eb]"
+                          >
+                            {idx + 1}. {section}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Prompt Instructions preview */}
+                    {tpl.promptInstructions && (
+                      <div className="mt-3 bg-[#fafbfc] rounded-xl p-3 border border-[#f0f2f5] text-[11px] text-[#6b7280]">
+                        <span className="font-bold text-[#374151]">AI Synthesis Directives: </span>
+                        <span>{tpl.promptInstructions}</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
+
+            {/* Interactive Template Modal (Create / Edit) */}
+            {isTemplateModalOpen && (
+              <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
+                <div className="bg-white border border-[#e5e7eb] rounded-2xl p-6 w-full max-w-xl shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
+                  <div className="flex items-center justify-between border-b border-[#e5e7eb] pb-3">
+                    <h3 className="text-base font-extrabold text-[#111827] flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-[#2563eb]" />
+                      <span>{editingTemplateId ? 'Edit MOM Template' : 'Create New MOM Template'}</span>
+                    </h3>
+                    <button
+                      onClick={() => setIsTemplateModalOpen(false)}
+                      className="p-1.5 text-[#6b7280] hover:text-[#111827] rounded-lg transition cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="space-y-4 text-xs">
+                    {/* Template Name */}
+                    <div>
+                      <label className="block font-bold text-[#374151] mb-1">Template Name</label>
+                      <input
+                        type="text"
+                        value={formName}
+                        onChange={(e) => setFormName(e.target.value)}
+                        placeholder="e.g., Executive Strategy & Board Sync"
+                        className="w-full px-3.5 py-2 border border-[#d6dbe2] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2563eb]"
+                      />
+                    </div>
+
+                    {/* Category */}
+                    <div>
+                      <label className="block font-bold text-[#374151] mb-1">Category</label>
+                      <select
+                        value={formCategory}
+                        onChange={(e) => setFormCategory(e.target.value)}
+                        className="w-full px-3.5 py-2 border border-[#d6dbe2] rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#2563eb]"
+                      >
+                        <option value="General & Operations">General &amp; Operations</option>
+                        <option value="Leadership & Strategy">Leadership &amp; Strategy</option>
+                        <option value="Agile & Development">Agile &amp; Development</option>
+                        <option value="Commercial & Sales">Commercial &amp; Sales</option>
+                        <option value="Project Management">Project Management</option>
+                        <option value="Custom Workflows">Custom Workflows</option>
+                      </select>
+                    </div>
+
+                    {/* Description */}
+                    <div>
+                      <label className="block font-bold text-[#374151] mb-1">Description &amp; Purpose</label>
+                      <textarea
+                        rows={2}
+                        value={formDescription}
+                        onChange={(e) => setFormDescription(e.target.value)}
+                        placeholder="Explain what kind of meetings this template is tailored for..."
+                        className="w-full px-3.5 py-2 border border-[#d6dbe2] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2563eb] resize-none"
+                      />
+                    </div>
+
+                    {/* Sections Manager */}
+                    <div>
+                      <label className="block font-bold text-[#374151] mb-1">
+                        Report Sections (Ordered AI Output Keys)
+                      </label>
+                      <div className="flex flex-wrap gap-1.5 mb-2">
+                        {formSections.map((sec, idx) => (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#eff6ff] text-[#1e40af] border border-[#bfdbfe] font-medium"
+                          >
+                            <span>{sec}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveSection(idx)}
+                              className="text-blue-400 hover:text-red-500 transition cursor-pointer"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+
+                      {/* Add new section input */}
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={newSectionInput}
+                          onChange={(e) => setNewSectionInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleAddSection();
+                            }
+                          }}
+                          placeholder="Add new section (e.g. Risk Assessment)..."
+                          className="flex-1 px-3.5 py-1.5 border border-[#d6dbe2] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAddSection}
+                          className="px-3 py-1.5 bg-[#f3f4f6] hover:bg-[#e5e7eb] text-[#374151] font-bold rounded-xl transition cursor-pointer flex items-center gap-1"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Add</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Prompt Instructions */}
+                    <div>
+                      <label className="block font-bold text-[#374151] mb-1">AI Synthesis Instructions</label>
+                      <textarea
+                        rows={3}
+                        value={formPromptInstructions}
+                        onChange={(e) => setFormPromptInstructions(e.target.value)}
+                        placeholder="Specific instructions for how the AI should extract, format, and structure the meeting minutes..."
+                        className="w-full px-3.5 py-2 border border-[#d6dbe2] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2563eb] resize-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Modal Footer */}
+                  <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#e5e7eb]">
+                    <button
+                      type="button"
+                      onClick={() => setIsTemplateModalOpen(false)}
+                      className="px-4 py-2 rounded-xl border border-[#d6dbe2] text-[#374151] hover:bg-[#f3f4f6] font-bold text-xs transition cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSaveTemplate}
+                      className="px-4 py-2 rounded-xl bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold text-xs shadow-xs transition cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                      <span>{editingTemplateId ? 'Save Changes' : 'Create Template'}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

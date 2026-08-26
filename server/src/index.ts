@@ -6,6 +6,7 @@ import meetingsRouter from './routes/meetings.js';
 import aiRouter from './routes/ai.js';
 import settingsRouter from './routes/settings.js';
 import transcriptionRouter from './routes/transcription.js';
+import { templatesRouter } from './routes/templates.js';
 import { liveStreamService } from './services/liveStreamService.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -31,6 +32,7 @@ app.use('/api/meetings', meetingsRouter);
 app.use('/api/ai', aiRouter);
 app.use('/api/settings', settingsRouter);
 app.use('/api/transcription', transcriptionRouter);
+app.use('/api/templates', templatesRouter);
 
 // Root endpoint
 app.get('/', (req, res) => {
