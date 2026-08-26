@@ -102,4 +102,18 @@ export interface TranscriptionEngineStatus {
   totalModelsDownloaded: number;
 }
 
+export interface StorageStats {
+  audioFilesCount: number;
+  audioStorageBytes: number;
+  audioStorageFormatted: string;
+  modelsCount: number;
+  modelsStorageBytes: number;
+  modelsStorageFormatted: string;
+  dbSizeBytes: number;
+  dbSizeFormatted: string;
+  realUploadsPath: string;
+  realModelsPath: string;
+  realDataPath: string;
+}
+
 

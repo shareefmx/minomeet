@@ -32,6 +32,7 @@ import { SettingsTab } from '../../types/meeting.js';
 export const SettingsScreen: React.FC = () => {
   const {
     settings,
+    storageStats,
     settingsTab,
     setSettingsTab,
     setCurrentScreen,
@@ -746,7 +747,7 @@ export const SettingsScreen: React.FC = () => {
                   <span>Appearance &amp; Theme</span>
                 </h4>
                 <p className="text-xs text-[#6b7280] mt-0.5">
-                  Select your interface appearance preference across the Minomeet workspace.
+                  Select your interface theme. Changes take effect across all workspace screens immediately.
                 </p>
               </div>
 
@@ -800,7 +801,7 @@ export const SettingsScreen: React.FC = () => {
                     </div>
                     <div className="font-extrabold text-xs text-[#111827]">Light Theme</div>
                     <div className="text-[11px] text-[#6b7280] mt-0.5">
-                      High-contrast clean white canvases and clear typography.
+                      Clean white canvases with sharp high-contrast typography.
                     </div>
                   </div>
                 </button>
@@ -827,7 +828,7 @@ export const SettingsScreen: React.FC = () => {
                     </div>
                     <div className="font-extrabold text-xs text-[#111827]">Dark Theme</div>
                     <div className="text-[11px] text-[#6b7280] mt-0.5">
-                      Obsidian dark interface engineered for reduced eye strain.
+                      Obsidian dark interface engineered for reduced eye fatigue.
                     </div>
                   </div>
                 </button>
@@ -843,7 +844,7 @@ export const SettingsScreen: React.FC = () => {
                     <span>Desktop Notifications</span>
                   </h4>
                   <p className="text-xs text-[#6b7280] mt-0.5 max-w-lg">
-                    Receive on-device system notifications when recording starts, meetings are saved, or AI MOM summaries complete.
+                    Receive native system notifications when recording starts, meetings are saved, or AI MOM summaries finish.
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -854,16 +855,14 @@ export const SettingsScreen: React.FC = () => {
                           Notification.requestPermission().then(p => {
                             if (p === 'granted') {
                               new Notification('Minomeet AI Notifications Active', {
-                                body: 'You will receive status updates when meetings and summaries finish.',
+                                body: 'Status updates and summary alerts are enabled.',
                                 icon: '/favicon.ico'
                               });
                               showToast('Test Notification Sent', 'Check your system notification center', 'success');
                             } else {
-                              showToast('Permission needed', 'Please allow notifications in your browser settings.', 'warning');
+                              showToast('Permission required', 'Please enable notifications in your browser settings.', 'warning');
                             }
                           });
-                        } else {
-                          showToast('Notifications Active', 'Native browser notification supported', 'info');
                         }
                       }}
                       className="px-3 py-1.5 rounded-lg border border-[#bfdbfe] bg-[#eff6ff] text-[11px] font-bold text-[#1e3a8a] hover:bg-[#dbeafe] transition cursor-pointer"
@@ -887,38 +886,106 @@ export const SettingsScreen: React.FC = () => {
               </div>
             </div>
 
-            {/* Data Storage Locations & Folder Launcher */}
-            <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs">
-              <h4 className="text-sm font-bold text-[#111827] flex items-center gap-2">
-                <FolderOpen className="w-4 h-4 text-[#2563eb]" />
-                <span>Data Storage Locations</span>
-              </h4>
-              <p className="text-xs text-[#6b7280] mt-0.5">
-                Local directory where Minomeet stores your transcripts, audio recordings, and AI indices.
-              </p>
-              
-              <div className="flex items-center gap-2 my-3">
-                <div className="font-mono text-xs bg-[#f9fafb] border border-[#e5e7eb] px-3.5 py-2 rounded-xl text-[#374151] flex-1 truncate">
-                  {settings.storagePath || '/Users/you/Minomeet/recordings'}
-                </div>
-                <button
-                  onClick={openStorageFolder}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2563eb] text-white text-xs font-bold hover:bg-[#1d4ed8] shadow-xs transition cursor-pointer flex-none"
-                >
-                  <FolderOpen className="w-3.5 h-3.5" />
-                  <span>Open Folder in Finder</span>
-                </button>
+            {/* Data Storage & Disk Usage Breakdown */}
+            <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs space-y-4">
+              <div>
+                <h4 className="text-sm font-bold text-[#111827] flex items-center gap-2">
+                  <HardDrive className="w-4 h-4 text-[#2563eb]" />
+                  <span>Local Storage &amp; Disk Usage</span>
+                </h4>
+                <p className="text-xs text-[#6b7280] mt-0.5">
+                  100% on-device data isolation. Inspect and manage local directories directly in macOS Finder.
+                </p>
               </div>
 
-              <div className="mt-3 p-3.5 rounded-xl bg-[#eff4ff] border border-[#c9dcff] flex items-start gap-2.5 text-xs text-[#1e3a8a]">
+              {/* Three Local Directory Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* 1. Audio Recordings Folder */}
+                <div className="p-3.5 rounded-xl border border-[#e5e7eb] bg-[#fafbfc] flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-bold text-[#111827] flex items-center gap-1.5">
+                        <FileAudio className="w-3.5 h-3.5 text-[#2563eb]" />
+                        <span>Audio Files</span>
+                      </span>
+                      <span className="text-[11px] font-bold text-[#1e3a8a] bg-[#dbeafe] px-2 py-0.5 rounded-md">
+                        {storageStats?.audioStorageFormatted || '0 B'}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-[#6b7280]">
+                      {storageStats?.audioFilesCount || 0} recording(s) on disk
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => openStorageFolder('recordings')}
+                    className="mt-3 inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-white border border-[#d6dbe2] hover:bg-[#f3f4f6] text-xs font-bold text-[#374151] transition cursor-pointer shadow-2xs"
+                  >
+                    <FolderOpen className="w-3.5 h-3.5 text-[#2563eb]" />
+                    <span>Open Audio Folder</span>
+                  </button>
+                </div>
+
+                {/* 2. AI Model Weights Folder */}
+                <div className="p-3.5 rounded-xl border border-[#e5e7eb] bg-[#fafbfc] flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-bold text-[#111827] flex items-center gap-1.5">
+                        <Cpu className="w-3.5 h-3.5 text-[#7c3aed]" />
+                        <span>AI Models</span>
+                      </span>
+                      <span className="text-[11px] font-bold text-[#7c3aed] bg-[#f3e8ff] px-2 py-0.5 rounded-md">
+                        {storageStats?.modelsStorageFormatted || '0 B'}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-[#6b7280]">
+                      {storageStats?.modelsCount || 0} model weight(s) cached
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => openStorageFolder('models')}
+                    className="mt-3 inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-white border border-[#d6dbe2] hover:bg-[#f3f4f6] text-xs font-bold text-[#374151] transition cursor-pointer shadow-2xs"
+                  >
+                    <FolderOpen className="w-3.5 h-3.5 text-[#7c3aed]" />
+                    <span>Open Models Folder</span>
+                  </button>
+                </div>
+
+                {/* 3. Database & Transcripts Folder */}
+                <div className="p-3.5 rounded-xl border border-[#e5e7eb] bg-[#fafbfc] flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-bold text-[#111827] flex items-center gap-1.5">
+                        <FileText className="w-3.5 h-3.5 text-[#10b981]" />
+                        <span>Database</span>
+                      </span>
+                      <span className="text-[11px] font-bold text-[#15803d] bg-[#dcfce7] px-2 py-0.5 rounded-md">
+                        {storageStats?.dbSizeFormatted || '120 KB'}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-[#6b7280]">
+                      Encrypted local JSON database
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => openStorageFolder('data')}
+                    className="mt-3 inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-white border border-[#d6dbe2] hover:bg-[#f3f4f6] text-xs font-bold text-[#374151] transition cursor-pointer shadow-2xs"
+                  >
+                    <FolderOpen className="w-3.5 h-3.5 text-[#10b981]" />
+                    <span>Open Data Folder</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Privacy Notice */}
+              <div className="p-3.5 rounded-xl bg-[#eff4ff] border border-[#c9dcff] flex items-start gap-2.5 text-xs text-[#1e3a8a]">
                 <ShieldCheck className="w-4 h-4 flex-none mt-0.5 text-[#2563eb]" />
                 <p>
-                  <b>100% Privacy &bull; Local Storage Only:</b> Database files, models, and audio never leave this machine.
+                  <b>100% Privacy Guarantee:</b> Your voice recordings, transcripts, and AI models are stored strictly on this device and are never uploaded to any cloud server.
                 </p>
               </div>
             </div>
 
-            {/* Auto-delete Recordings & Purge Cleaner */}
+            {/* Auto-delete Recordings & Instant Purge Tool */}
             <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
@@ -946,12 +1013,34 @@ export const SettingsScreen: React.FC = () => {
 
                   <button
                     onClick={() => purgeOldRecordings(settings.autoDeleteRecordingsDays)}
-                    className="px-3.5 py-1.5 rounded-xl border border-[#fee2e2] bg-[#fef2f2] text-[#ef4444] hover:bg-[#fee2e2] text-xs font-bold transition cursor-pointer flex-none"
+                    className="px-3.5 py-1.5 rounded-xl border border-[#fee2e2] bg-[#fef2f2] text-[#ef4444] hover:bg-[#fee2e2] text-xs font-bold transition cursor-pointer flex-none shadow-2xs"
                   >
                     Purge Now
                   </button>
                 </div>
               </div>
+            </div>
+
+            {/* Data Backup & Export Section */}
+            <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h4 className="text-sm font-bold text-[#111827] flex items-center gap-2">
+                  <Download className="w-4 h-4 text-[#2563eb]" />
+                  <span>Backup &amp; Export Meeting History</span>
+                </h4>
+                <p className="text-xs text-[#6b7280] mt-0.5">
+                  Download a complete JSON archive of all your recorded meetings, dialogue lines, and AI summaries.
+                </p>
+              </div>
+
+              <a
+                href="/api/settings/export-data"
+                download={`minomeet_backup_${new Date().toISOString().slice(0, 10)}.json`}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-[#d6dbe2] hover:bg-[#f9fafb] text-xs font-bold text-[#374151] shadow-2xs transition cursor-pointer flex-none"
+              >
+                <Download className="w-3.5 h-3.5 text-[#2563eb]" />
+                <span>Export JSON Backup</span>
+              </a>
             </div>
           </div>
         )}

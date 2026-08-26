@@ -1,4 +1,4 @@
-import { Meeting, AppSettings, MOMSummary, TranscriptLine, TranscriptionModel, TranscriptionEngineStatus } from '../types/meeting.js';
+import { Meeting, AppSettings, MOMSummary, TranscriptLine, TranscriptionModel, TranscriptionEngineStatus, StorageStats } from '../types/meeting.js';
 
 const API_BASE = '/api';
 
@@ -122,10 +122,16 @@ export const api = {
   },
 
   // Settings
-  async getSettings(): Promise<AppSettings> {
+  async getSettings(): Promise<{ settings: AppSettings; storageStats?: StorageStats }> {
     const res = await fetch(`${API_BASE}/settings`);
     const data = await res.json();
-    return data.settings;
+    return { settings: data.settings, storageStats: data.storageStats };
+  },
+
+  async getStorageStats(): Promise<StorageStats> {
+    const res = await fetch(`${API_BASE}/settings/stats`);
+    const data = await res.json();
+    return data.storageStats;
   },
 
   async updateSettings(updates: Partial<AppSettings>): Promise<AppSettings> {
@@ -138,18 +144,18 @@ export const api = {
     return data.settings;
   },
 
-  async openFolder(customPath?: string): Promise<{ success: boolean; path: string }> {
+  async openFolder(targetFolder?: string): Promise<{ success: boolean; path: string }> {
     const res = await fetch(`${API_BASE}/settings/open-folder`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path: customPath })
+      body: JSON.stringify({ folder: targetFolder, path: targetFolder })
     });
     const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Failed to open directory');
     return data;
   },
 
-  async purgeRecordings(days: number): Promise<{ success: boolean; deletedCount: number; message: string }> {
+  async purgeRecordings(days: number): Promise<{ success: boolean; deletedCount: number; freedFormatted: string; message: string }> {
     const res = await fetch(`${API_BASE}/settings/purge-recordings`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

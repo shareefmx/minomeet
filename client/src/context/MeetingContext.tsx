@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Meeting, AppSettings, ScreenType, SettingsTab, ToastMessage, TranscriptLine, MOMSummary, TranscriptionModel, TranscriptionEngineStatus } from '../types/meeting.js';
+import { Meeting, AppSettings, ScreenType, SettingsTab, ToastMessage, TranscriptLine, MOMSummary, TranscriptionModel, TranscriptionEngineStatus, StorageStats } from '../types/meeting.js';
 import { api } from '../services/api.js';
 import { speechService } from '../services/speech.js';
 
@@ -16,6 +16,7 @@ interface MeetingContextType {
   audioSource: 'mic' | 'system' | 'mixed';
   isGeneratingSummary: boolean;
   settings: AppSettings | null;
+  storageStats: StorageStats | null;
   toasts: ToastMessage[];
   meetingToDelete: Meeting | null;
   meetingToRename: Meeting | null;
@@ -47,8 +48,9 @@ interface MeetingContextType {
   deleteMeeting: (id: string) => Promise<void>;
   openDeleteModal: (meeting: Meeting) => void;
   closeDeleteModal: () => void;
-  openStorageFolder: () => Promise<void>;
+  openStorageFolder: (target?: string) => Promise<void>;
   purgeOldRecordings: (days: number) => Promise<void>;
+  refreshStorageStats: () => Promise<void>;
   confirmDeleteMeeting: () => Promise<void>;
   openRenameModal: (meeting: Meeting) => void;
   closeRenameModal: () => void;
@@ -82,6 +84,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [audioSource, setAudioSource] = useState<'mic' | 'system' | 'mixed'>('mixed');
   const [isGeneratingSummary, setIsGeneratingSummary] = useState<boolean>(false);
   const [settings, setSettings] = useState<AppSettings | null>(null);
+  const [storageStats, setStorageStats] = useState<StorageStats | null>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [timerInterval, setTimerInterval] = useState<any>(null);
 
@@ -156,10 +159,22 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const loadSettings = async () => {
     try {
-      const s = await api.getSettings();
-      setSettings(s);
+      const res = await api.getSettings();
+      setSettings(res.settings);
+      if (res.storageStats) {
+        setStorageStats(res.storageStats);
+      }
     } catch (err) {
       console.error('Failed to load settings:', err);
+    }
+  };
+
+  const refreshStorageStats = async () => {
+    try {
+      const stats = await api.getStorageStats();
+      setStorageStats(stats);
+    } catch (err) {
+      console.error('Failed to load storage stats:', err);
     }
   };
 
@@ -331,7 +346,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
     } else {
       showToast('Microphone Active', 'Capturing local voice', 'info');
     }
-    sendDesktopNotification('Minomeet Recording Active', 'Live meeting audio transcription in progress…');
+    sendDesktopNotification('Minomeet Recording Active', 'Live speech transcription in progress…');
   };
 
   const stopRecording = async () => {
@@ -364,6 +379,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
       setCurrentScreen('notes');
       showToast('Recording saved successfully!', `${lines.length} transcript segments captured.`, 'success');
       sendDesktopNotification('Meeting Saved Successfully', `Recorded ${duration} with ${lines.length} transcript lines.`);
+      await refreshStorageStats();
     } catch (err: any) {
       showToast('Failed to save meeting', err.message, 'error');
     }
@@ -506,10 +522,10 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
-  const openStorageFolder = async () => {
+  const openStorageFolder = async (target?: string) => {
     try {
-      const res = await api.openFolder(settings?.storagePath);
-      showToast('Storage Folder Opened', res.path, 'success');
+      const res = await api.openFolder(target || settings?.storagePath);
+      showToast('Folder Opened in Finder', res.path, 'success');
     } catch (err: any) {
       showToast('Could not open folder', err.message, 'error');
     }
@@ -518,7 +534,8 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
   const purgeOldRecordings = async (days: number) => {
     try {
       const res = await api.purgeRecordings(days);
-      showToast('Storage Optimized', `${res.deletedCount} old audio file(s) purged.`, 'info');
+      showToast('Storage Optimized', res.message, 'info');
+      await refreshStorageStats();
     } catch (err: any) {
       showToast('Purge Failed', err.message, 'error');
     }
@@ -536,6 +553,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
       const updated = await api.updateSettings(updates);
       setSettings(updated);
       showToast('Settings updated', 'Configuration saved.', 'success');
+      await refreshStorageStats();
     } catch (err: any) {
       showToast('Failed to update settings', err.message, 'error');
     }
@@ -556,6 +574,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
         audioSource,
         isGeneratingSummary,
         settings,
+        storageStats,
         toasts,
         meetingToDelete,
         meetingToRename,
@@ -589,6 +608,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
         updateSettings,
         openStorageFolder,
         purgeOldRecordings,
+        refreshStorageStats,
         refreshMeetings,
         refreshTranscriptionModels,
         downloadTranscriptionModel,

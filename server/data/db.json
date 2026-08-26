@@ -6679,6 +6679,7 @@
     "selectedModel": "Nimbus 1B (Fast)",
     "betaDiarization": true,
     "betaAskMeetings": true,
-    "betaAutoFollowUp": true
+    "betaAutoFollowUp": true,
+    "theme": "dark"
   }
 }

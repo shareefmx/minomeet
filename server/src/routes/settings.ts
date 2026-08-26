@@ -8,14 +8,99 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const UPLOADS_DIR = path.join(__dirname, '../../uploads');
+const DATA_DIR = path.join(__dirname, '../../data');
+const MODELS_DIR = path.join(__dirname, '../../models');
 
 const router = Router();
 
-// GET /api/settings - get app settings
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+function getStorageInfo() {
+  let audioFilesCount = 0;
+  let audioStorageBytes = 0;
+  let modelsCount = 0;
+  let modelsStorageBytes = 0;
+  let dbSizeBytes = 0;
+
+  try {
+    if (!fs.existsSync(UPLOADS_DIR)) {
+      fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+    }
+    const files = fs.readdirSync(UPLOADS_DIR);
+    for (const f of files) {
+      if (f.startsWith('.')) continue;
+      const stats = fs.statSync(path.join(UPLOADS_DIR, f));
+      if (stats.isFile()) {
+        audioFilesCount++;
+        audioStorageBytes += stats.size;
+      }
+    }
+  } catch (e) {}
+
+  try {
+    if (fs.existsSync(MODELS_DIR)) {
+      const files = fs.readdirSync(MODELS_DIR);
+      for (const f of files) {
+        if (f.startsWith('.')) continue;
+        const stats = fs.statSync(path.join(MODELS_DIR, f));
+        if (stats.isFile()) {
+          modelsCount++;
+          modelsStorageBytes += stats.size;
+        }
+      }
+    }
+  } catch (e) {}
+
+  try {
+    const dbPath = path.join(DATA_DIR, 'db.json');
+    if (fs.existsSync(dbPath)) {
+      dbSizeBytes = fs.statSync(dbPath).size;
+    }
+  } catch (e) {}
+
+  return {
+    audioFilesCount,
+    audioStorageBytes,
+    audioStorageFormatted: formatBytes(audioStorageBytes),
+    modelsCount,
+    modelsStorageBytes,
+    modelsStorageFormatted: formatBytes(modelsStorageBytes),
+    dbSizeBytes,
+    dbSizeFormatted: formatBytes(dbSizeBytes),
+    realUploadsPath: UPLOADS_DIR,
+    realModelsPath: MODELS_DIR,
+    realDataPath: DATA_DIR
+  };
+}
+
+// GET /api/settings - get app settings and storage statistics
 router.get('/', (_req: Request, res: Response) => {
   try {
     const settings = storageService.getSettings();
-    res.json({ success: true, settings });
+    const storageStats = getStorageInfo();
+    
+    // Automatically keep storagePath in sync with the real upload directory
+    if (!settings.storagePath || settings.storagePath.includes('/Users/you/')) {
+      settings.storagePath = storageStats.realUploadsPath;
+    }
+
+    res.json({ success: true, settings, storageStats });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/settings/stats - get live storage stats
+router.get('/stats', (_req: Request, res: Response) => {
+  try {
+    const storageStats = getStorageInfo();
+    res.json({ success: true, storageStats });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -34,16 +119,19 @@ router.put('/', (req: Request, res: Response) => {
 // POST /api/settings/open-folder - opens the local storage directory in OS file manager (Finder / Explorer)
 router.post('/open-folder', (req: Request, res: Response) => {
   try {
-    const customPath = req.body.path;
+    const requested = req.body.folder || req.body.path;
     let targetPath = UPLOADS_DIR;
 
-    if (customPath && typeof customPath === 'string' && fs.existsSync(customPath)) {
-      targetPath = customPath;
-    } else {
-      if (!fs.existsSync(UPLOADS_DIR)) {
-        fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-      }
-      targetPath = UPLOADS_DIR;
+    if (requested === 'models') {
+      targetPath = MODELS_DIR;
+    } else if (requested === 'data') {
+      targetPath = DATA_DIR;
+    } else if (requested && typeof requested === 'string' && fs.existsSync(requested)) {
+      targetPath = requested;
+    }
+
+    if (!fs.existsSync(targetPath)) {
+      fs.mkdirSync(targetPath, { recursive: true });
     }
 
     const platform = process.platform;
@@ -60,17 +148,18 @@ router.post('/open-folder', (req: Request, res: Response) => {
       }
     });
 
-    res.json({ success: true, path: targetPath });
+    res.json({ success: true, path: targetPath, message: `Opened ${targetPath}` });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// POST /api/settings/purge-recordings - purges audio files older than specified days
+// POST /api/settings/purge-recordings - purges raw audio files older than specified days
 router.post('/purge-recordings', (req: Request, res: Response) => {
   try {
     const days = typeof req.body.days === 'number' ? req.body.days : 30;
     let deletedCount = 0;
+    let freedBytes = 0;
 
     if (fs.existsSync(UPLOADS_DIR)) {
       const files = fs.readdirSync(UPLOADS_DIR);
@@ -78,11 +167,12 @@ router.post('/purge-recordings', (req: Request, res: Response) => {
       const maxAgeMs = days * 24 * 60 * 60 * 1000;
 
       for (const file of files) {
-        if (file.startsWith('.')) continue; // protect .gitkeep
+        if (file.startsWith('.')) continue; // preserve .gitkeep
         const filePath = path.join(UPLOADS_DIR, file);
         try {
           const stats = fs.statSync(filePath);
           if (days === 0 || (now - stats.mtimeMs > maxAgeMs)) {
+            freedBytes += stats.size;
             fs.unlinkSync(filePath);
             deletedCount++;
           }
@@ -90,11 +180,35 @@ router.post('/purge-recordings', (req: Request, res: Response) => {
       }
     }
 
-    res.json({ success: true, deletedCount, message: `Purged ${deletedCount} recording(s) older than ${days} days.` });
+    res.json({
+      success: true,
+      deletedCount,
+      freedBytes,
+      freedFormatted: formatBytes(freedBytes),
+      message: `Cleaned ${deletedCount} audio recording(s), reclaiming ${formatBytes(freedBytes)}.`
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/settings/export-data - exports meeting history and settings as JSON
+router.get('/export-data', (_req: Request, res: Response) => {
+  try {
+    const meetings = storageService.getMeetings();
+    const settings = storageService.getSettings();
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename=minomeet_backup_${new Date().toISOString().slice(0, 10)}.json`);
+    res.json({
+      exportedAt: new Date().toISOString(),
+      app: 'Minomeet AI Meeting Assistant',
+      totalMeetings: meetings.length,
+      settings,
+      meetings
+    });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
 export default router;
-
