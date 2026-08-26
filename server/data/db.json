@@ -1,6 +1,110 @@
 {
   "meetings": [
     {
+      "id": "meeting-11c27217",
+      "title": "Quarterly Planning Sync",
+      "createdAt": "2026-08-26T06:43:51.249Z",
+      "updatedAt": "2026-08-26T06:43:51.249Z",
+      "duration": "01:05",
+      "transcript": [
+        {
+          "id": "69d78551-cb93-4469-8ba4-5f3940b6398e",
+          "time": "00:08",
+          "speaker": "Facilitator",
+          "text": "Starting our recorded session regarding \"Quarterly Planning Sync\". Let's go over the core agenda items."
+        },
+        {
+          "id": "0d4fd533-ade1-4625-830e-c91bfe3369ce",
+          "time": "00:18",
+          "speaker": "Lead Architect",
+          "text": "The latest release build passed integration tests with no major regression warnings."
+        },
+        {
+          "id": "5f5e93cc-0b45-4981-ac65-fbb5f5ace12d",
+          "time": "00:32",
+          "speaker": "Product Lead",
+          "text": "Great. Let’s make sure customer telemetry and alerting thresholds are verified before we greenlight the public rollout."
+        },
+        {
+          "id": "ffa08a8b-0076-48a5-bcc9-f20e45e1a283",
+          "time": "00:46",
+          "speaker": "Lead Architect",
+          "text": "I will prepare the telemetry dashboards and email the staging link to the team by tomorrow morning."
+        },
+        {
+          "id": "3dc64db2-750f-4f3a-965a-68e27caefda3",
+          "time": "00:58",
+          "speaker": "Facilitator",
+          "text": "Excellent. Let’s reconvene on Thursday for the final sign-off."
+        }
+      ],
+      "summary": {
+        "title": "Quarterly Planning Sync",
+        "date": "Aug 26, 2026",
+        "attendees": [
+          "Facilitator (Participant)",
+          "Lead Architect (Participant)",
+          "Product Lead (Participant)"
+        ],
+        "summary": "The meeting focused on key project deliverables and strategic alignments. Topics discussed included starting our recorded session regarding \"quarterly planning sync\". let's go over the core agenda items.. The team reviewed current status and established concrete next steps.",
+        "keyDecisions": [
+          "Agreed on milestones outlined in Starting our recorded session regarding \"Quarterly Planning ..."
+        ],
+        "actionItems": [
+          {
+            "id": "8255c11b-e120-40ad-8f68-7f0e946f6689",
+            "owner": "Facilitator",
+            "task": "Starting our recorded session regarding \"Quarterly Planning Sync\". Let's go over the core agenda items.",
+            "due": "By Friday",
+            "notes": "Mentioned at [00:08]",
+            "completed": false
+          },
+          {
+            "id": "55e08449-d82e-411a-b45e-b33756dcb155",
+            "owner": "Product Lead",
+            "task": "Great. Let’s make sure customer telemetry and alerting thresholds are verified before we greenlight the public rollout.",
+            "due": "By Friday",
+            "notes": "Mentioned at [00:32]",
+            "completed": false
+          },
+          {
+            "id": "9b1e64fa-2005-4ebf-81db-6667531d9acb",
+            "owner": "Lead Architect",
+            "task": "I will prepare the telemetry dashboards and email the staging link to the team by tomorrow morning.",
+            "due": "By Friday",
+            "notes": "Mentioned at [00:46]",
+            "completed": false
+          },
+          {
+            "id": "c9b6b74b-8842-4394-8029-f1df05fd5e19",
+            "owner": "Facilitator",
+            "task": "Excellent. Let’s reconvene on Thursday for the final sign-off.",
+            "due": "By Friday",
+            "notes": "Mentioned at [00:58]",
+            "completed": false
+          }
+        ],
+        "discussionHighlights": [
+          "Facilitator noted: Starting our recorded session regarding \"Quarterly Planning Sync\". Let's go over the core agenda items.",
+          "Lead Architect noted: The latest release build passed integration tests with no major regression warnings.",
+          "Product Lead noted: Great. Let’s make sure customer telemetry and alerting thresholds are verified before we greenlight the public rollout.",
+          "Lead Architect noted: I will prepare the telemetry dashboards and email the staging link to the team by tomorrow morning."
+        ],
+        "nextSteps": [
+          "Facilitator to finish: Starting our recorded session regarding \"Quarterly Planning Sync\". Let's go over the core agenda items. (By Friday)",
+          "Product Lead to finish: Great. Let’s make sure customer telemetry and alerting thresholds are verified before we greenlight the public rollout. (By Friday)"
+        ],
+        "template": "Standard Meeting Notes",
+        "language": "English",
+        "modelUsed": "Nimbus 4B (High Quality)",
+        "generatedAt": "2026-08-26T06:43:51.249Z"
+      },
+      "tags": [
+        "Imported",
+        "Audio"
+      ]
+    },
+    {
       "id": "meeting-341d2487",
       "title": "Product Marketing Meeting (weekly) 2021 06 28",
       "createdAt": "2026-08-26T06:00:36.023Z",
@@ -346,7 +450,7 @@
     "autoDeleteRecordingsDays": 30,
     "saveAudio": true,
     "audioFormat": "MP4",
-    "transcriptionEngine": "Nimbus Whisper · Local On-Device",
+    "transcriptionEngine": "Whisper Large-v3 Turbo (Recommended)",
     "liveCaptions": true,
     "speakerLabels": true,
     "autoSummary": true,

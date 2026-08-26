@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Meeting, AppSettings, ScreenType, SettingsTab, ToastMessage, TranscriptLine, MOMSummary } from '../types/meeting.js';
+import { Meeting, AppSettings, ScreenType, SettingsTab, ToastMessage, TranscriptLine, MOMSummary, TranscriptionModel, TranscriptionEngineStatus } from '../types/meeting.js';
 import { api } from '../services/api.js';
 import { speechService } from '../services/speech.js';
 
@@ -18,6 +18,9 @@ interface MeetingContextType {
   toasts: ToastMessage[];
   meetingToDelete: Meeting | null;
   meetingToRename: Meeting | null;
+  transcriptionModels: TranscriptionModel[];
+  activeTranscriptionModel: TranscriptionModel | null;
+  engineStatus: TranscriptionEngineStatus | null;
   modals: {
     import: boolean;
     model: boolean;
@@ -54,6 +57,11 @@ interface MeetingContextType {
   removeToast: (id: string) => void;
   updateSettings: (updates: Partial<AppSettings>) => Promise<void>;
   refreshMeetings: () => Promise<void>;
+  refreshTranscriptionModels: () => Promise<void>;
+  downloadTranscriptionModel: (id: string) => Promise<void>;
+  deleteTranscriptionModel: (id: string) => Promise<void>;
+  selectTranscriptionModel: (id: string) => Promise<void>;
+  installPythonPackages: () => Promise<void>;
 }
 
 const MeetingContext = createContext<MeetingContextType | undefined>(undefined);
@@ -73,6 +81,10 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [timerInterval, setTimerInterval] = useState<any>(null);
 
+  const [transcriptionModels, setTranscriptionModels] = useState<TranscriptionModel[]>([]);
+  const [activeTranscriptionModel, setActiveTranscriptionModel] = useState<TranscriptionModel | null>(null);
+  const [engineStatus, setEngineStatus] = useState<TranscriptionEngineStatus | null>(null);
+
   const [meetingToDelete, setMeetingToDelete] = useState<Meeting | null>(null);
   const [meetingToRename, setMeetingToRename] = useState<Meeting | null>(null);
 
@@ -91,6 +103,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
   useEffect(() => {
     refreshMeetings();
     loadSettings();
+    refreshTranscriptionModels();
   }, []);
 
   const refreshMeetings = async () => {
@@ -113,6 +126,80 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
       console.error('Failed to load settings:', err);
     }
   };
+
+  const refreshTranscriptionModels = async () => {
+    try {
+      const { models, activeModel } = await api.getTranscriptionModels();
+      setTranscriptionModels(models);
+      setActiveTranscriptionModel(activeModel);
+
+      const status = await api.getTranscriptionEngineStatus();
+      setEngineStatus(status);
+    } catch (err) {
+      console.error('Failed to load transcription models:', err);
+    }
+  };
+
+  const downloadTranscriptionModel = async (id: string) => {
+    try {
+      showToast('Download started', `Downloading ${id} weights to local cache…`, 'info');
+      setTranscriptionModels(prev =>
+        prev.map(m => m.id === id ? { ...m, status: 'downloading', downloadProgress: 15 } : m)
+      );
+
+      const updated = await api.downloadTranscriptionModel(id);
+      setTranscriptionModels(prev =>
+        prev.map(m => m.id === id ? updated : m)
+      );
+      showToast('Model Ready!', `${updated.name} downloaded and ready for offline use.`, 'success');
+      await refreshTranscriptionModels();
+    } catch (err: any) {
+      showToast('Download failed', err.message, 'error');
+      setTranscriptionModels(prev =>
+        prev.map(m => m.id === id ? { ...m, status: 'not_downloaded', downloadProgress: 0 } : m)
+      );
+    }
+  };
+
+  const deleteTranscriptionModel = async (id: string) => {
+    try {
+      await api.deleteTranscriptionModel(id);
+      showToast('Model cache cleared', 'Weights removed from local disk.', 'info');
+      await refreshTranscriptionModels();
+    } catch (err: any) {
+      showToast('Failed to delete model', err.message, 'error');
+    }
+  };
+
+  const selectTranscriptionModel = async (id: string) => {
+    try {
+      const active = await api.selectTranscriptionModel(id);
+      setActiveTranscriptionModel(active);
+      if (settings) {
+        setSettings({ ...settings, transcriptionEngine: active.name });
+      }
+      showToast('Transcription Engine Selected', active.name, 'success');
+      await refreshTranscriptionModels();
+    } catch (err: any) {
+      showToast('Failed to select model', err.message, 'error');
+    }
+  };
+
+  const installPythonPackages = async () => {
+    try {
+      showToast('Installing AI Packages…', 'Installing openai-whisper, torch, torchaudio, and ffmpeg-python', 'info');
+      const res = await api.installPythonPackages();
+      if (res.success) {
+        showToast('Packages Installed Successfully!', 'OpenAI Whisper & PyTorch ready.', 'success');
+      } else {
+        showToast('Installation Note', res.output || 'Check terminal output', 'info');
+      }
+      await refreshTranscriptionModels();
+    } catch (err: any) {
+      showToast('Installation error', err.message, 'error');
+    }
+  };
+
 
   const showToast = (title: string, subtitle = '', type: ToastMessage['type'] = 'success') => {
     const id = 'toast-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
@@ -354,6 +441,9 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
         toasts,
         meetingToDelete,
         meetingToRename,
+        transcriptionModels,
+        activeTranscriptionModel,
+        engineStatus,
         modals,
         setCurrentScreen,
         setSettingsTab,
@@ -379,7 +469,12 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
         showToast,
         removeToast,
         updateSettings,
-        refreshMeetings
+        refreshMeetings,
+        refreshTranscriptionModels,
+        downloadTranscriptionModel,
+        deleteTranscriptionModel,
+        selectTranscriptionModel,
+        installPythonPackages
       }}
     >
       {children}

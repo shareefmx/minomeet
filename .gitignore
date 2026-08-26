@@ -23,6 +23,8 @@ uploads/*
 recordings/
 server/uploads/*
 !server/uploads/.gitkeep
+server/models/*
+!server/models/.gitkeep
 
 # System & Editor files
 .DS_Store

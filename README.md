@@ -180,203 +180,48 @@ Minomeet adopts a clean client-server architecture with proxy routing for develo
 ### Backend (`server/`)
 - **Node.js & Express**: High-performance RESTful API service.
 - **TypeScript & TSX**: Type-safe development with live reload.
+- **Python 3 & OpenAI Whisper**: On-device speech recognition engine (`whisper.load_model('turbo')`, `large-v3`, `medium`, `small`, `base`, `tiny`).
+- **NVIDIA / Fast STT**: Parakeet TDT Lightning (sub-50ms streaming latency architecture).
 - **Multer**: Multi-part audio file upload handling.
 - **Local File Database (`data/db.json`)**: Lightweight, zero-setup local persistence.
 - **CORS & Proxy Middleware**: Seamless local and containerized communication.
 
 ---
 
-## Project Structure
+## Transcription Model Catalog
 
-```text
-minomeet/
-├── client/                     # Frontend React + TypeScript application
-│   ├── public/                 # Static assets
-│   ├── src/
-│   │   ├── components/         # Modals, Titlebar, Sidebar, NotesScreen, RecordingScreen
-│   │   ├── context/            # MeetingContext state management
-│   │   ├── services/           # SpeechService, ApiService, ExportService
-│   │   ├── types/              # TypeScript models & schemas
-│   │   ├── App.tsx             # Root application component
-│   │   ├── main.tsx            # React DOM entry point
-│   │   └── index.css           # Tailwind CSS directives
-│   ├── index.html
-│   ├── package.json
-│   ├── tailwind.config.js
-│   ├── tsconfig.json
-│   └── vite.config.ts
-│
-├── server/                     # Backend Node.js + Express API
-│   ├── data/                   # JSON storage persistence (db.json)
-│   ├── uploads/                # Imported audio recordings
-│   ├── src/
-│   │   ├── data/               # Seed & default meeting records
-│   │   ├── routes/             # Express route controllers (meetings, ai, settings)
-│   │   ├── services/           # AIService, AudioService, StorageService
-│   │   ├── types/              # Backend TypeScript definitions
-│   │   └── index.ts            # Server entry point & route definitions
-│   ├── package.json
-│   └── tsconfig.json
-│
-├── .env.example                # Example environment variables
-├── .gitignore
-├── generate_git_history.py     # Git development history generator
-├── package.json                # Monorepo root scripts
-└── README.md
-```
+Minomeet includes an offline model manager supporting both high-accuracy transformer models and low-latency streaming models:
+
+| Model | Family | Size | Decoding Speed | Recommended Use Case |
+|---|---|---|---|---|
+| **Whisper Large-v3 Turbo** | Whisper | 1.5 GB | 8x Real-Time | ★ **Recommended Default** — Top accuracy with ultra-fast inference |
+| **Whisper Large-v3** | Whisper | 3.1 GB | 2x Real-Time | Studio-grade accuracy across 99+ languages |
+| **Whisper Large-v3 Compressed (INT8)** | Whisper | 1.5 GB | 5x Real-Time | Quantized weights for memory-constrained machines |
+| **Whisper Medium** | Whisper | 1.5 GB | 4x Real-Time | Balanced multi-speaker meetings and conferences |
+| **Whisper Small** | Whisper | 461 MB | 6x Real-Time | Quick standups and standard 1-on-1 calls |
+| **Whisper Base** | Whisper | 142 MB | 10x Real-Time | Lightweight, low memory footprint |
+| **Whisper Tiny** | Whisper | 75 MB | 16x Real-Time | Ultra-lightweight rapid transcription |
+| **Parakeet TDT 1.1B Lightning** | Parakeet | 620 MB | Real-Time (<50ms) | ★ **Recommended Streaming** — Instant live captions with sub-50ms latency |
+| **Parakeet Compact 0.6B** | Parakeet | 290 MB | Real-Time (<30ms) | Ultra-low latency for constrained hardware |
 
 ---
 
-## Requirements
+## Python AI Engine & Setup
 
-Before running Minomeet, make sure you have:
-
-- **Node.js** (v18.0.0 or higher recommended)
-- **npm** (v9.0.0 or higher)
-- A modern web browser (Google Chrome, Microsoft Edge, Brave, or Safari with Web Speech API support)
-- Microphone & Screen Recording permissions enabled in your browser/OS
-
-Check your environment:
+Minomeet can utilize local Python-based Whisper for offline audio file transcription:
 
 ```bash
-node --version
-npm --version
+cd server
+pip3 install -r requirements.txt
 ```
 
----
-
-## Installation & Setup
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/shareefmx/minomeet.git
-   cd minomeet
-   ```
-
-2. **Install all dependencies:**
-   ```bash
-   npm run install:all
-   ```
-   *(This installs dependencies for the root orchestrator, `server`, and `client`.)*
-
----
-
-## Environment Configuration
-
-Create a `.env` file in the `server` directory (or use default configuration):
-
-```bash
-cp server/.env.example server/.env
-```
-
-Example `server/.env`:
-
-```env
-PORT=5001
-NODE_ENV=development
-
-# Optional AI API keys (Local engine is enabled by default)
-OPENAI_API_KEY=
-GEMINI_API_KEY=
-ANTHROPIC_API_KEY=
-OLLAMA_ENDPOINT=http://localhost:11434
-
-STORAGE_PATH=./data
-UPLOADS_PATH=./uploads
-AUTO_DELETE_RECORDINGS_DAYS=30
-```
-
----
-
-## Running the Application
-
-### 🚀 Start Development Servers (Recommended)
-
-Run both the backend API server and frontend client concurrently:
-
-```bash
-npm run dev
-```
-
-- **Frontend Application**: [http://localhost:5173](http://localhost:5173)
-- **Backend API & Dashboard**: [http://localhost:5001](http://localhost:5001)
-- **Backend Health Check**: [http://localhost:5001/api/health](http://localhost:5001/api/health)
-
----
-
-### Individual Service Commands
-
-| Command | Description |
-|---|---|
-| `npm run server` | Start the backend Express server with `tsx watch` |
-| `npm run client` | Start the frontend Vite dev server |
-| `npm run build` | Compile TypeScript and build production assets for client & server |
-| `npm run install:all` | Install all dependencies across root, server, and client |
-
----
-
-## Meeting Recording Flow
-
-```text
-1. Select Source   ➔ [Microphone] or [System Audio / Tab] or [Mixed Audio]
-2. Permissions     ➔ Grant browser media stream access
-3. Live Recording  ➔ Waveform visualizer + live speech transcription
-4. Conclude        ➔ Click "Stop Recording"
-5. Auto-Process    ➔ Generates title, timestamps, and structured MOM
-```
-
----
-
-## AI MOM Generation & Intelligence
-
-Minomeet transforms raw meeting transcripts into structured meeting notes:
-
-```text
-Raw Audio Transcript
-        │
-        ▼
-   Clean & Segment
-        │
-        ├────────────────────────┬────────────────────────┐
-        ▼                        ▼                        ▼
-Executive Summary          Key Decisions            Action Items
-(Context & Objectives)   (Agreements & Roadmaps)  (Owner, Due Date, Task)
-```
-
-### Supported Templates
-- **Standard Meeting Notes**: General purpose business & team syncs.
-- **Daily Standup**: Quick alignment, blockers, and today's commitments.
-- **Project Sync / Status Update**: Milestone reviews, risks, and technical blockers.
-- **Retrospective (Agile)**: What went well, what can improve, and action items.
-- **Client / Sales Meeting**: Client requirements, timeline milestones, and delivery credentials.
-- **Executive Board Brief**: High-level strategic overview and board decisions.
-
----
-
-## MOM Structure
-
-Generated meeting documents include:
-
-| Section | Content Description |
-|---|---|
-| **Header & Meta** | Meeting title, date, duration, tags, and attendee list |
-| **Executive Summary** | Concise paragraph capturing the core objective and outcomes |
-| **Key Decisions** | Clear bulleted list of finalized technical and business agreements |
-| **Action Items Matrix** | Table containing: **Owner**, **Task Description**, **Due Date**, **Context Notes**, and **Checkbox Status** |
-| **Discussion Highlights** | Timestamped dialogue cues and important speaker remarks |
-| **Next Steps** | Immediate follow-up priorities |
-
----
-
-## MOM Editor & Exporting
-
-- **Real-Time In-Place Editing**: Click any section (Summary, Decisions, Action Items) to edit text inline.
-- **Interactive Checklists**: Toggle action item completion status; updates persist automatically to the local database.
-- **Export Options**:
-  - 📄 **Markdown (`.md`)**: Download formatted markdown for GitHub, Notion, or Obsidian.
-  - 📑 **Plain Text (`.txt`)**: Clean text format for simple sharing.
-  - 🖨️ **Printable PDF**: Formatted print preview with clean styling for distribution.
-- **Follow-Up Email Drafts**: Select a tone (*Professional*, *Concise*, *Action-Oriented*) to instantly generate a ready-to-send email.
+### Python Dependencies (`server/requirements.txt`):
+- `openai-whisper>=20231117`
+- `torch>=2.0.0`
+- `torchaudio>=2.0.0`
+- `numpy>=1.24.0`
+- `soundfile>=0.12.1`
+- `ffmpeg-python>=0.2.0`
 
 ---
 
@@ -392,7 +237,18 @@ GET    /api/meetings/:id     # Retrieve single meeting details & transcript
 POST   /api/meetings         # Create a new meeting
 PUT    /api/meetings/:id     # Update meeting details, summary, or action items
 DELETE /api/meetings/:id     # Delete meeting permanently
-POST   /api/meetings/import  # Upload audio file for transcription
+POST   /api/meetings/import  # Upload audio file & transcribe with selected Whisper model
+```
+
+### 🎙️ Transcription & Model Management API
+
+```http
+GET    /api/transcription/models             # List all available Whisper & Parakeet models
+POST   /api/transcription/models/:id/download # Download model weights to local disk
+DELETE /api/transcription/models/:id          # Delete / offload local model weights
+POST   /api/transcription/models/:id/select   # Set active transcription engine
+GET    /api/transcription/status             # Check Python, Whisper, PyTorch & FFmpeg status
+POST   /api/transcription/install-packages   # 1-Click pip package installer
 ```
 
 ### 🧠 AI & Intelligence API

@@ -95,3 +95,33 @@ export interface FollowUpEmailResponse {
   body: string;
 }
 
+export type ModelFamily = 'whisper' | 'parakeet';
+
+export interface TranscriptionModel {
+  id: string;
+  name: string;
+  family: ModelFamily;
+  description: string;
+  sizeBytes: number;
+  sizeFormatted: string;
+  ramRequired: string;
+  speedRating: string;
+  accuracyScore: number;
+  recommended?: boolean;
+  status: 'not_downloaded' | 'downloading' | 'downloaded';
+  downloadProgress?: number;
+  downloadedAt?: string;
+  localPath?: string;
+}
+
+export interface TranscriptionEngineStatus {
+  pythonInstalled: boolean;
+  pythonVersion?: string;
+  whisperInstalled: boolean;
+  torchInstalled: boolean;
+  ffmpegInstalled: boolean;
+  activeModelId: string;
+  modelsDir: string;
+  totalModelsDownloaded: number;
+}
+

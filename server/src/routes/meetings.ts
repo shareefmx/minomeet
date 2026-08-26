@@ -142,16 +142,31 @@ router.post('/import', upload.single('audio'), async (req: Request, res: Respons
     const file = req.file;
     const originalName = file ? file.originalname : (req.body.fileName || 'imported_audio.mp3');
     const autoSummarize = req.body.autoSummarize === 'true' || req.body.autoSummarize === true;
+    const model = req.body.model as string | undefined;
+    const language = req.body.language as string | undefined;
+    const template = req.body.template as string | undefined;
 
-    // Transcribe audio
-    const transcript = await audioService.transcribeAudioFile(originalName);
+    // Transcribe audio using local Whisper / Parakeet model
+    const transcript = await audioService.transcribeAudioFile(
+      file ? file.path : undefined,
+      originalName,
+      model,
+      language
+    );
 
     const title = originalName.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ') || 'Imported Meeting Recording';
     const meetingId = 'meeting-' + uuidv4().slice(0, 8);
 
     let summary = undefined;
     if (autoSummarize) {
-      summary = await aiService.generateMOM(transcript, 'Standard Meeting Notes', 'English', 'Nimbus 4B (High Quality)', undefined, title);
+      summary = await aiService.generateMOM(
+        transcript,
+        template || 'Standard Meeting Notes',
+        language || 'English',
+        'Nimbus 4B (High Quality)',
+        undefined,
+        title
+      );
     }
 
     const meeting: Meeting = {

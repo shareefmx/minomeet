@@ -12,7 +12,15 @@ import {
   ShieldCheck,
   Zap,
   Check,
-  Plus
+  Plus,
+  Download,
+  Trash2,
+  CheckCircle2,
+  Terminal,
+  Star,
+  Activity,
+  HardDrive,
+  Loader2
 } from 'lucide-react';
 import { SettingsTab } from '../../types/meeting.js';
 
@@ -24,11 +32,20 @@ export const SettingsScreen: React.FC = () => {
     setCurrentScreen,
     updateSettings,
     openModal,
-    showToast
+    showToast,
+    transcriptionModels,
+    activeTranscriptionModel,
+    engineStatus,
+    downloadTranscriptionModel,
+    deleteTranscriptionModel,
+    selectTranscriptionModel,
+    installPythonPackages
   } = useMeeting();
 
   const [customTemplateName, setCustomTemplateName] = useState('');
   const [customTemplateDesc, setCustomTemplateDesc] = useState('');
+  const [modelFilter, setModelFilter] = useState<'all' | 'whisper' | 'parakeet'>('all');
+
 
   if (!settings) return null;
 
@@ -172,24 +189,249 @@ export const SettingsScreen: React.FC = () => {
 
         {/* 2. TRANSCRIPTION TAB */}
         {settingsTab === 'transcription' && (
-          <div className="space-y-4">
-            <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs">
-              <h4 className="text-sm font-bold text-[#111827]">Transcription Engine</h4>
-              <p className="text-xs text-[#6b7280] mt-0.5">
-                Runs fully on-device — speech recognition and acoustic features never leave this machine.
-              </p>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#dbeafe] text-[#1e3a8a] border border-[#bfdbfe] text-xs font-bold mt-3">
-                <Zap className="w-3.5 h-3.5 text-[#2563eb]" />
-                <span>{settings.transcriptionEngine}</span>
+          <div className="space-y-5">
+            {/* Active Model Hero Banner */}
+            <div className="border border-[#bfdbfe] bg-[#f0f7ff] rounded-2xl p-5 shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#dcfce7] text-[#15803d] border border-[#bbf7d0]">
+                      <span className="w-2 h-2 rounded-full bg-[#16a34a] animate-pulse" />
+                      Active Local Engine
+                    </span>
+                    <span className="text-xs font-mono text-[#6b7280]">
+                      {activeTranscriptionModel?.family === 'parakeet' ? '⚡ Real-Time Streaming' : '🧠 Transformer Multilingual'}
+                    </span>
+                  </div>
+                  <h3 className="text-base font-extrabold text-[#1e3a8a]">
+                    {activeTranscriptionModel?.name || settings.transcriptionEngine}
+                  </h3>
+                  <p className="text-xs text-[#4b5563] mt-1 max-w-xl">
+                    {activeTranscriptionModel?.description || 'Runs fully on-device — speech recognition and acoustic features never leave this machine.'}
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap sm:flex-col items-start sm:items-end gap-1.5 text-xs text-[#1e3a8a] font-medium">
+                  <span className="bg-white/80 px-2.5 py-1 rounded-lg border border-[#bfdbfe]">
+                    ⚡ Speed: <b>{activeTranscriptionModel?.speedRating || '8x Real-Time'}</b>
+                  </span>
+                  <span className="bg-white/80 px-2.5 py-1 rounded-lg border border-[#bfdbfe]">
+                    💾 Memory: <b>{activeTranscriptionModel?.ramRequired || '~2 GB RAM'}</b>
+                  </span>
+                </div>
               </div>
             </div>
 
-            <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs">
+            {/* Python & AI Runtime Status Card */}
+            <div className="border border-[#e5e7eb] rounded-2xl p-4 bg-[#fafbfc] text-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-indigo-50 text-[#4f46e5] flex items-center justify-center flex-none">
+                    <Terminal className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h5 className="font-bold text-[#111827]">Local AI Runtime &amp; Dependencies</h5>
+                    <div className="flex items-center gap-3 mt-1 text-[11px] text-[#6b7280] flex-wrap">
+                      <span>Python: <b className="text-[#111827]">{engineStatus?.pythonVersion || '3.12.x'}</b></span>
+                      <span>&bull;</span>
+                      <span>Whisper: <b className={engineStatus?.whisperInstalled ? 'text-green-600' : 'text-amber-600'}>{engineStatus?.whisperInstalled ? 'Installed' : 'Ready (Fallback Active)'}</b></span>
+                      <span>&bull;</span>
+                      <span>FFmpeg: <b className={engineStatus?.ffmpegInstalled ? 'text-green-600' : 'text-gray-500'}>{engineStatus?.ffmpegInstalled ? 'Available' : 'Checking'}</b></span>
+                      <span>&bull;</span>
+                      <span>Models on Disk: <b className="text-[#2563eb]">{engineStatus?.totalModelsDownloaded || transcriptionModels.filter(m => m.status === 'downloaded').length} ready</b></span>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => installPythonPackages()}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-[#d6dbe2] hover:bg-[#f3f4f6] text-[#374151] font-bold text-xs shadow-2xs transition cursor-pointer flex-none"
+                >
+                  <Download className="w-3.5 h-3.5 text-[#2563eb]" />
+                  <span>Verify / Install AI Packages (pip)</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Models Filter Tabs */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div>
+                  <h4 className="text-sm font-bold text-[#111827]">Offline Transcription Model Library</h4>
+                  <p className="text-xs text-[#6b7280] mt-0.5">
+                    Download once to local disk — models persist permanently for 100% offline speech recognition.
+                  </p>
+                </div>
+
+                <div className="flex items-center bg-[#f3f4f6] p-1 rounded-xl border border-[#e5e7eb] text-xs">
+                  <button
+                    onClick={() => setModelFilter('all')}
+                    className={`px-3 py-1 rounded-lg font-bold transition cursor-pointer ${
+                      modelFilter === 'all' ? 'bg-white text-[#2563eb] shadow-xs' : 'text-[#6b7280] hover:text-[#111827]'
+                    }`}
+                  >
+                    All Models ({transcriptionModels.length})
+                  </button>
+                  <button
+                    onClick={() => setModelFilter('whisper')}
+                    className={`px-3 py-1 rounded-lg font-bold transition cursor-pointer ${
+                      modelFilter === 'whisper' ? 'bg-white text-[#2563eb] shadow-xs' : 'text-[#6b7280] hover:text-[#111827]'
+                    }`}
+                  >
+                    Whisper (High Accuracy)
+                  </button>
+                  <button
+                    onClick={() => setModelFilter('parakeet')}
+                    className={`px-3 py-1 rounded-lg font-bold transition cursor-pointer ${
+                      modelFilter === 'parakeet' ? 'bg-white text-[#2563eb] shadow-xs' : 'text-[#6b7280] hover:text-[#111827]'
+                    }`}
+                  >
+                    Parakeet (Real-Time)
+                  </button>
+                </div>
+              </div>
+
+              {/* Model Cards Grid */}
+              <div className="space-y-3">
+                {transcriptionModels
+                  .filter(m => modelFilter === 'all' || m.family === modelFilter)
+                  .map((model) => {
+                    const isActive = activeTranscriptionModel?.id === model.id;
+                    const isDownloaded = model.status === 'downloaded';
+                    const isDownloading = model.status === 'downloading';
+
+                    return (
+                      <div
+                        key={model.id}
+                        className={`border-2 rounded-2xl p-4 transition ${
+                          isActive
+                            ? 'border-[#2563eb] bg-[#f8faff]'
+                            : isDownloaded
+                            ? 'border-[#e5e7eb] bg-white hover:border-[#cbd5e1]'
+                            : 'border-[#f1f3f5] bg-[#fafbfc]'
+                        }`}
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                              <span className="font-extrabold text-sm text-[#111827]">{model.name}</span>
+                              {model.recommended && (
+                                <span className="bg-[#fef3c7] text-[#92400e] text-[10px] font-bold px-2 py-0.5 rounded-full border border-[#fde68a]">
+                                  ★ Recommended
+                                </span>
+                              )}
+                              {model.family === 'parakeet' && (
+                                <span className="bg-[#e0e7ff] text-[#4338ca] text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                  ⚡ Streaming
+                                </span>
+                              )}
+                              <span className="text-[11px] text-[#6b7280] font-medium bg-[#f3f4f6] px-2 py-0.5 rounded-md">
+                                {model.sizeFormatted}
+                              </span>
+                            </div>
+
+                            <p className="text-xs text-[#4b5563] leading-relaxed mb-3">
+                              {model.description}
+                            </p>
+
+                            <div className="flex items-center gap-4 text-[11px] text-[#6b7280] flex-wrap">
+                              <span className="flex items-center gap-1">
+                                <Activity className="w-3.5 h-3.5 text-[#2563eb]" />
+                                <span>Speed: <b>{model.speedRating}</b></span>
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <HardDrive className="w-3.5 h-3.5 text-[#6b7280]" />
+                                <span>RAM: <b>{model.ramRequired}</b></span>
+                              </span>
+                              <span className="flex items-center gap-0.5 text-amber-500">
+                                {Array.from({ length: model.accuracyScore }).map((_, i) => (
+                                  <Star key={i} className="w-3 h-3 fill-current" />
+                                ))}
+                                <span className="text-[#6b7280] ml-1 text-[10px]">Accuracy ({model.accuracyScore}/5)</span>
+                              </span>
+                            </div>
+
+                            {/* Downloading Progress Bar */}
+                            {isDownloading && (
+                              <div className="mt-3 space-y-1.5">
+                                <div className="flex justify-between text-[11px] font-bold text-[#2563eb]">
+                                  <span className="flex items-center gap-1.5">
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                    Downloading local model weights…
+                                  </span>
+                                  <span>{model.downloadProgress || 25}%</span>
+                                </div>
+                                <div className="w-full h-2 bg-[#e2e8f0] rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full bg-[#2563eb] transition-all duration-300 rounded-full"
+                                    style={{ width: `${model.downloadProgress || 25}%` }}
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex sm:flex-col items-center sm:items-end gap-2 flex-none pt-1">
+                            {isActive ? (
+                              <button
+                                disabled
+                                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#dcfce7] border border-[#86efac] text-[#15803d] text-xs font-extrabold rounded-xl"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>Active Engine</span>
+                              </button>
+                            ) : isDownloaded ? (
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => selectTranscriptionModel(model.id)}
+                                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer"
+                                >
+                                  <Zap className="w-3.5 h-3.5" />
+                                  <span>Set as Active</span>
+                                </button>
+                                <button
+                                  onClick={() => deleteTranscriptionModel(model.id)}
+                                  className="p-1.5 rounded-lg border border-[#fee2e2] text-[#ef4444] hover:bg-[#fef2f2] transition cursor-pointer"
+                                  title="Delete cached weights"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ) : isDownloading ? (
+                              <button
+                                disabled
+                                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#e2e8f0] text-[#64748b] text-xs font-bold rounded-xl"
+                              >
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                <span>Downloading…</span>
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => downloadTranscriptionModel(model.id)}
+                                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#eff6ff] hover:bg-[#dbeafe] border border-[#bfdbfe] text-[#1e3a8a] text-xs font-bold rounded-xl shadow-xs transition cursor-pointer"
+                              >
+                                <Download className="w-3.5 h-3.5 text-[#2563eb]" />
+                                <span>Download ({model.sizeFormatted})</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+
+            {/* Audio Stream & Live Captions Controls */}
+            <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs space-y-4">
+              <h4 className="text-sm font-bold text-[#111827]">Live Capture Preferences</h4>
+
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <h4 className="text-sm font-bold text-[#111827]">Live Captions Stream</h4>
-                  <p className="text-xs text-[#6b7280] mt-0.5">
-                    Render speech-to-text words in real time while a recording is in progress.
+                  <h5 className="text-xs font-bold text-[#111827]">Live Captions Stream</h5>
+                  <p className="text-[11px] text-[#6b7280] mt-0.5">
+                    Render speech-to-text words in real time while recording is active.
                   </p>
                 </div>
                 <div
@@ -205,14 +447,12 @@ export const SettingsScreen: React.FC = () => {
                   />
                 </div>
               </div>
-            </div>
 
-            <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs">
-              <div className="flex items-center justify-between gap-4">
+              <div className="border-t border-[#f3f4f6] pt-3 flex items-center justify-between gap-4">
                 <div>
-                  <h4 className="text-sm font-bold text-[#111827]">Speaker Diarization Labels</h4>
-                  <p className="text-xs text-[#6b7280] mt-0.5">
-                    Automatically distinguish and label distinct speaker voices in the live transcript.
+                  <h5 className="text-xs font-bold text-[#111827]">Speaker Diarization Labels</h5>
+                  <p className="text-[11px] text-[#6b7280] mt-0.5">
+                    Automatically distinguish and label distinct speaker voices in the transcript.
                   </p>
                 </div>
                 <div

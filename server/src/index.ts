@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import meetingsRouter from './routes/meetings.js';
 import aiRouter from './routes/ai.js';
 import settingsRouter from './routes/settings.js';
+import transcriptionRouter from './routes/transcription.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,6 +29,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use('/api/meetings', meetingsRouter);
 app.use('/api/ai', aiRouter);
 app.use('/api/settings', settingsRouter);
+app.use('/api/transcription', transcriptionRouter);
 
 // Root endpoint
 app.get('/', (req, res) => {

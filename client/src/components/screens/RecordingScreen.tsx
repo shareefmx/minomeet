@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useMeeting } from '../../context/MeetingContext.js';
-import { Copy, Pause, Play, Square, X, Mic, Volume2, Layers } from 'lucide-react';
+import { Copy, Pause, Play, Square, X, Mic, Volume2, Layers, Cpu } from 'lucide-react';
 import { exportService } from '../../services/export.js';
 
 export const RecordingScreen: React.FC = () => {
@@ -11,7 +11,8 @@ export const RecordingScreen: React.FC = () => {
     setAudioSource,
     stopRecording,
     cancelRecording,
-    showToast
+    showToast,
+    activeTranscriptionModel
   } = useMeeting();
 
   const [isPaused, setIsPaused] = useState(false);
@@ -51,6 +52,13 @@ export const RecordingScreen: React.FC = () => {
             <span className={`w-2.5 h-2.5 rounded-full bg-[#e2564c] ${isPaused ? 'opacity-40' : 'animate-pulse'}`} />
             <span>{isPaused ? 'Paused' : 'Recording'} &bull; {formatTimer(recordingTimer)}</span>
           </div>
+
+          {/* Engine Badge */}
+          <div className="hidden lg:flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f0f7ff] border border-[#bfdbfe] text-xs font-bold text-[#1e3a8a]">
+            <Cpu className="w-3.5 h-3.5 text-[#2563eb]" />
+            <span>Engine: {activeTranscriptionModel?.name?.split(' ')[0] || 'Whisper'} {activeTranscriptionModel?.name?.split(' ')[1] || 'Turbo'} (Local)</span>
+          </div>
+
 
           {/* Audio Source Switcher Badge */}
           <div className="hidden sm:flex items-center bg-[#f3f4f6] rounded-lg p-0.5 border border-[#e5e7eb] text-xs">

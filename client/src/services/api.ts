@@ -1,4 +1,4 @@
-import { Meeting, AppSettings, MOMSummary, TranscriptLine } from '../types/meeting.js';
+import { Meeting, AppSettings, MOMSummary, TranscriptLine, TranscriptionModel, TranscriptionEngineStatus } from '../types/meeting.js';
 
 const API_BASE = '/api';
 
@@ -55,10 +55,19 @@ export const api = {
     return data.success;
   },
 
-  async importAudio(file: File, autoSummarize = true): Promise<Meeting> {
+  async importAudio(payload: {
+    file: File;
+    autoSummarize?: boolean;
+    model?: string;
+    language?: string;
+    template?: string;
+  }): Promise<Meeting> {
     const formData = new FormData();
-    formData.append('audio', file);
-    formData.append('autoSummarize', String(autoSummarize));
+    formData.append('audio', payload.file);
+    formData.append('autoSummarize', String(payload.autoSummarize ?? true));
+    if (payload.model) formData.append('model', payload.model);
+    if (payload.language) formData.append('language', payload.language);
+    if (payload.template) formData.append('template', payload.template);
 
     const res = await fetch(`${API_BASE}/meetings/import`, {
       method: 'POST',
@@ -125,6 +134,54 @@ export const api = {
     });
     const data = await res.json();
     return data.settings;
+  },
+
+  // Transcription Models & Engine
+  async getTranscriptionModels(): Promise<{ models: TranscriptionModel[]; activeModel: TranscriptionModel }> {
+    const res = await fetch(`${API_BASE}/transcription/models`);
+    const data = await res.json();
+    return { models: data.models || [], activeModel: data.activeModel };
+  },
+
+  async downloadTranscriptionModel(id: string): Promise<TranscriptionModel> {
+    const res = await fetch(`${API_BASE}/transcription/models/${encodeURIComponent(id)}/download`, {
+      method: 'POST'
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed to download model');
+    return data.model;
+  },
+
+  async deleteTranscriptionModel(id: string): Promise<boolean> {
+    const res = await fetch(`${API_BASE}/transcription/models/${encodeURIComponent(id)}`, {
+      method: 'DELETE'
+    });
+    const data = await res.json();
+    return data.success;
+  },
+
+  async selectTranscriptionModel(id: string): Promise<TranscriptionModel> {
+    const res = await fetch(`${API_BASE}/transcription/models/${encodeURIComponent(id)}/select`, {
+      method: 'POST'
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed to select model');
+    return data.activeModel;
+  },
+
+  async getTranscriptionEngineStatus(): Promise<TranscriptionEngineStatus> {
+    const res = await fetch(`${API_BASE}/transcription/status`);
+    const data = await res.json();
+    return data.status;
+  },
+
+  async installPythonPackages(): Promise<{ success: boolean; output: string }> {
+    const res = await fetch(`${API_BASE}/transcription/install-packages`, {
+      method: 'POST'
+    });
+    const data = await res.json();
+    return data;
   }
 };
+
 
