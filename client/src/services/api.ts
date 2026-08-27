@@ -200,11 +200,15 @@ export const api = {
     return await res.json();
   },
 
-  async fetchOllamaModels(baseUrl?: string): Promise<{ success: boolean; models?: string[]; error?: string }> {
-    const res = await fetch(`${API_BASE}/ai/fetch-ollama-models`, {
+  async fetchAIProviderModels(payload: {
+    provider: string;
+    apiKey?: string;
+    baseUrl?: string;
+  }): Promise<{ success: boolean; models?: string[]; error?: string }> {
+    const res = await fetch(`${API_BASE}/ai/fetch-models`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ baseUrl })
+      body: JSON.stringify(payload)
     });
     return await res.json();
   },

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useMeeting } from '../../context/MeetingContext.js';
 import { Cpu, X, Check, Sliders } from 'lucide-react';
-import { AI_PROVIDERS_CONFIG } from '../../utils/aiModelConfig.js';
+import { AI_PROVIDERS_CONFIG, getAvailableModelsForProvider } from '../../utils/aiModelConfig.js';
 
 export const ModelSettingsModal: React.FC = () => {
   const { modals, closeModal, settings, updateSettings, showToast, setCurrentScreen, setSettingsTab } = useMeeting();
@@ -66,7 +66,7 @@ export const ModelSettingsModal: React.FC = () => {
 
           <div className="space-y-2">
             {AI_PROVIDERS_CONFIG.flatMap(prov =>
-              prov.models.map(m => {
+              getAvailableModelsForProvider(settings, prov.id).map(m => {
                 const isSelected = selected === m.id;
                 return (
                   <div
@@ -85,7 +85,7 @@ export const ModelSettingsModal: React.FC = () => {
                           {prov.name}
                         </span>
                       </div>
-                      <p className="text-[11px] text-[#6b7280]">{m.tag} &bull; {m.contextWindow}</p>
+                      <p className="text-[11px] text-[#6b7280]">{m.tag || 'Standard'} &bull; {m.contextWindow || 'Dynamic'}</p>
                     </div>
                     {isSelected && (
                       <span className="bg-[#2563eb] text-white p-1 rounded-full flex-none">

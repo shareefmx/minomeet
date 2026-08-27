@@ -10,6 +10,7 @@ export const AskMeetingsModal: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   const agentModel = getEffectiveModelForAgent(settings, 'ask_meetings');
+
   const [history, setHistory] = useState<{ query: string; answer: string; sources: any[] }[]>([
     {
       query: 'What was decided regarding the Argus and Pulse scanners?',

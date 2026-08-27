@@ -228,3 +228,31 @@ export function getEffectiveModelForAgent(settings?: AppSettings | null, agentId
     isOverride: false
   };
 }
+
+/**
+ * Returns all available models for a provider, combining predefined defaults with dynamically fetched models.
+ */
+export function getAvailableModelsForProvider(
+  settings: AppSettings | null | undefined,
+  providerId: string
+): AIModelOption[] {
+  const provDef = AI_PROVIDERS_CONFIG.find(p => p.id === providerId);
+  const baseModels = provDef ? [...provDef.models] : [];
+  const fetched = settings?.aiProviders?.[providerId]?.fetchedModels || [];
+
+  const existingIds = new Set(baseModels.map(m => m.id));
+  const dynamicOptions: AIModelOption[] = [];
+
+  for (const mId of fetched) {
+    if (!existingIds.has(mId)) {
+      dynamicOptions.push({
+        id: mId,
+        name: mId,
+        tag: 'Live Fetched'
+      });
+      existingIds.add(mId);
+    }
+  }
+
+  return [...baseModels, ...dynamicOptions];
+}

@@ -40,7 +40,8 @@ import { SettingsTab, MOMTemplate, AIConnectionStatus, ProviderCredential, AIAge
 import {
   AI_PROVIDERS_CONFIG,
   AI_AGENTS_CONFIG,
-  getEffectiveModelForAgent
+  getEffectiveModelForAgent,
+  getAvailableModelsForProvider
 } from '../../utils/aiModelConfig.js';
 
 export const SettingsScreen: React.FC = () => {
@@ -77,8 +78,8 @@ export const SettingsScreen: React.FC = () => {
   const [customModelInput, setCustomModelInput] = useState<string>('custom-model');
   const [showApiKey, setShowApiKey] = useState<boolean>(false);
   const [isTestingConnection, setIsTestingConnection] = useState<boolean>(false);
-  const [isFetchingOllama, setIsFetchingOllama] = useState<boolean>(false);
-  const [fetchedOllamaModels, setFetchedOllamaModels] = useState<string[]>([]);
+  const [isFetchingModels, setIsFetchingModels] = useState<boolean>(false);
+  const [providerFetchedModels, setProviderFetchedModels] = useState<Record<string, string[]>>({});
   const [connectionStatus, setConnectionStatus] = useState<AIConnectionStatus>('not_configured');
   const [connectionStatusMessage, setConnectionStatusMessage] = useState<string>('');
   const [agentOverridesState, setAgentOverridesState] = useState<Record<string, AIAgentOverride>>({});
@@ -96,6 +97,15 @@ export const SettingsScreen: React.FC = () => {
       setCustomModelInput(savedCred?.customModelName || 'custom-model');
       setConnectionStatus(savedCred?.status || (activeProv === 'builtin' ? 'connected' : (savedCred?.apiKey ? 'connected' : 'not_configured')));
       setConnectionStatusMessage(savedCred?.statusMessage || (activeProv === 'builtin' ? 'Connected & Ready' : ''));
+
+      // Populate fetched models cache across all providers
+      const fetchedMap: Record<string, string[]> = {};
+      AI_PROVIDERS_CONFIG.forEach(p => {
+        if (settings.aiProviders?.[p.id]?.fetchedModels) {
+          fetchedMap[p.id] = settings.aiProviders[p.id].fetchedModels || [];
+        }
+      });
+      setProviderFetchedModels(fetchedMap);
 
       const overrides: Record<string, AIAgentOverride> = {};
       AI_AGENTS_CONFIG.forEach((a) => {
@@ -128,7 +138,48 @@ export const SettingsScreen: React.FC = () => {
     setConnectionStatusMessage(savedCred?.statusMessage || (newProviderId === 'builtin' ? 'Connected & Ready' : ''));
   };
 
-  // Test Connection Handler
+  // Generalized Dynamic Model Fetcher for ALL Providers
+  const handleFetchModels = async (targetProviderId?: string) => {
+    const pId = targetProviderId || selectedProviderId;
+    const provDef = AI_PROVIDERS_CONFIG.find(p => p.id === pId);
+    const keyToUse = pId === selectedProviderId ? apiKeyInput : (settings?.aiProviders?.[pId]?.apiKey || '');
+    const urlToUse = pId === selectedProviderId ? baseUrlInput : (settings?.aiProviders?.[pId]?.baseUrl || '');
+
+    if (provDef?.requiresKey && (!keyToUse || keyToUse.trim().length === 0)) {
+      showToast('API Key Required', `Please enter your ${provDef.name} API key first to fetch models.`, 'warning');
+      return;
+    }
+
+    setIsFetchingModels(true);
+    try {
+      const res = await api.fetchAIProviderModels({
+        provider: pId,
+        apiKey: keyToUse,
+        baseUrl: urlToUse
+      });
+
+      if (res.success && res.models && res.models.length > 0) {
+        setProviderFetchedModels(prev => ({
+          ...prev,
+          [pId]: res.models || []
+        }));
+
+        if (pId === selectedProviderId && !res.models.includes(selectedModelId)) {
+          setSelectedModelId(res.models[0]);
+        }
+
+        showToast('Models Loaded', `Fetched ${res.models.length} available models from ${provDef?.name || pId}.`, 'success');
+      } else {
+        showToast('Fetch Notice', res.error || `No models returned from ${provDef?.name || pId}.`, 'warning');
+      }
+    } catch (err: any) {
+      showToast('Fetch Failed', err.message || 'Failed to fetch models.', 'error');
+    } finally {
+      setIsFetchingModels(false);
+    }
+  };
+
+  // Test Connection Handler (also updates fetched models)
   const handleTestConnection = async () => {
     setIsTestingConnection(true);
     setConnectionStatus('testing');
@@ -146,7 +197,10 @@ export const SettingsScreen: React.FC = () => {
       setConnectionStatusMessage(res.message);
 
       if (res.fetchedModels && res.fetchedModels.length > 0) {
-        setFetchedOllamaModels(res.fetchedModels);
+        setProviderFetchedModels(prev => ({
+          ...prev,
+          [selectedProviderId]: res.fetchedModels || []
+        }));
       }
 
       if (res.success) {
@@ -160,27 +214,6 @@ export const SettingsScreen: React.FC = () => {
       showToast('Connection Failed', err.message || 'Failed to connect.', 'error');
     } finally {
       setIsTestingConnection(false);
-    }
-  };
-
-  // Fetch Ollama Models Handler
-  const handleFetchOllamaModels = async () => {
-    setIsFetchingOllama(true);
-    try {
-      const res = await api.fetchOllamaModels(baseUrlInput);
-      if (res.success && res.models && res.models.length > 0) {
-        setFetchedOllamaModels(res.models);
-        if (!res.models.includes(selectedModelId)) {
-          setSelectedModelId(res.models[0]);
-        }
-        showToast('Models Fetched', `Found ${res.models.length} local Ollama model(s).`, 'success');
-      } else {
-        showToast('Ollama Notice', res.error || 'No models returned from Ollama endpoint.', 'warning');
-      }
-    } catch (err: any) {
-      showToast('Fetch Failed', err.message, 'error');
-    } finally {
-      setIsFetchingOllama(false);
     }
   };
 
@@ -198,6 +231,7 @@ export const SettingsScreen: React.FC = () => {
       baseUrl: (selectedProviderId === 'ollama' || selectedProviderId === 'custom') ? baseUrlInput.trim() : undefined,
       selectedModel: selectedModelId,
       customModelName: selectedProviderId === 'custom' ? customModelInput.trim() : undefined,
+      fetchedModels: providerFetchedModels[selectedProviderId] || [],
       status: connectionStatus,
       statusMessage: connectionStatusMessage,
       lastTested: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -226,8 +260,11 @@ export const SettingsScreen: React.FC = () => {
       return;
     }
 
-    const provDef = AI_PROVIDERS_CONFIG.find(p => p.id === provId) || AI_PROVIDERS_CONFIG[7];
-    const defaultModel = provDef.models[0]?.id || 'default';
+    const modelsForProv = getAvailableModelsForProvider(
+      { ...settings, aiProviders: { ...settings?.aiProviders, [provId]: { ...settings?.aiProviders?.[provId], fetchedModels: providerFetchedModels[provId] } } } as any,
+      provId
+    );
+    const defaultModel = modelsForProv[0]?.id || 'default';
     setAgentOverridesState(prev => ({
       ...prev,
       [agentId]: { agentId, providerId: provId, modelId: defaultModel }
@@ -1197,9 +1234,16 @@ export const SettingsScreen: React.FC = () => {
 
                 {/* Model Dropdown */}
                 <div>
-                  <label className="block text-xs font-bold text-[#374151] mb-1.5">
-                    Model
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-bold text-[#374151]">
+                      Model
+                    </label>
+                    {(providerFetchedModels[selectedProviderId] || []).length > 0 && (
+                      <span className="text-[10px] font-bold text-[#15803d] bg-[#dcfce7] px-2 py-0.2 rounded-full border border-[#86efac]">
+                        ● {(providerFetchedModels[selectedProviderId] || []).length} dynamic models
+                      </span>
+                    )}
+                  </div>
                   {selectedProviderId === 'custom' ? (
                     <input
                       type="text"
@@ -1219,26 +1263,21 @@ export const SettingsScreen: React.FC = () => {
                       aria-label="Model"
                       className="w-full h-10 px-3.5 rounded-xl border border-[#d6dbe2] bg-white text-xs font-semibold text-[#111827] focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] cursor-pointer shadow-2xs transition"
                     >
-                      {/* Dynamic model options for the selected provider */}
-                      {selectedProviderId === 'ollama' && fetchedOllamaModels.length > 0 ? (
-                        fetchedOllamaModels.map((mName) => (
-                          <option key={mName} value={mName}>
-                            {mName} (Fetched Local)
-                          </option>
-                        ))
-                      ) : (
-                        (AI_PROVIDERS_CONFIG.find(p => p.id === selectedProviderId)?.models || []).map((m) => (
-                          <option key={m.id} value={m.id}>
-                            {m.name} {m.contextWindow ? `(${m.contextWindow})` : ''}
-                          </option>
-                        ))
-                      )}
+                      {/* Dynamic models combined with provider presets */}
+                      {getAvailableModelsForProvider(
+                        { ...settings, aiProviders: { ...settings?.aiProviders, [selectedProviderId]: { ...settings?.aiProviders?.[selectedProviderId], fetchedModels: providerFetchedModels[selectedProviderId] } } } as any,
+                        selectedProviderId
+                      ).map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.name} {m.contextWindow ? `(${m.contextWindow})` : ''} {m.tag ? `[${m.tag}]` : ''}
+                        </option>
+                      ))}
                     </select>
                   )}
                 </div>
               </div>
 
-              {/* Endpoint URL (for Ollama or Custom Server) */}
+              {/* Endpoint URL (for Ollama or Custom Server) with Fetch Models */}
               {(selectedProviderId === 'ollama' || selectedProviderId === 'custom') && (
                 <div>
                   <label className="block text-xs font-bold text-[#374151] mb-1.5">
@@ -1253,47 +1292,53 @@ export const SettingsScreen: React.FC = () => {
                       aria-label="Endpoint URL"
                       className="flex-1 h-10 px-3.5 rounded-xl border border-[#d6dbe2] bg-white font-mono text-xs text-[#111827] focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] shadow-2xs transition"
                     />
-                    {selectedProviderId === 'ollama' && (
-                      <button
-                        type="button"
-                        onClick={handleFetchOllamaModels}
-                        disabled={isFetchingOllama}
-                        className="px-4 h-10 rounded-xl border border-[#d6dbe2] bg-[#f8fafc] hover:bg-[#f1f5f9] text-xs font-bold text-[#1e293b] inline-flex items-center gap-1.5 shadow-2xs transition cursor-pointer flex-none disabled:opacity-50"
-                      >
-                        {isFetchingOllama ? (
-                          <RotateCw className="w-3.5 h-3.5 animate-spin text-[#2563eb]" />
-                        ) : (
-                          <RotateCw className="w-3.5 h-3.5 text-[#2563eb]" />
-                        )}
-                        <span>Fetch Models</span>
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleFetchModels(selectedProviderId)}
+                      disabled={isFetchingModels}
+                      className="px-4 h-10 rounded-xl border border-[#d6dbe2] bg-[#f8fafc] hover:bg-[#f1f5f9] text-xs font-bold text-[#1e293b] inline-flex items-center gap-1.5 shadow-2xs transition cursor-pointer flex-none disabled:opacity-50"
+                    >
+                      <RotateCw className={`w-3.5 h-3.5 text-[#2563eb] ${isFetchingModels ? 'animate-spin' : ''}`} />
+                      <span>{isFetchingModels ? 'Fetching…' : 'Fetch Models'}</span>
+                    </button>
                   </div>
                 </div>
               )}
 
-              {/* API Key Input (if required or custom) */}
+              {/* API Key Input with Show/Hide Eye and Fetch Models Button for Cloud Providers */}
               {selectedProviderId !== 'builtin' && selectedProviderId !== 'ollama' && (
                 <div>
                   <label className="block text-xs font-bold text-[#374151] mb-1.5">
                     {selectedProviderId === 'custom' ? 'API Key (Optional)' : 'API Key'}
                   </label>
-                  <div className="relative">
-                    <input
-                      type={showApiKey ? 'text' : 'password'}
-                      value={apiKeyInput}
-                      onChange={(e) => setApiKeyInput(e.target.value)}
-                      placeholder={AI_PROVIDERS_CONFIG.find(p => p.id === selectedProviderId)?.keyPlaceholder || 'Enter API Key…'}
-                      aria-label="API Key"
-                      className="w-full h-10 pl-3.5 pr-10 rounded-xl border border-[#d6dbe2] bg-white font-mono text-xs text-[#111827] focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] shadow-2xs transition"
-                    />
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-1">
+                      <input
+                        type={showApiKey ? 'text' : 'password'}
+                        value={apiKeyInput}
+                        onChange={(e) => setApiKeyInput(e.target.value)}
+                        placeholder={AI_PROVIDERS_CONFIG.find(p => p.id === selectedProviderId)?.keyPlaceholder || 'Enter API Key…'}
+                        aria-label="API Key"
+                        className="w-full h-10 pl-3.5 pr-10 rounded-xl border border-[#d6dbe2] bg-white font-mono text-xs text-[#111827] focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] shadow-2xs transition"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowApiKey(!showApiKey)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94a3b8] hover:text-[#475569] p-1 cursor-pointer transition"
+                        title={showApiKey ? 'Hide Key' : 'Show Key'}
+                      >
+                        {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
                     <button
                       type="button"
-                      onClick={() => setShowApiKey(!showApiKey)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94a3b8] hover:text-[#475569] p-1 cursor-pointer transition"
-                      title={showApiKey ? 'Hide Key' : 'Show Key'}
+                      onClick={() => handleFetchModels(selectedProviderId)}
+                      disabled={isFetchingModels || (!apiKeyInput && AI_PROVIDERS_CONFIG.find(p => p.id === selectedProviderId)?.requiresKey)}
+                      className="px-4 h-10 rounded-xl border border-[#d6dbe2] bg-[#f8fafc] hover:bg-[#f1f5f9] text-xs font-bold text-[#1e293b] inline-flex items-center gap-1.5 shadow-2xs transition cursor-pointer flex-none disabled:opacity-50"
+                      title="Fetch live available models from provider API"
                     >
-                      {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      <RotateCw className={`w-3.5 h-3.5 text-[#2563eb] ${isFetchingModels ? 'animate-spin' : ''}`} />
+                      <span>{isFetchingModels ? 'Fetching…' : 'Fetch Models'}</span>
                     </button>
                   </div>
                 </div>
@@ -1396,10 +1441,22 @@ export const SettingsScreen: React.FC = () => {
               <div className="space-y-3">
                 {AI_AGENTS_CONFIG.map((agent) => {
                   const effective = getEffectiveModelForAgent(settings, agent.id);
-                  const currentOverride = agentOverridesState[agent.id] || { providerId: 'use_default', modelId: 'use_default' };
+                  const currentOverride = agentOverridesState[agent.id] || { agentId: agent.id, providerId: 'use_default', modelId: 'use_default' };
                   const isUsingDefault = currentOverride.providerId === 'use_default' || currentOverride.modelId === 'use_default';
+                  const agentProvId: string = (isUsingDefault ? (settings?.activeAIProvider || 'builtin') : (currentOverride.providerId || 'builtin')) as string;
 
-                  const agentProvDef = AI_PROVIDERS_CONFIG.find(p => p.id === currentOverride.providerId) || AI_PROVIDERS_CONFIG[7];
+                  const mergedSettings = {
+                    ...settings,
+                    aiProviders: {
+                      ...settings?.aiProviders,
+                      [agentProvId]: {
+                        ...settings?.aiProviders?.[agentProvId],
+                        fetchedModels: providerFetchedModels[agentProvId] || []
+                      }
+                    }
+                  } as any;
+
+                  const agentModels = getAvailableModelsForProvider(mergedSettings, agentProvId);
 
                   return (
                     <div
@@ -1469,9 +1526,9 @@ export const SettingsScreen: React.FC = () => {
                                 {settings.selectedModel || 'Nimbus 4B (High Quality)'} (Global Default)
                               </option>
                             ) : (
-                              agentProvDef.models.map((m) => (
+                              agentModels.map((m) => (
                                 <option key={m.id} value={m.id}>
-                                  {m.name}
+                                  {m.name} {m.tag ? `[${m.tag}]` : ''}
                                 </option>
                               ))
                             )}

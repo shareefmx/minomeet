@@ -49,6 +49,7 @@ export interface ProviderCredential {
   baseUrl?: string;
   selectedModel?: string;
   customModelName?: string;
+  fetchedModels?: string[];
   status: AIConnectionStatus;
   statusMessage?: string;
   lastTested?: string;

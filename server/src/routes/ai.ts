@@ -81,21 +81,18 @@ router.post('/test-connection', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/ai/fetch-ollama-models - fetch locally installed models from Ollama daemon
-router.post('/fetch-ollama-models', async (req: Request, res: Response) => {
+// POST /api/ai/fetch-models - dynamically fetch models from any provider using API key / endpoint
+router.post('/fetch-models', async (req: Request, res: Response) => {
   try {
-    const { baseUrl } = req.body;
-    const endpoint = (baseUrl || 'http://localhost:11434').replace(/\/+$/, '');
-    const fetchRes = await fetch(`${endpoint}/api/tags`);
-    if (fetchRes.ok) {
-      const data = (await fetchRes.json()) as any;
-      const models: string[] = (data.models || []).map((m: any) => m.name || m.model);
-      res.json({ success: true, models });
-    } else {
-      res.status(fetchRes.status).json({ success: false, error: `Ollama returned status ${fetchRes.status}` });
+    const { provider, apiKey, baseUrl } = req.body;
+    if (!provider) {
+      res.status(400).json({ success: false, error: 'Provider is required' });
+      return;
     }
+    const result = await aiService.fetchProviderModels(provider, apiKey, baseUrl);
+    res.json(result);
   } catch (err: any) {
-    res.status(500).json({ success: false, error: `Could not connect to Ollama: ${err.message}` });
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
