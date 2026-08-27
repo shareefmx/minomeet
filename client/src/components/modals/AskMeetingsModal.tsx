@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { useMeeting } from '../../context/MeetingContext.js';
 import { api } from '../../services/api.js';
+import { getEffectiveModelForAgent } from '../../utils/aiModelConfig.js';
 import { X, Send, Sparkles, Loader2, ArrowRight } from 'lucide-react';
 
 export const AskMeetingsModal: React.FC = () => {
-  const { modals, closeModal, selectMeeting, meetings, showToast } = useMeeting();
+  const { modals, closeModal, selectMeeting, meetings, showToast, settings, setCurrentScreen, setSettingsTab } = useMeeting();
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const agentModel = getEffectiveModelForAgent(settings, 'ask_meetings');
   const [history, setHistory] = useState<{ query: string; answer: string; sources: any[] }[]>([
     {
       query: 'What was decided regarding the Argus and Pulse scanners?',
@@ -138,6 +141,30 @@ export const AskMeetingsModal: React.FC = () => {
               <span>Synthesizing answer from your meetings…</span>
             </div>
           )}
+        </div>
+
+        {/* AI Agent Model Section */}
+        <div className="px-6 py-2.5 bg-[#f8fafc] border-t border-[#e2e8f0] flex items-center justify-between flex-wrap gap-2 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-[#475569]">AI Model:</span>
+            <span className="font-semibold text-[#1e293b]">{agentModel.providerName} &bull; {agentModel.modelId}</span>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${agentModel.isOverride ? 'bg-[#fef3c7] text-[#92400e]' : 'bg-[#dbeafe] text-[#1e40af]'}`}>
+              {agentModel.isOverride ? 'Custom Override' : 'Global Default'}
+            </span>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${agentModel.status === 'connected' ? 'bg-[#dcfce7] text-[#15803d]' : 'bg-[#f1f5f9] text-[#64748b]'}`}>
+              {agentModel.status === 'connected' ? '● Ready' : '● Not Configured'}
+            </span>
+          </div>
+          <button
+            onClick={() => {
+              closeModal('ask');
+              setSettingsTab('model');
+              setCurrentScreen('settings');
+            }}
+            className="text-xs font-bold text-[#2563eb] hover:underline cursor-pointer flex-none"
+          >
+            Configure in Settings &rarr;
+          </button>
         </div>
 
         {/* Input Bar */}

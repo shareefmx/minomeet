@@ -26,6 +26,7 @@ import {
   X
 } from 'lucide-react';
 import { ActionItem } from '../../types/meeting.js';
+import { getEffectiveModelForAgent } from '../../utils/aiModelConfig.js';
 
 interface TemplateConfig {
   summaryLabel: string;
@@ -482,14 +483,21 @@ export const NotesScreen: React.FC = () => {
               </div>
 
               {/* 3. AI Model Selector */}
-              <button
-                onClick={() => openModal('model')}
-                className="w-full h-9 px-2.5 rounded-xl border border-[#e2e8f0] bg-white text-xs font-semibold text-[#374151] hover:bg-[#f8fafc] hover:border-[#cbd5e1] shadow-2xs transition cursor-pointer inline-flex items-center justify-center gap-1.5 truncate"
-                title={`AI Inference Model: ${settings?.selectedModel || 'Nimbus 4B'}. Click to configure.`}
-              >
-                <Cpu className="w-3.5 h-3.5 text-[#7c3aed] flex-none" />
-                <span className="truncate">{settings?.selectedModel ? `Model: ${settings.selectedModel.split(' ')[0]}` : 'AI Model'}</span>
-              </button>
+              {(() => {
+                const momModel = getEffectiveModelForAgent(settings, 'mom_synthesis');
+                return (
+                  <button
+                    onClick={() => openModal('model')}
+                    className="w-full h-9 px-2.5 rounded-xl border border-[#e2e8f0] bg-white text-xs font-semibold text-[#374151] hover:bg-[#f8fafc] hover:border-[#cbd5e1] shadow-2xs transition cursor-pointer inline-flex items-center justify-center gap-1.5 truncate"
+                    title={`MOM Synthesis Model: ${momModel.modelId} (${momModel.providerName})${momModel.isOverride ? ' [Override]' : ' [Default]'}. Click to configure.`}
+                  >
+                    <Cpu className="w-3.5 h-3.5 text-[#2563eb] flex-none" />
+                    <span className="truncate">
+                      {momModel.modelId ? `Model: ${momModel.modelId.split(' ')[0]}` : 'AI Model'}
+                    </span>
+                  </button>
+                );
+              })()}
 
               {/* 4. Language Selector */}
               <div className="relative w-full">

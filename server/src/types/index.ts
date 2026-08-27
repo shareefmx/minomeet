@@ -42,6 +42,24 @@ export interface Meeting {
   isPinned?: boolean;
 }
 
+export type AIConnectionStatus = 'not_configured' | 'testing' | 'connected' | 'invalid' | 'error';
+
+export interface ProviderCredential {
+  apiKey?: string;
+  baseUrl?: string;
+  selectedModel?: string;
+  customModelName?: string;
+  status: AIConnectionStatus;
+  statusMessage?: string;
+  lastTested?: string;
+}
+
+export interface AIAgentOverride {
+  agentId: string;
+  providerId?: string;
+  modelId?: string;
+}
+
 export interface AppSettings {
   theme?: 'system' | 'light' | 'dark';
   notifications: boolean;
@@ -63,6 +81,9 @@ export interface AppSettings {
   defaultLanguage: string;
   defaultTemplate: string;
   selectedModel: string;
+  activeAIProvider?: string;
+  aiProviders?: Record<string, ProviderCredential>;
+  agentOverrides?: Record<string, AIAgentOverride>;
   betaDiarization: boolean;
   betaAskMeetings: boolean;
   betaAutoFollowUp: boolean;

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useMeeting } from '../../context/MeetingContext.js';
+import { api } from '../../services/api.js';
 import {
   ArrowLeft,
   Sliders,
@@ -26,9 +27,21 @@ import {
   Edit2,
   Layers,
   Volume2,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  RefreshCw,
+  Bot,
+  Save,
+  RotateCw,
   X
 } from 'lucide-react';
-import { SettingsTab, MOMTemplate } from '../../types/meeting.js';
+import { SettingsTab, MOMTemplate, AIConnectionStatus, ProviderCredential, AIAgentOverride } from '../../types/meeting.js';
+import {
+  AI_PROVIDERS_CONFIG,
+  AI_AGENTS_CONFIG,
+  getEffectiveModelForAgent
+} from '../../utils/aiModelConfig.js';
 
 export const SettingsScreen: React.FC = () => {
   const {
@@ -38,7 +51,6 @@ export const SettingsScreen: React.FC = () => {
     setSettingsTab,
     setCurrentScreen,
     updateSettings,
-    openModal,
     showToast,
     openStorageFolder,
     transcriptionModels,
@@ -56,6 +68,183 @@ export const SettingsScreen: React.FC = () => {
   } = useMeeting();
 
   const [modelFilter, setModelFilter] = useState<'all' | 'whisper' | 'parakeet'>('all');
+
+  // AI Model Control Panel State
+  const [selectedProviderId, setSelectedProviderId] = useState<string>('builtin');
+  const [selectedModelId, setSelectedModelId] = useState<string>('Nimbus 4B (High Quality)');
+  const [apiKeyInput, setApiKeyInput] = useState<string>('');
+  const [baseUrlInput, setBaseUrlInput] = useState<string>('http://localhost:11434');
+  const [customModelInput, setCustomModelInput] = useState<string>('custom-model');
+  const [showApiKey, setShowApiKey] = useState<boolean>(false);
+  const [isTestingConnection, setIsTestingConnection] = useState<boolean>(false);
+  const [isFetchingOllama, setIsFetchingOllama] = useState<boolean>(false);
+  const [fetchedOllamaModels, setFetchedOllamaModels] = useState<string[]>([]);
+  const [connectionStatus, setConnectionStatus] = useState<AIConnectionStatus>('not_configured');
+  const [connectionStatusMessage, setConnectionStatusMessage] = useState<string>('');
+  const [agentOverridesState, setAgentOverridesState] = useState<Record<string, AIAgentOverride>>({});
+
+  // Sync settings into local AI Model state
+  useEffect(() => {
+    if (settings) {
+      const activeProv = settings.activeAIProvider || 'builtin';
+      setSelectedProviderId(activeProv);
+      setSelectedModelId(settings.selectedModel || 'Nimbus 4B (High Quality)');
+
+      const savedCred = settings.aiProviders?.[activeProv];
+      setApiKeyInput(savedCred?.apiKey || '');
+      setBaseUrlInput(savedCred?.baseUrl || (activeProv === 'ollama' ? 'http://localhost:11434' : 'http://localhost:8000/v1'));
+      setCustomModelInput(savedCred?.customModelName || 'custom-model');
+      setConnectionStatus(savedCred?.status || (activeProv === 'builtin' ? 'connected' : (savedCred?.apiKey ? 'connected' : 'not_configured')));
+      setConnectionStatusMessage(savedCred?.statusMessage || (activeProv === 'builtin' ? 'Connected & Ready' : ''));
+
+      const overrides: Record<string, AIAgentOverride> = {};
+      AI_AGENTS_CONFIG.forEach((a) => {
+        const saved = settings.agentOverrides?.[a.id];
+        overrides[a.id] = {
+          agentId: a.id,
+          providerId: saved?.providerId || 'use_default',
+          modelId: saved?.modelId || 'use_default'
+        };
+      });
+      setAgentOverridesState(overrides);
+    }
+  }, [settings]);
+
+  // When selected provider changes in the UI dropdown
+  const handleProviderChange = (newProviderId: string) => {
+    setSelectedProviderId(newProviderId);
+    const provDef = AI_PROVIDERS_CONFIG.find(p => p.id === newProviderId) || AI_PROVIDERS_CONFIG[7];
+    const savedCred = settings?.aiProviders?.[newProviderId];
+
+    const defaultModel = savedCred?.selectedModel || provDef.models[0]?.id || 'default';
+    setSelectedModelId(defaultModel);
+
+    setApiKeyInput(savedCred?.apiKey || '');
+    setBaseUrlInput(savedCred?.baseUrl || (newProviderId === 'ollama' ? 'http://localhost:11434' : (provDef.defaultEndpoint || 'http://localhost:8000/v1')));
+    setCustomModelInput(savedCred?.customModelName || 'custom-model');
+
+    const status: AIConnectionStatus = savedCred?.status || (newProviderId === 'builtin' ? 'connected' : (savedCred?.apiKey ? 'connected' : 'not_configured'));
+    setConnectionStatus(status);
+    setConnectionStatusMessage(savedCred?.statusMessage || (newProviderId === 'builtin' ? 'Connected & Ready' : ''));
+  };
+
+  // Test Connection Handler
+  const handleTestConnection = async () => {
+    setIsTestingConnection(true);
+    setConnectionStatus('testing');
+    setConnectionStatusMessage('Validating credentials and model reachability…');
+
+    try {
+      const res = await api.testAIConnection({
+        provider: selectedProviderId,
+        apiKey: apiKeyInput,
+        baseUrl: baseUrlInput,
+        model: selectedModelId
+      });
+
+      setConnectionStatus(res.status);
+      setConnectionStatusMessage(res.message);
+
+      if (res.fetchedModels && res.fetchedModels.length > 0) {
+        setFetchedOllamaModels(res.fetchedModels);
+      }
+
+      if (res.success) {
+        showToast('Connection Verified', res.message, 'success');
+      } else {
+        showToast('Connection Check', res.message, 'warning');
+      }
+    } catch (err: any) {
+      setConnectionStatus('error');
+      setConnectionStatusMessage(err.message || 'Connection test failed.');
+      showToast('Connection Failed', err.message || 'Failed to connect.', 'error');
+    } finally {
+      setIsTestingConnection(false);
+    }
+  };
+
+  // Fetch Ollama Models Handler
+  const handleFetchOllamaModels = async () => {
+    setIsFetchingOllama(true);
+    try {
+      const res = await api.fetchOllamaModels(baseUrlInput);
+      if (res.success && res.models && res.models.length > 0) {
+        setFetchedOllamaModels(res.models);
+        if (!res.models.includes(selectedModelId)) {
+          setSelectedModelId(res.models[0]);
+        }
+        showToast('Models Fetched', `Found ${res.models.length} local Ollama model(s).`, 'success');
+      } else {
+        showToast('Ollama Notice', res.error || 'No models returned from Ollama endpoint.', 'warning');
+      }
+    } catch (err: any) {
+      showToast('Fetch Failed', err.message, 'error');
+    } finally {
+      setIsFetchingOllama(false);
+    }
+  };
+
+  // Save AI Model Configuration Handler
+  const handleSaveAIConfiguration = async () => {
+    const provDef = AI_PROVIDERS_CONFIG.find(p => p.id === selectedProviderId) || AI_PROVIDERS_CONFIG[7];
+    if (provDef.requiresKey && (!apiKeyInput || apiKeyInput.trim().length === 0)) {
+      showToast('API Key Required', `Please enter a valid API key for ${provDef.name}.`, 'warning');
+      return;
+    }
+
+    const currentProviders = settings?.aiProviders || {};
+    const updatedCredential: ProviderCredential = {
+      apiKey: provDef.requiresKey ? apiKeyInput.trim() : (selectedProviderId === 'custom' ? apiKeyInput.trim() : undefined),
+      baseUrl: (selectedProviderId === 'ollama' || selectedProviderId === 'custom') ? baseUrlInput.trim() : undefined,
+      selectedModel: selectedModelId,
+      customModelName: selectedProviderId === 'custom' ? customModelInput.trim() : undefined,
+      status: connectionStatus,
+      statusMessage: connectionStatusMessage,
+      lastTested: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    await updateSettings({
+      activeAIProvider: selectedProviderId,
+      selectedModel: selectedModelId,
+      aiProviders: {
+        ...currentProviders,
+        [selectedProviderId]: updatedCredential
+      },
+      agentOverrides: agentOverridesState
+    });
+
+    showToast('Configuration Saved', `Active AI model set to ${selectedModelId} (${provDef.name}).`, 'success');
+  };
+
+  // Handler for Agent Provider Change
+  const handleAgentProviderChange = (agentId: string, provId: string) => {
+    if (provId === 'use_default') {
+      setAgentOverridesState(prev => ({
+        ...prev,
+        [agentId]: { agentId, providerId: 'use_default', modelId: 'use_default' }
+      }));
+      return;
+    }
+
+    const provDef = AI_PROVIDERS_CONFIG.find(p => p.id === provId) || AI_PROVIDERS_CONFIG[7];
+    const defaultModel = provDef.models[0]?.id || 'default';
+    setAgentOverridesState(prev => ({
+      ...prev,
+      [agentId]: { agentId, providerId: provId, modelId: defaultModel }
+    }));
+  };
+
+  // Handler for Agent Model Change
+  const handleAgentModelChange = (agentId: string, modelId: string) => {
+    setAgentOverridesState(prev => ({
+      ...prev,
+      [agentId]: {
+        agentId,
+        providerId: prev[agentId]?.providerId || selectedProviderId,
+        modelId
+      }
+    }));
+  };
 
   // Audio Input Devices & Mic Test State
   const [audioDevices, setAudioDevices] = useState<{ deviceId: string; label: string }[]>([]);
@@ -967,44 +1156,331 @@ export const SettingsScreen: React.FC = () => {
 
         {/* 3. AI MODEL TAB */}
         {settingsTab === 'model' && (
-          <div className="space-y-4">
-            <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs">
-              <h4 className="text-sm font-bold text-[#111827]">AI Inference Engine</h4>
-              <p className="text-xs text-[#6b7280] mt-0.5 mb-3">
-                Configure the model used for extracting Executive Summaries, Key Decisions, and Action Items.
+          <div className="space-y-6">
+            {/* Header / Intro */}
+            <div>
+              <h3 className="text-lg font-bold text-[#111827]">AI Model Configuration</h3>
+              <p className="text-xs text-[#6b7280] mt-0.5">
+                Configure the AI models used across the entire application.
               </p>
-              <div className="p-3.5 rounded-xl bg-[#f8fafd] border border-[#bfdbfe] flex items-center justify-between mb-3">
+            </div>
+
+            {/* Model Settings Card */}
+            <div className="border border-[#e5e7eb] rounded-2xl p-6 bg-white shadow-xs space-y-5">
+              <div>
+                <h4 className="text-sm font-bold text-[#111827]">Model Settings</h4>
+                <p className="text-xs text-[#6b7280] mt-0.5">
+                  Select the primary AI provider and model used for meeting summaries, action item extraction, and Q&amp;A.
+                </p>
+              </div>
+
+              {/* Provider and Model Dropdowns Side by Side */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Provider Dropdown */}
                 <div>
-                  <div className="font-bold text-xs text-[#1e3a8a]">Active Model: {settings.selectedModel}</div>
-                  <div className="text-[11px] text-[#6b7280]">On-device &bull; Zero external API dependencies</div>
+                  <label className="block text-xs font-bold text-[#374151] mb-1.5">
+                    Provider
+                  </label>
+                  <select
+                    value={selectedProviderId}
+                    onChange={(e) => handleProviderChange(e.target.value)}
+                    aria-label="Provider"
+                    className="w-full h-10 px-3.5 rounded-xl border border-[#d6dbe2] bg-white text-xs font-semibold text-[#111827] focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] cursor-pointer shadow-2xs transition"
+                  >
+                    {AI_PROVIDERS_CONFIG.map((prov) => (
+                      <option key={prov.id} value={prov.id}>
+                        {prov.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
+
+                {/* Model Dropdown */}
+                <div>
+                  <label className="block text-xs font-bold text-[#374151] mb-1.5">
+                    Model
+                  </label>
+                  {selectedProviderId === 'custom' ? (
+                    <input
+                      type="text"
+                      value={customModelInput}
+                      onChange={(e) => {
+                        setCustomModelInput(e.target.value);
+                        setSelectedModelId(e.target.value);
+                      }}
+                      placeholder="e.g., deepseek-r1, llama-3.3-70b"
+                      aria-label="Custom Model Name"
+                      className="w-full h-10 px-3.5 rounded-xl border border-[#d6dbe2] bg-white text-xs font-medium text-[#111827] focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] shadow-2xs transition"
+                    />
+                  ) : (
+                    <select
+                      value={selectedModelId}
+                      onChange={(e) => setSelectedModelId(e.target.value)}
+                      aria-label="Model"
+                      className="w-full h-10 px-3.5 rounded-xl border border-[#d6dbe2] bg-white text-xs font-semibold text-[#111827] focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] cursor-pointer shadow-2xs transition"
+                    >
+                      {/* Dynamic model options for the selected provider */}
+                      {selectedProviderId === 'ollama' && fetchedOllamaModels.length > 0 ? (
+                        fetchedOllamaModels.map((mName) => (
+                          <option key={mName} value={mName}>
+                            {mName} (Fetched Local)
+                          </option>
+                        ))
+                      ) : (
+                        (AI_PROVIDERS_CONFIG.find(p => p.id === selectedProviderId)?.models || []).map((m) => (
+                          <option key={m.id} value={m.id}>
+                            {m.name} {m.contextWindow ? `(${m.contextWindow})` : ''}
+                          </option>
+                        ))
+                      )}
+                    </select>
+                  )}
+                </div>
+              </div>
+
+              {/* Endpoint URL (for Ollama or Custom Server) */}
+              {(selectedProviderId === 'ollama' || selectedProviderId === 'custom') && (
+                <div>
+                  <label className="block text-xs font-bold text-[#374151] mb-1.5">
+                    {selectedProviderId === 'ollama' ? 'Ollama Endpoint URL' : 'API Endpoint URL'}
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={baseUrlInput}
+                      onChange={(e) => setBaseUrlInput(e.target.value)}
+                      placeholder={selectedProviderId === 'ollama' ? 'http://localhost:11434' : 'http://localhost:8000/v1'}
+                      aria-label="Endpoint URL"
+                      className="flex-1 h-10 px-3.5 rounded-xl border border-[#d6dbe2] bg-white font-mono text-xs text-[#111827] focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] shadow-2xs transition"
+                    />
+                    {selectedProviderId === 'ollama' && (
+                      <button
+                        type="button"
+                        onClick={handleFetchOllamaModels}
+                        disabled={isFetchingOllama}
+                        className="px-4 h-10 rounded-xl border border-[#d6dbe2] bg-[#f8fafc] hover:bg-[#f1f5f9] text-xs font-bold text-[#1e293b] inline-flex items-center gap-1.5 shadow-2xs transition cursor-pointer flex-none disabled:opacity-50"
+                      >
+                        {isFetchingOllama ? (
+                          <RotateCw className="w-3.5 h-3.5 animate-spin text-[#2563eb]" />
+                        ) : (
+                          <RotateCw className="w-3.5 h-3.5 text-[#2563eb]" />
+                        )}
+                        <span>Fetch Models</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* API Key Input (if required or custom) */}
+              {selectedProviderId !== 'builtin' && selectedProviderId !== 'ollama' && (
+                <div>
+                  <label className="block text-xs font-bold text-[#374151] mb-1.5">
+                    {selectedProviderId === 'custom' ? 'API Key (Optional)' : 'API Key'}
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showApiKey ? 'text' : 'password'}
+                      value={apiKeyInput}
+                      onChange={(e) => setApiKeyInput(e.target.value)}
+                      placeholder={AI_PROVIDERS_CONFIG.find(p => p.id === selectedProviderId)?.keyPlaceholder || 'Enter API Key…'}
+                      aria-label="API Key"
+                      className="w-full h-10 pl-3.5 pr-10 rounded-xl border border-[#d6dbe2] bg-white font-mono text-xs text-[#111827] focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] shadow-2xs transition"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowApiKey(!showApiKey)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94a3b8] hover:text-[#475569] p-1 cursor-pointer transition"
+                      title={showApiKey ? 'Hide Key' : 'Show Key'}
+                    >
+                      {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Built-in AI Info Box */}
+              {selectedProviderId === 'builtin' && (
+                <div className="p-4 rounded-xl bg-[#f5f3ff] border border-[#ddd6fe] flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <ShieldCheck className="w-4 h-4 text-[#7c3aed] flex-none" />
+                    <div>
+                      <div className="text-xs font-bold text-[#5b21b6]">Built-in On-Device Engine Active</div>
+                      <div className="text-[11px] text-[#6d28d9]">100% offline neural synthesis &bull; Zero external API dependencies &bull; Zero network calls</div>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-extrabold px-2.5 py-0.5 bg-[#ede9fe] text-[#6d28d9] rounded-full flex-none">
+                    Privacy First
+                  </span>
+                </div>
+              )}
+
+              {/* Test Connection Row & Connection States */}
+              <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={handleTestConnection}
+                    disabled={isTestingConnection}
+                    className="px-4 py-2 rounded-xl border border-[#cbd5e1] bg-white hover:bg-[#f8fafc] text-xs font-bold text-[#1e293b] inline-flex items-center gap-2 shadow-2xs transition cursor-pointer disabled:opacity-50"
+                  >
+                    {isTestingConnection ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-[#2563eb]" />
+                    ) : (
+                      <RefreshCw className="w-3.5 h-3.5 text-[#2563eb]" />
+                    )}
+                    <span>{isTestingConnection ? 'Testing…' : 'Test Connection'}</span>
+                  </button>
+
+                  {/* 5 Clear Connection States */}
+                  {connectionStatus === 'connected' && (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold bg-[#dcfce7] text-[#15803d] border border-[#86efac] px-3 py-1 rounded-full">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Connected
+                    </span>
+                  )}
+                  {connectionStatus === 'invalid' && (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold bg-[#fee2e2] text-[#b91c1c] border border-[#fca5a5] px-3 py-1 rounded-full">
+                      <AlertCircle className="w-3.5 h-3.5" /> Invalid API key
+                    </span>
+                  )}
+                  {connectionStatus === 'testing' && (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold bg-[#dbeafe] text-[#1e40af] border border-[#bfdbfe] px-3 py-1 rounded-full">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Testing…
+                    </span>
+                  )}
+                  {connectionStatus === 'error' && (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold bg-[#fef3c7] text-[#92400e] border border-[#fde68a] px-3 py-1 rounded-full">
+                      <AlertCircle className="w-3.5 h-3.5" /> Connection failed
+                    </span>
+                  )}
+                  {connectionStatus === 'not_configured' && (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[#64748b] bg-[#f1f5f9] px-3 py-1 rounded-full border border-[#e2e8f0]">
+                      Not configured
+                    </span>
+                  )}
+                </div>
+
+                {/* Status Message Text */}
+                {connectionStatusMessage && (
+                  <div className="text-[11px] text-[#6b7280] font-medium truncate max-w-sm">
+                    {connectionStatusMessage}
+                  </div>
+                )}
+              </div>
+
+              {/* Bottom-right Save Button */}
+              <div className="flex items-center justify-end pt-4 border-t border-[#f1f5f9]">
                 <button
-                  onClick={() => openModal('model')}
-                  className="px-3 py-1.5 rounded-lg bg-[#2563eb] text-white text-xs font-bold hover:bg-[#1d4ed8] transition cursor-pointer"
+                  type="button"
+                  onClick={handleSaveAIConfiguration}
+                  className="px-5 py-2.5 bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer inline-flex items-center gap-2"
                 >
-                  Change Model
+                  <Save className="w-3.5 h-3.5" />
+                  <span>Save Model Configuration</span>
                 </button>
               </div>
             </div>
 
-            <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs">
-              <h4 className="text-sm font-bold text-[#111827]">External AI Providers (Optional)</h4>
-              <p className="text-xs text-[#6b7280] mt-0.5 mb-3">
-                You can optionally plug in your own API keys for cloud models (OpenAI GPT-4o, Google Gemini 1.5, Ollama Local).
-              </p>
-              <div className="space-y-2 text-xs">
-                <div className="flex items-center justify-between p-2.5 rounded-lg border border-[#e5e7eb]">
-                  <span className="font-semibold text-[#374151]">OpenAI / GPT-4o API</span>
-                  <span className="text-[#9aa2af] font-mono">sk-••••••••••••</span>
-                </div>
-                <div className="flex items-center justify-between p-2.5 rounded-lg border border-[#e5e7eb]">
-                  <span className="font-semibold text-[#374151]">Google Gemini API</span>
-                  <span className="text-[#9aa2af] font-mono">AIza••••••••••••</span>
-                </div>
-                <div className="flex items-center justify-between p-2.5 rounded-lg border border-[#e5e7eb]">
-                  <span className="font-semibold text-[#374151]">Local Ollama Endpoint</span>
-                  <span className="text-[#9aa2af] font-mono">http://localhost:11434</span>
-                </div>
+            {/* AI AGENT MODEL OVERRIDE SECTION */}
+            <div className="border border-[#e5e7eb] rounded-2xl p-6 bg-white shadow-xs space-y-4">
+              <div>
+                <h4 className="text-sm font-bold text-[#111827] flex items-center gap-2">
+                  <Bot className="w-4 h-4 text-[#7c3aed]" />
+                  <span>AI Agent Overrides</span>
+                </h4>
+                <p className="text-xs text-[#6b7280] mt-0.5">
+                  Optionally assign specific providers and models to individual AI capabilities. When &quot;Use Global Default&quot; is selected, the agent automatically follows the centralized Model Settings above.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {AI_AGENTS_CONFIG.map((agent) => {
+                  const effective = getEffectiveModelForAgent(settings, agent.id);
+                  const currentOverride = agentOverridesState[agent.id] || { providerId: 'use_default', modelId: 'use_default' };
+                  const isUsingDefault = currentOverride.providerId === 'use_default' || currentOverride.modelId === 'use_default';
+
+                  const agentProvDef = AI_PROVIDERS_CONFIG.find(p => p.id === currentOverride.providerId) || AI_PROVIDERS_CONFIG[7];
+
+                  return (
+                    <div
+                      key={agent.id}
+                      className="p-4 rounded-xl border border-[#e5e7eb] bg-[#fafbfc] hover:border-[#cbd5e1] transition space-y-3"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                          <div className="font-bold text-xs text-[#111827] flex items-center gap-2">
+                            <span>{agent.name}</span>
+                            <span className="text-[10px] font-semibold text-[#2563eb] bg-[#eff6ff] px-2 py-0.2 rounded-full border border-[#bfdbfe]">
+                              {agent.role}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-[#6b7280] mt-0.5">{agent.description}</p>
+                        </div>
+
+                        <span
+                          className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full flex-none ${
+                            effective.isOverride
+                              ? 'bg-[#fef3c7] text-[#92400e] border border-[#fde68a]'
+                              : 'bg-[#dbeafe] text-[#1e40af] border border-[#bfdbfe]'
+                          }`}
+                        >
+                          {effective.isOverride ? 'Custom Override' : 'Global Default'}
+                        </span>
+                      </div>
+
+                      {/* Agent Provider and Model Selection Controls */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                        {/* Agent Provider Selector */}
+                        <div>
+                          <label className="block text-[11px] font-bold text-[#475569] mb-1">
+                            Provider
+                          </label>
+                          <select
+                            value={currentOverride.providerId}
+                            onChange={(e) => handleAgentProviderChange(agent.id, e.target.value)}
+                            aria-label={`Provider for ${agent.name}`}
+                            className="w-full h-8.5 px-3 rounded-lg border border-[#cbd5e1] bg-white text-xs font-semibold text-[#111827] focus:outline-none focus:border-[#2563eb] cursor-pointer"
+                          >
+                            <option value="use_default">
+                              ⚡ Use Global Default ({AI_PROVIDERS_CONFIG.find(p => p.id === (settings.activeAIProvider || 'builtin'))?.name || 'Built-in AI'})
+                            </option>
+                            {AI_PROVIDERS_CONFIG.map((prov) => (
+                              <option key={prov.id} value={prov.id}>
+                                {prov.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Agent Model Selector */}
+                        <div>
+                          <label className="block text-[11px] font-bold text-[#475569] mb-1">
+                            Model
+                          </label>
+                          <select
+                            value={isUsingDefault ? 'use_default' : currentOverride.modelId}
+                            onChange={(e) => handleAgentModelChange(agent.id, e.target.value)}
+                            disabled={isUsingDefault}
+                            aria-label={`Model for ${agent.name}`}
+                            className="w-full h-8.5 px-3 rounded-lg border border-[#cbd5e1] bg-white text-xs font-semibold text-[#111827] focus:outline-none focus:border-[#2563eb] cursor-pointer disabled:bg-gray-100 disabled:text-gray-400"
+                          >
+                            {isUsingDefault ? (
+                              <option value="use_default">
+                                {settings.selectedModel || 'Nimbus 4B (High Quality)'} (Global Default)
+                              </option>
+                            ) : (
+                              agentProvDef.models.map((m) => (
+                                <option key={m.id} value={m.id}>
+                                  {m.name}
+                                </option>
+                              ))
+                            )}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>

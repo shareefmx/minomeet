@@ -20,6 +20,24 @@ export const defaultSettings: AppSettings = {
   defaultLanguage: 'English',
   defaultTemplate: 'Standard Meeting Notes & MOM',
   selectedModel: 'Nimbus 4B (High Quality)',
+  activeAIProvider: 'builtin',
+  aiProviders: {
+    openai: { apiKey: '', selectedModel: 'gpt-4o', status: 'not_configured', statusMessage: 'Not configured' },
+    anthropic: { apiKey: '', selectedModel: 'claude-3-7-sonnet', status: 'not_configured', statusMessage: 'Not configured' },
+    google: { apiKey: '', selectedModel: 'gemini-2.5-flash', status: 'not_configured', statusMessage: 'Not configured' },
+    groq: { apiKey: '', selectedModel: 'llama-3.3-70b-versatile', status: 'not_configured', statusMessage: 'Not configured' },
+    openrouter: { apiKey: '', selectedModel: 'openai/gpt-4o', status: 'not_configured', statusMessage: 'Not configured' },
+    ollama: { baseUrl: 'http://localhost:11434', selectedModel: 'llama3.3:70b', status: 'not_configured', statusMessage: 'Not configured' },
+    custom: { baseUrl: 'http://localhost:8000/v1', apiKey: '', selectedModel: 'custom-model', customModelName: 'custom-model', status: 'not_configured', statusMessage: 'Not configured' },
+    builtin: { selectedModel: 'Nimbus 4B (High Quality)', status: 'connected', statusMessage: 'Connected & Ready' }
+  },
+  agentOverrides: {
+    mom_synthesis: { agentId: 'mom_synthesis', providerId: 'use_default', modelId: 'use_default' },
+    action_items: { agentId: 'action_items', providerId: 'use_default', modelId: 'use_default' },
+    ask_meetings: { agentId: 'ask_meetings', providerId: 'use_default', modelId: 'use_default' },
+    follow_up_email: { agentId: 'follow_up_email', providerId: 'use_default', modelId: 'use_default' },
+    title_tagging: { agentId: 'title_tagging', providerId: 'use_default', modelId: 'use_default' }
+  },
   betaDiarization: true,
   betaAskMeetings: true,
   betaAutoFollowUp: true,

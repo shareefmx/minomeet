@@ -181,6 +181,34 @@ export const api = {
     return { subject: data.subject, body: data.body };
   },
 
+  async testAIConnection(payload: {
+    provider: string;
+    apiKey?: string;
+    baseUrl?: string;
+    model?: string;
+  }): Promise<{
+    success: boolean;
+    status: 'not_configured' | 'testing' | 'connected' | 'invalid' | 'error';
+    message: string;
+    fetchedModels?: string[];
+  }> {
+    const res = await fetch(`${API_BASE}/ai/test-connection`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    return await res.json();
+  },
+
+  async fetchOllamaModels(baseUrl?: string): Promise<{ success: boolean; models?: string[]; error?: string }> {
+    const res = await fetch(`${API_BASE}/ai/fetch-ollama-models`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ baseUrl })
+    });
+    return await res.json();
+  },
+
   // Settings
   async getSettings(): Promise<{ settings: AppSettings; storageStats?: StorageStats }> {
     const res = await fetch(`${API_BASE}/settings`);
