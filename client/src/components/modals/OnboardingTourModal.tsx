@@ -37,30 +37,30 @@ interface TourStep {
 const TOUR_STEPS: TourStep[] = [
   {
     stepNumber: 1,
-    badge: 'Step 1 of 7 • Platform Overview',
-    title: 'Welcome to Minomeet AI',
-    subtitle: 'Autonomous On-Device & Cloud Meeting Intelligence Assistant',
+    badge: 'Step 1 of 7 • Website Onboarding Tour',
+    title: 'Welcome to Minomeet Web Application',
+    subtitle: 'Autonomous On-Device & Cloud Meeting Intelligence • Product Tour',
     icon: Sparkles,
     iconBg: 'bg-gradient-to-br from-[#4f46e5] to-[#3730a3]',
     iconColor: 'text-white',
-    description: 'Minomeet transforms raw meeting conversations into structured, actionable intelligence—combining real-time transcription, executive summaries, decision matrices, and semantic Q&A.',
+    description: 'Welcome to the Minomeet web application! This interactive Product Tour guides you through all 7 core sections—combining real-time speech transcription, executive MOM summaries, decision matrices, and semantic AI search.',
     features: [
       {
         icon: Shield,
-        title: '100% Privacy-First',
+        title: '100% Privacy-First Web App',
         text: 'Audio streams, live transcripts, and notes are processed and stored locally on your machine.'
       },
       {
         icon: Zap,
         title: 'Autonomous Multi-Model AI',
-        text: 'Instantly orchestrate Google Gemini, OpenAI, Claude 3.7, Groq, and Ollama for all synthesis tasks.'
+        text: 'Instantly orchestrate Google Gemini, OpenAI, Claude 3.7, Groq, and Ollama for all meeting tasks.'
       }
     ],
-    highlightTip: '💡 Minomeet operates with zero third-party telemetry, keeping corporate conversations completely confidential.'
+    highlightTip: '💡 Minomeet operates with zero third-party telemetry, keeping all organizational conversations completely confidential.'
   },
   {
     stepNumber: 2,
-    badge: 'Step 2 of 7 • AI Model & API Key',
+    badge: 'Step 2 of 7 • AI Model & API Key Setup',
     title: 'Connect Your Preferred AI Engine',
     subtitle: 'Direct, zero-cloud-telemetry integration with frontier LLM providers',
     icon: Key,
@@ -79,7 +79,7 @@ const TOUR_STEPS: TourStep[] = [
         text: 'Connect to Ollama or custom OpenAI-compatible endpoints running on your device or LAN.'
       }
     ],
-    highlightTip: '🔑 After completing this tour, you will be automatically navigated to Settings to set up your AI API key.'
+    highlightTip: '🔑 After completing this Website Onboarding Tour, you will be automatically navigated to Settings to set up your AI API key.'
   },
   {
     stepNumber: 3,
@@ -106,9 +106,9 @@ const TOUR_STEPS: TourStep[] = [
   },
   {
     stepNumber: 4,
-    badge: 'Step 4 of 7 • Speech-to-Text',
-    title: 'Real-Time Live Transcriptions',
-    subtitle: 'Lightning-fast speech recognition with speaker diarization',
+    badge: 'Step 4 of 7 • Real-Time Speech-to-Text',
+    title: 'Live Transcriptions & Diarization',
+    subtitle: 'Lightning-fast speech recognition with speaker segmentation',
     icon: FileText,
     iconBg: 'bg-gradient-to-br from-[#0891b2] to-[#0e7490]',
     iconColor: 'text-white',
@@ -265,7 +265,11 @@ export const OnboardingTourModal: React.FC = () => {
         {/* Header Bar */}
         <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-[#f1f5f9]">
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-[#eff6ff] text-[#2563eb] border border-[#bfdbfe]">
+            <span className="font-extrabold text-xs text-[#1e3a8a] bg-[#eff6ff] border border-[#bfdbfe] px-2.5 py-1 rounded-full flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-[#2563eb]" />
+              <span>Website Onboarding Tour</span>
+            </span>
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#f1f5f9] text-[#475569] border border-[#e2e8f0]">
               {currentStep.badge}
             </span>
           </div>

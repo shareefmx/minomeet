@@ -314,7 +314,7 @@ export const AboutModal: React.FC = () => {
             className="w-full py-2 px-3 rounded-xl border border-[#bfdbfe] bg-[#eff6ff] hover:bg-[#dbeafe] text-[#1e40af] text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
           >
             <Sparkles className="w-4 h-4 text-[#2563eb]" />
-            <span>Replay 7-Step Product Tour</span>
+            <span>Website Onboarding Tour &amp; Product Guide (7 Steps)</span>
           </button>
         </div>
 

@@ -100,10 +100,11 @@ export const Sidebar: React.FC = () => {
         <button
           onClick={() => window.dispatchEvent(new CustomEvent('minomeet_replay_tour'))}
           className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] font-semibold transition text-left cursor-pointer text-[#2563eb] hover:bg-[#eff6ff] group"
+          title="Website Onboarding Tour &amp; Product Walkthrough (7 Steps)"
         >
           <Compass className="w-4 h-4 text-[#2563eb] group-hover:rotate-45 transition" />
-          <span>Product Tour</span>
-          <span className="ml-auto text-[9.5px] font-bold px-1.5 py-0.5 rounded bg-[#dbeafe] text-[#1e40af]">7 Steps</span>
+          <span className="truncate">Website Onboarding Tour</span>
+          <span className="ml-auto text-[9.5px] font-bold px-1.5 py-0.5 rounded bg-[#dbeafe] text-[#1e40af] flex-none">7 Steps</span>
         </button>
       </nav>
 

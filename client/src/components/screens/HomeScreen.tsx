@@ -16,7 +16,8 @@ import {
   Edit3,
   Trash2,
   Key,
-  ChevronRight
+  ChevronRight,
+  Compass
 } from 'lucide-react';
 
 export const HomeScreen: React.FC = () => {
@@ -125,6 +126,14 @@ export const HomeScreen: React.FC = () => {
               >
                 <MessageSquare className="w-4 h-4 text-indigo-200" />
                 <span>Ask Your Meetings</span>
+              </button>
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent('minomeet_replay_tour'))}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm border border-white/20 transition cursor-pointer backdrop-blur-sm"
+                title="Launch the 7-Step Website Onboarding Tour"
+              >
+                <Compass className="w-4 h-4 text-indigo-200" />
+                <span>Website Tour</span>
               </button>
             </div>
           </div>
