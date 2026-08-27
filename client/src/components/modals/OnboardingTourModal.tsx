@@ -11,14 +11,8 @@ import {
   ChevronRight,
   ChevronLeft,
   X,
-  Shield,
   Zap,
-  Sliders,
-  Users,
-  Send,
-  Upload,
-  ArrowRight,
-  CheckCircle2
+  ArrowRight
 } from 'lucide-react';
 
 interface TourStep {
@@ -37,164 +31,72 @@ interface TourStep {
 const TOUR_STEPS: TourStep[] = [
   {
     stepNumber: 1,
-    badge: 'Step 1 of 7 • Website Onboarding Tour',
-    title: 'Welcome to Minomeet Web Application',
-    subtitle: 'Autonomous On-Device & Cloud Meeting Intelligence • Product Tour',
-    icon: Sparkles,
-    iconBg: 'bg-gradient-to-br from-[#4f46e5] to-[#3730a3]',
-    iconColor: 'text-white',
-    description: 'Welcome to the Minomeet web application! This interactive Product Tour guides you through all 7 core sections—combining real-time speech transcription, executive MOM summaries, decision matrices, and semantic AI search.',
-    features: [
-      {
-        icon: Shield,
-        title: '100% Privacy-First Web App',
-        text: 'Audio streams, live transcripts, and notes are processed and stored locally on your machine.'
-      },
-      {
-        icon: Zap,
-        title: 'Autonomous Multi-Model AI',
-        text: 'Instantly orchestrate Google Gemini, OpenAI, Claude 3.7, Groq, and Ollama for all meeting tasks.'
-      }
-    ],
-    highlightTip: '💡 Minomeet operates with zero third-party telemetry, keeping all organizational conversations completely confidential.'
-  },
-  {
-    stepNumber: 2,
-    badge: 'Step 2 of 7 • AI Model & API Key Setup',
-    title: 'Connect Your Preferred AI Engine',
-    subtitle: 'Direct, zero-cloud-telemetry integration with frontier LLM providers',
-    icon: Key,
-    iconBg: 'bg-gradient-to-br from-[#2563eb] to-[#1d4ed8]',
-    iconColor: 'text-white',
-    description: 'Minomeet connects directly to your own AI API keys. Configure your credentials once in Settings to power executive summaries, action item extraction, and meeting search.',
-    features: [
-      {
-        icon: Zap,
-        title: 'Supported Cloud Providers',
-        text: 'Google Gemini (2.5 Flash/Pro), OpenAI (GPT-4o/o3-mini), Anthropic (Claude 3.7), Groq (LPU Speed), OpenRouter.'
-      },
-      {
-        icon: Shield,
-        title: 'Local / Self-Hosted Support',
-        text: 'Connect to Ollama or custom OpenAI-compatible endpoints running on your device or LAN.'
-      }
-    ],
-    highlightTip: '🔑 After completing this Website Onboarding Tour, you will be automatically navigated to Settings to set up your AI API key.'
-  },
-  {
-    stepNumber: 3,
-    badge: 'Step 3 of 7 • Audio Recording & Ingestion',
-    title: 'Multi-Source Audio Capture',
-    subtitle: 'Record microphone, browser tabs, video calls, or import files',
+    badge: 'Step 1 of 3 • Capture & Transcribe',
+    title: 'Record & Transcribe Any Meeting',
+    subtitle: 'Dual-channel audio capture with real-time speech-to-text & speaker diarization',
     icon: Mic,
     iconBg: 'bg-gradient-to-br from-[#dc2626] to-[#991b1b]',
     iconColor: 'text-white',
-    description: 'Capture high-fidelity dual-channel audio from any source with live interactive waveform visualization and automated gain control.',
+    description: 'Capture high-fidelity audio from your microphone, system sounds (Google Meet, Zoom, Slack Huddles, browser tabs), or import pre-recorded audio files (.mp3, .wav, .m4a, .webm) with real-time scrolling transcripts.',
     features: [
       {
         icon: Mic,
-        title: 'Dual-Channel Capture',
-        text: 'Capture your microphone, system audio (Google Meet, Zoom, Slack Huddles), or mixed simultaneous stream.'
+        title: 'Multi-Source Audio Capture',
+        text: 'Capture microphone, system/tab audio, or mixed dual-channel streams with live waveforms.'
       },
       {
-        icon: Upload,
-        title: 'Audio File Ingestion',
-        text: 'Drag and drop pre-recorded .mp3, .wav, .m4a, or .webm recordings for instant background transcription.'
+        icon: FileText,
+        title: 'Real-Time Speech-to-Text',
+        text: 'Live transcription with speaker diarization, millisecond timestamps, and instant search.'
       }
     ],
-    highlightTip: '🎙️ Select "Mixed (Mic + System)" when on video calls so both your voice and remote speakers are captured.'
+    highlightTip: '🎙️ Select "Mixed (Mic + System)" on video calls so both your voice and remote participants are recorded.'
   },
   {
-    stepNumber: 4,
-    badge: 'Step 4 of 7 • Real-Time Speech-to-Text',
-    title: 'Live Transcriptions & Diarization',
-    subtitle: 'Lightning-fast speech recognition with speaker segmentation',
-    icon: FileText,
-    iconBg: 'bg-gradient-to-br from-[#0891b2] to-[#0e7490]',
-    iconColor: 'text-white',
-    description: 'Watch conversations turn into searchable text in real time with automatic speaker segmentation and millisecond timestamps.',
-    features: [
-      {
-        icon: Users,
-        title: 'Speaker Diarization',
-        text: 'Distinguish between different meeting participants with automatic speaker attribution tags.'
-      },
-      {
-        icon: Zap,
-        title: 'Live Scrolling Captions',
-        text: 'Interactive live transcript flow with inline search, playback jumping, and dialogue editing.'
-      }
-    ],
-    highlightTip: '⚡ Live transcripts are automatically saved in local archives even before you click Stop Recording.'
-  },
-  {
-    stepNumber: 5,
-    badge: 'Step 5 of 7 • Meeting Intelligence',
-    title: 'Executive Minutes of Meeting (MOM)',
-    subtitle: 'Structured summaries, key decisions, and template styles',
+    stepNumber: 2,
+    badge: 'Step 2 of 3 • Meeting Intelligence',
+    title: 'Executive MOM & Action Items Matrix',
+    subtitle: 'Automated executive summaries, key decisions, and deliverable tracking',
     icon: FileCheck,
     iconBg: 'bg-gradient-to-br from-[#7c3aed] to-[#5b21b6]',
     iconColor: 'text-white',
-    description: 'Transform lengthy transcripts into clean, actionable Minutes of Meeting formatted for executive review and cross-team sharing.',
+    description: 'Transform lengthy transcripts into structured, actionable Minutes of Meeting (MOM). Automatically extracts key decisions, discussion highlights, and task deliverables with assignees and due dates.',
     features: [
       {
         icon: FileCheck,
-        title: 'Structured Sections',
-        text: 'Automated generation of Executive Summaries, Key Decisions, Discussion Highlights, and Next Steps.'
+        title: 'Structured Executive MOM',
+        text: 'Generate executive summaries, decisions, next steps, and customizable meeting note templates.'
       },
       {
-        icon: Sliders,
-        title: 'Custom MOM Templates',
-        text: 'Choose from Standard Notes, Daily Standups, Client Discovery, Technical Design, or Executive Board styles.'
+        icon: CheckSquare,
+        title: 'Action Items Matrix',
+        text: 'Interactive task checklists with assignees, due dates, tracking notes, and completion toggles.'
       }
     ],
-    highlightTip: '📋 You can edit any summary section inline or re-synthesize specific sections with new prompts anytime.'
+    highlightTip: '📋 All meeting notes and action items stay 100% private and stored locally on your machine.'
   },
   {
-    stepNumber: 6,
-    badge: 'Step 6 of 7 • Action Items Matrix',
-    title: 'Deliverables & Ownership Tracking',
-    subtitle: 'Assignees, due dates, context notes, and completion toggles',
-    icon: CheckSquare,
-    iconBg: 'bg-gradient-to-br from-[#16a34a] to-[#15803d]',
+    stepNumber: 3,
+    badge: 'Step 3 of 3 • AI Model API Setup',
+    title: 'Connect Your AI API Key & Launch',
+    subtitle: 'Direct, zero-telemetry connection to Google Gemini, OpenAI, Claude, Groq, or Ollama',
+    icon: Key,
+    iconBg: 'bg-gradient-to-br from-[#2563eb] to-[#1d4ed8]',
     iconColor: 'text-white',
-    description: 'Never let critical tasks slip through the cracks. Minomeet extracts all commitments and deliverables into an interactive action items matrix.',
+    description: 'Minomeet connects directly to your own AI API keys with zero third-party telemetry. Configure your credentials once in Settings to power automated synthesis, semantic Q&A, and follow-up emails.',
     features: [
       {
-        icon: Users,
-        title: 'Owner & Due Date Tagging',
-        text: 'Intelligently identifies task owners, explicit deadlines, and tracking notes directly from dialogue.'
+        icon: Zap,
+        title: 'Frontier AI Providers',
+        text: 'Supports Google Gemini (2.5 Flash/Pro), OpenAI (GPT-4o), Anthropic (Claude 3.7), Groq, and Ollama.'
       },
-      {
-        icon: CheckCircle2,
-        title: 'Interactive Checklists',
-        text: 'Mark items as complete, re-assign team members, add new tasks, or filter pending action items.'
-      }
-    ],
-    highlightTip: '✅ Action items sync seamlessly into follow-up email drafts and exported PDF reports.'
-  },
-  {
-    stepNumber: 7,
-    badge: 'Step 7 of 7 • Q&A, Export & Sharing',
-    title: 'Ask Your Meetings & Instant Emails',
-    subtitle: 'Cross-meeting semantic search and 1-click follow-up emails',
-    icon: MessageSquare,
-    iconBg: 'bg-gradient-to-br from-[#ea580c] to-[#c2410c]',
-    iconColor: 'text-white',
-    description: 'Ask natural-language questions across your entire historical meeting archives and generate polished follow-up emails in seconds.',
-    features: [
       {
         icon: MessageSquare,
-        title: 'Semantic Meeting Q&A',
-        text: 'Ask "What did we decide about the Q3 budget?" and get instant answers with direct timestamp citations.'
-      },
-      {
-        icon: Send,
-        title: '1-Click Email Recaps & Export',
-        text: 'Generate tailored email drafts (Professional, Concise, Action-Oriented) and export to Markdown, Text, or PDF.'
+        title: 'Meeting Q&A & Email Recaps',
+        text: 'Ask questions across past meetings with exact citations and draft 1-click tailored follow-up emails.'
       }
     ],
-    highlightTip: '🚀 You are all set! Click below to open Settings and configure your AI Model API key to get started.'
+    highlightTip: '🚀 Click below to open Settings, enter your AI API key, and start synthesizing meetings!'
   }
 ];
 
@@ -383,7 +285,7 @@ export const OnboardingTourModal: React.FC = () => {
                 onClick={handleNext}
                 className="px-5 py-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer inline-flex items-center gap-1.5"
               >
-                <span>Next Step ({currentStepIndex + 1}/7)</span>
+                <span>Next Step ({currentStepIndex + 1}/3)</span>
                 <ChevronRight className="w-4 h-4" />
               </button>
             )}

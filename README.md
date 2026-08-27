@@ -101,20 +101,16 @@ Both the React client and Express backend will start concurrently:
 
 ---
 
-### 🧭 First-Time User Tour & AI API Key Setup
+### 🧭 First-Time User 3-Step Tour & AI API Key Setup
 
-1. **Interactive 7-Step Product Tour**:
-   When launching Minomeet for the first time, an interactive walkthrough introduces each section of the application:
-   - **Step 1**: Platform Overview & Privacy Architecture
-   - **Step 2**: AI Model & Direct API Connection
-   - **Step 3**: Dual-Channel Audio Capture & Ingestion
-   - **Step 4**: Real-Time Live Transcriptions & Diarization
-   - **Step 5**: Executive Minutes of Meeting (MOM) & Templates
-   - **Step 6**: Action Items Matrix & Ownership Tracking
-   - **Step 7**: Cross-Meeting Semantic Q&A & Universal Export
+1. **Interactive 3-Step Website Onboarding Tour**:
+   When launching Minomeet for the first time, an interactive 3-step walkthrough guides you through the application:
+   - **Step 1 — Capture & Transcribe**: Dual-channel recording (Mic + System Audio) and live speech-to-text diarization.
+   - **Step 2 — Meeting Intelligence**: Executive Minutes of Meeting (MOM), key decisions, and action items matrix.
+   - **Step 3 — AI Model Setup**: Direct connection to your preferred AI API key for private, zero-telemetry synthesis.
 
 2. **Configure Your AI API Key**:
-   Upon completing or skipping the tour, Minomeet automatically navigates you to **Settings ➔ AI Model**:
+   Upon completing or skipping the 3-step tour, Minomeet automatically opens **Settings ➔ AI Model**:
    - Select your provider: **Google Gemini**, **OpenAI**, **Anthropic Claude**, **Groq**, **OpenRouter**, or **Ollama**.
    - Paste your API key (or specify your custom endpoint).
    - Click **"Test Connection"** to verify credentials in real time.
@@ -152,8 +148,6 @@ Settings ──► AI Model ──► Provider ──► Model ──► Test Co
    - Supports: `llama3.3:70b`, `qwen2.5:7b`, `mistral:7b`, `deepseek-r1:8b`, `phi4:14b`
    - Real-time "Fetch Models" and "Test Connection" validation.
 7. **Custom OpenAI-Compatible Server**: Connect to any vLLM, LM Studio, Together AI, or LocalAI endpoint.
-
----
 
 ## 📂 Project Structure
 
