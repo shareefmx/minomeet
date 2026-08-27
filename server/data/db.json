@@ -4,7 +4,7 @@
       "id": "meeting-059eae13",
       "title": "Meeting 2026-08-26_01-59",
       "createdAt": "2026-08-26T16:19:16.337Z",
-      "updatedAt": "2026-08-26T17:06:08.353Z",
+      "updatedAt": "2026-08-26T17:16:39.939Z",
       "duration": "01:59",
       "transcript": [
         {
@@ -228,13 +228,13 @@
           "You (Microphone) (Participant)",
           "Meeting Participant (Participant)"
         ],
-        "summary": "Daily Standup Summary: The engineering team synced on active work streams and sprint deliverables. Key updates centered on my name is mom sharif.. Active blockers were triaged and peer pairing sessions aligned.",
+        "summary": "Executive Meeting Summary: The meeting focused on key project deliverables and strategic alignments. Topics discussed included my name is mom sharif.. The team reviewed current status and established concrete next steps.",
         "keyDecisions": [
           "Agreed on milestones outlined in My name is Mom Sharif...."
         ],
         "actionItems": [
           {
-            "id": "9355e449-8436-40ee-9272-170f89ed8be1",
+            "id": "6068513a-9c22-4a10-832b-15d76c142684",
             "owner": "Meeting Participant",
             "task": "Can I please send this?",
             "due": "By Friday",
@@ -251,10 +251,10 @@
         "nextSteps": [
           "Meeting Participant to finish: Can I please send this? (By Friday)"
         ],
-        "template": "Engineering & Daily Standup",
+        "template": "Standard Meeting Notes & MOM",
         "language": "Auto",
         "modelUsed": "Nimbus 1B (Fast)",
-        "generatedAt": "2026-08-26T17:06:08.326Z"
+        "generatedAt": "2026-08-26T17:16:39.893Z"
       }
     },
     {

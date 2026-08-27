@@ -3,12 +3,15 @@
   "version": "1.0.0",
   "description": "Minomeet - AI-Powered Minutes of Meeting Assistant",
   "private": true,
+  "workspaces": [
+    "client",
+    "server"
+  ],
   "scripts": {
-    "dev": "concurrently -n \"SERVER,CLIENT\" -c \"blue,magenta\" \"npm run server\" \"npm run client\"",
-    "server": "npm --prefix server run dev",
-    "client": "npm --prefix client run dev",
-    "build": "npm --prefix server run build && npm --prefix client run build",
-    "install:all": "npm install && npm --prefix server install && npm --prefix client install"
+    "dev": "concurrently -n \"SERVER,CLIENT\" -c \"blue,magenta\" \"npm run dev -w server\" \"npm run dev -w client\"",
+    "server": "npm run dev -w server",
+    "client": "npm run dev -w client",
+    "build": "npm run build -w server && npm run build -w client"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
