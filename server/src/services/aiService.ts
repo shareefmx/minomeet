@@ -217,6 +217,61 @@ export class AIService {
   }
 
   /**
+   * Helper to resolve the active LLM credentials from settings or environment.
+   */
+  public resolveActiveLLM(settings: any, agentRole: string = 'general'): {
+    provider: string;
+    apiKey?: string;
+    baseUrl?: string;
+    model: string;
+    isLLMAvailable: boolean;
+  } {
+    const effective = getEffectiveModelForAgent(settings, agentRole);
+    let activeProvider = effective.providerId;
+    let activeKey = settings?.aiProviders?.[activeProvider]?.apiKey;
+    let activeBaseUrl = settings?.aiProviders?.[activeProvider]?.baseUrl;
+    let activeModelName = effective.modelId;
+
+    if (!activeKey && settings?.aiProviders) {
+      for (const [pId, pCred] of Object.entries(settings.aiProviders as Record<string, any>)) {
+        if (pCred?.apiKey && pCred.apiKey.trim()) {
+          activeProvider = pId;
+          activeKey = pCred.apiKey;
+          activeBaseUrl = pCred.baseUrl;
+          activeModelName = pCred.selectedModel || effective.modelId;
+          break;
+        }
+      }
+    }
+
+    if (!activeKey) {
+      if (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY) {
+        activeProvider = 'google';
+        activeKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+        activeModelName = 'gemini-1.5-flash';
+      } else if (process.env.OPENAI_API_KEY) {
+        activeProvider = 'openai';
+        activeKey = process.env.OPENAI_API_KEY;
+        activeModelName = 'gpt-4o';
+      } else if (process.env.GROQ_API_KEY) {
+        activeProvider = 'groq';
+        activeKey = process.env.GROQ_API_KEY;
+        activeModelName = 'llama-3.3-70b-versatile';
+      }
+    }
+
+    const isLLMAvailable = activeProvider !== 'builtin' && (Boolean(activeKey) || activeProvider === 'ollama' || activeProvider === 'custom');
+
+    return {
+      provider: activeProvider,
+      apiKey: activeKey,
+      baseUrl: activeBaseUrl,
+      model: activeModelName,
+      isLLMAvailable
+    };
+  }
+
+  /**
    * Generates a structured Minutes of Meeting (MOM) document from transcript text.
    */
   public async generateMOM(
@@ -228,10 +283,8 @@ export class AIService {
     meetingTitle?: string
   ): Promise<MOMSummary> {
     const settings = storageService.getSettings();
-    const effective = getEffectiveModelForAgent(settings, 'mom_synthesis');
-    const effectiveModel = model || effective.modelId;
-    const effectiveProvider = effective.providerId;
-    const cred = settings?.aiProviders?.[effectiveProvider];
+    const llmInfo = this.resolveActiveLLM(settings, 'mom_synthesis');
+    const effectiveModel = model || llmInfo.model;
 
     const fullText = transcript.map(t => `${t.speaker ? t.speaker + ': ' : ''}${t.text}`).join('\n');
     const speakers = Array.from(new Set(transcript.map(t => t.speaker).filter(Boolean))) as string[];
@@ -244,7 +297,7 @@ export class AIService {
     const templateDef = storageService.getTemplateById(template);
 
     // If external cloud or local LLM is configured and ready, try calling real LLM
-    if (effectiveProvider !== 'builtin' && (cred?.apiKey || effectiveProvider === 'ollama' || effectiveProvider === 'custom') && fullText.trim().length > 0) {
+    if (llmInfo.isLLMAvailable && fullText.trim().length > 0) {
       try {
         const sysPrompt = `You are an expert executive meeting assistant. You synthesize meeting transcripts into structured Minutes of Meeting (MOM) in ${language}.
 Template style to adhere to: "${template}".
@@ -258,7 +311,7 @@ Respond with a JSON object strictly matching this schema:
 }`;
         const userPrompt = `Meeting Title: ${title}\nAttendees: ${attendeesList.join(', ')}\n${customPrompt ? `Custom Instructions: ${customPrompt}\n` : ''}\nTranscript:\n${fullText}`;
 
-        const llmResponse = await this.callLLM(effectiveProvider, cred?.apiKey, cred?.baseUrl, effectiveModel, sysPrompt, userPrompt);
+        const llmResponse = await this.callLLM(llmInfo.provider, llmInfo.apiKey, llmInfo.baseUrl, effectiveModel, sysPrompt, userPrompt);
         
         // Extract JSON from markdown backticks if wrapped
         const cleanJsonStr = llmResponse.replace(/^```json\s*|\s*```$/gi, '').trim();
@@ -282,7 +335,7 @@ Respond with a JSON object strictly matching this schema:
           nextSteps: parsed.nextSteps || ['Follow up on assigned action items.'],
           template: templateDef ? templateDef.name : template,
           language,
-          modelUsed: `${effective.providerName} • ${effectiveModel}`,
+          modelUsed: `${llmInfo.provider} • ${effectiveModel}`,
           generatedAt: new Date().toISOString()
         };
       } catch (err: any) {
@@ -319,7 +372,7 @@ Respond with a JSON object strictly matching this schema:
       nextSteps: nextSteps,
       template: templateDef ? templateDef.name : template,
       language,
-      modelUsed: `${effective.providerName} • ${effectiveModel}`,
+      modelUsed: `${llmInfo.provider} • ${effectiveModel}`,
       generatedAt: new Date().toISOString()
     };
   }
@@ -675,8 +728,7 @@ Answer the user's question directly, simply, and concisely in 1 to 3 short sente
    */
   public async generateFollowUpEmail(meetingId: string, tone: 'professional' | 'concise' | 'action-oriented' = 'professional'): Promise<FollowUpEmailResponse> {
     const settings = storageService.getSettings();
-    const effective = getEffectiveModelForAgent(settings, 'follow_up_email');
-    const cred = settings?.aiProviders?.[effective.providerId];
+    const llmInfo = this.resolveActiveLLM(settings, 'follow_up_email');
 
     const meeting = storageService.getMeetingById(meetingId);
     if (!meeting) {
@@ -689,14 +741,14 @@ Answer the user's question directly, simply, and concisely in 1 to 3 short sente
     const attendees = meeting.summary?.attendees?.join(', ') || 'Team';
 
     // If external model like Gemini is active, call real LLM to draft email
-    if (effective.providerId !== 'builtin' && (cred?.apiKey || effective.providerId === 'ollama' || effective.providerId === 'custom')) {
+    if (llmInfo.isLLMAvailable) {
       try {
         const sysPrompt = `You are a corporate communication specialist. Draft a clear, impactful follow-up email after a meeting.
 Tone requested: ${tone}.
 Respond in JSON format with keys: "subject" and "body".`;
         const userPrompt = `Meeting Title: ${title}\nAttendees: ${attendees}\nSummary: ${summaryText}\nKey Decisions: ${meeting.summary?.keyDecisions?.join('; ') || 'None'}\nAction Items: ${actionItems.map(a => `${a.owner}: ${a.task} (Due: ${a.due})`).join('; ')}`;
 
-        const llmResponse = await this.callLLM(effective.providerId, cred?.apiKey, cred?.baseUrl, effective.modelId, sysPrompt, userPrompt);
+        const llmResponse = await this.callLLM(llmInfo.provider, llmInfo.apiKey, llmInfo.baseUrl, llmInfo.model, sysPrompt, userPrompt);
         const cleanJsonStr = llmResponse.replace(/^```json\s*|\s*```$/gi, '').trim();
         const parsed = JSON.parse(cleanJsonStr);
         return {
