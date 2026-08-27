@@ -52,50 +52,83 @@
 
 ---
 
-## 🚀 Getting Started & First-Time Installation
+## 🚀 Installation & Setup Guide
 
-Anyone running Minomeet on their local machine can set up the environment and on-device AI models with the following steps:
+Get Minomeet running locally on your machine in less than 2 minutes.
 
-### Prerequisites
+### 📋 Prerequisites
 
-- **Node.js**: `v18.0.0` or higher
-- **npm** / **pnpm** / **yarn**
-- **Python**: `3.10+` *(Recommended for on-device neural transcription & speech processing)*
-- *(Optional)* [Ollama](https://ollama.com/) for external local models.
+| Requirement | Recommended Version | Purpose |
+| :--- | :--- | :--- |
+| **Node.js** | `v18.0.0` or higher (`v20+` LTS recommended) | Frontend & Backend Runtime |
+| **npm / pnpm / yarn** | Latest | Package Management |
+| **Python** *(Optional)* | `3.10+` | Real-time on-device speech-to-text (Whisper/Parakeet) |
+| **AI Provider Key** | Google Gemini, OpenAI, Claude, Groq, or Ollama | Meeting summaries, action items & Q&A |
 
-### Step 1: Clone the Repository
+---
 
+### 📥 Step-by-Step Installation
+
+#### Step 1: Clone the Repository
 ```bash
 git clone https://github.com/shareefmx/minomeet.git
 cd minomeet
 ```
 
-### Step 2: Install Node.js & Python Dependencies
-
+#### Step 2: Install Dependencies
 ```bash
-# Install root, client, and server dependencies
+# Install workspace dependencies for root, client, and server
 npm install
 
-# Install optional on-device neural speech & local processing packages
+# (Optional) Install Python packages for on-device speech transcription
 pip install -r requirements.txt
 ```
 
-### Step 3: Run the Development Server
+#### Step 3: (Optional) Configure Environment Variables
+Copy the example environment configuration:
+```bash
+cp .env.example .env
+```
 
+#### Step 4: Run the Development Server
 ```bash
 npm run dev
 ```
 
-- **Frontend Application**: [`http://localhost:5173`](http://localhost:5173)
-- **Backend API**: [`http://localhost:5001`](http://localhost:5001)
+Both the React client and Express backend will start concurrently:
+- 🌐 **Frontend Application**: [`http://localhost:5173`](http://localhost:5173)
+- 🔌 **Backend API Server**: [`http://localhost:5001`](http://localhost:5001)
 
-### Step 4: First-Time User 7-Step Tour & AI API Key Setup
+---
 
-When you launch Minomeet for the first time:
-1. **Interactive 7-Step Product Tour**: An interactive walkthrough introduces each section of the app (Audio Capture, Speech-to-Text, Multi-Model AI, Executive MOM, Action Items Matrix, Meeting Q&A, and Universal Export).
-2. **Instant Navigation to AI Setup**: Upon completing or skipping the tour, you are seamlessly navigated to **Settings ➔ AI Model**.
-3. **Configure Your API Key**: Enter your API key for **Google Gemini**, **OpenAI**, **Anthropic Claude**, **Groq**, or configure **Ollama**.
-4. Click **"Test Connection"** and **"Save Global Configuration"** to start synthesizing meetings with zero friction!
+### 🧭 First-Time User Tour & AI API Key Setup
+
+1. **Interactive 7-Step Product Tour**:
+   When launching Minomeet for the first time, an interactive walkthrough introduces each section of the application:
+   - **Step 1**: Platform Overview & Privacy Architecture
+   - **Step 2**: AI Model & Direct API Connection
+   - **Step 3**: Dual-Channel Audio Capture & Ingestion
+   - **Step 4**: Real-Time Live Transcriptions & Diarization
+   - **Step 5**: Executive Minutes of Meeting (MOM) & Templates
+   - **Step 6**: Action Items Matrix & Ownership Tracking
+   - **Step 7**: Cross-Meeting Semantic Q&A & Universal Export
+
+2. **Configure Your AI API Key**:
+   Upon completing or skipping the tour, Minomeet automatically navigates you to **Settings ➔ AI Model**:
+   - Select your provider: **Google Gemini**, **OpenAI**, **Anthropic Claude**, **Groq**, **OpenRouter**, or **Ollama**.
+   - Paste your API key (or specify your custom endpoint).
+   - Click **"Test Connection"** to verify credentials in real time.
+   - Click **"Save Global Configuration"**.
+
+---
+
+### 📦 Production Build
+
+To compile and build optimized production bundles:
+```bash
+npm run build
+```
+Compiled production outputs will be located in `client/dist` and `server/dist`.
 
 ---
 
