@@ -484,16 +484,16 @@ export const NotesScreen: React.FC = () => {
 
               {/* 3. AI Model Selector */}
               {(() => {
-                const momModel = getEffectiveModelForAgent(settings, 'mom_synthesis');
+                const activeModel = getEffectiveModelForAgent(settings, 'mom_synthesis');
                 return (
                   <button
                     onClick={() => openModal('model')}
                     className="w-full h-9 px-2.5 rounded-xl border border-[#e2e8f0] bg-white text-xs font-semibold text-[#374151] hover:bg-[#f8fafc] hover:border-[#cbd5e1] shadow-2xs transition cursor-pointer inline-flex items-center justify-center gap-1.5 truncate"
-                    title={`MOM Synthesis Model: ${momModel.modelId} (${momModel.providerName})${momModel.isOverride ? ' [Override]' : ' [Default]'}. Click to configure.`}
+                    title={`AI Model: ${activeModel.modelId} (${activeModel.providerName}). Click to configure.`}
                   >
                     <Cpu className="w-3.5 h-3.5 text-[#2563eb] flex-none" />
                     <span className="truncate">
-                      {momModel.modelId ? `Model: ${momModel.modelId.split(' ')[0]}` : 'AI Model'}
+                      {activeModel.modelId ? `Model: ${activeModel.modelId.split(' ')[0]}` : 'AI Model'}
                     </span>
                   </button>
                 );

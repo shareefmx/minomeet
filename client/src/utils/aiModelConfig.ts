@@ -177,9 +177,9 @@ export const AI_AGENTS_CONFIG: AIAgentDef[] = [
 ];
 
 /**
- * Resolves the effective provider, model, and connection status for any agent.
+ * Resolves the active global default AI provider, model, and connection status for the entire project.
  */
-export function getEffectiveModelForAgent(settings?: AppSettings | null, agentId?: string): {
+export function getActiveAIModel(settings?: AppSettings | null): {
   providerId: string;
   providerName: string;
   modelId: string;
@@ -193,32 +193,6 @@ export function getEffectiveModelForAgent(settings?: AppSettings | null, agentId
   const globalCred = settings?.aiProviders?.[globalProviderId];
   const globalStatus: AIConnectionStatus = globalCred?.status || (globalProviderId === 'builtin' ? 'connected' : 'not_configured');
 
-  if (!agentId || !settings?.agentOverrides?.[agentId]) {
-    return {
-      providerId: globalProviderId,
-      providerName: globalProvider.name,
-      modelId: globalModelId,
-      status: globalStatus,
-      statusMessage: globalCred?.statusMessage,
-      isOverride: false
-    };
-  }
-
-  const override = settings.agentOverrides[agentId];
-  if (override.modelId && override.modelId !== 'use_default') {
-    const provId = override.providerId && override.providerId !== 'use_default' ? override.providerId : globalProviderId;
-    const provDef = AI_PROVIDERS_CONFIG.find(p => p.id === provId) || globalProvider;
-    const provCred = settings.aiProviders?.[provId];
-    return {
-      providerId: provId,
-      providerName: provDef.name,
-      modelId: override.modelId,
-      status: provCred?.status || (provId === 'builtin' ? 'connected' : 'not_configured'),
-      statusMessage: provCred?.statusMessage,
-      isOverride: true
-    };
-  }
-
   return {
     providerId: globalProviderId,
     providerName: globalProvider.name,
@@ -227,6 +201,17 @@ export function getEffectiveModelForAgent(settings?: AppSettings | null, agentId
     statusMessage: globalCred?.statusMessage,
     isOverride: false
   };
+}
+
+export function getEffectiveModelForAgent(settings?: AppSettings | null, _agentId?: string): {
+  providerId: string;
+  providerName: string;
+  modelId: string;
+  status: AIConnectionStatus;
+  statusMessage?: string;
+  isOverride: boolean;
+} {
+  return getActiveAIModel(settings);
 }
 
 /**

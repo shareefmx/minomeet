@@ -31,13 +31,6 @@ export const defaultSettings: AppSettings = {
     custom: { baseUrl: 'http://localhost:8000/v1', apiKey: '', selectedModel: 'custom-model', customModelName: 'custom-model', status: 'not_configured', statusMessage: 'Not configured' },
     builtin: { selectedModel: 'Nimbus 4B (High Quality)', status: 'connected', statusMessage: 'Connected & Ready' }
   },
-  agentOverrides: {
-    mom_synthesis: { agentId: 'mom_synthesis', providerId: 'use_default', modelId: 'use_default' },
-    action_items: { agentId: 'action_items', providerId: 'use_default', modelId: 'use_default' },
-    ask_meetings: { agentId: 'ask_meetings', providerId: 'use_default', modelId: 'use_default' },
-    follow_up_email: { agentId: 'follow_up_email', providerId: 'use_default', modelId: 'use_default' },
-    title_tagging: { agentId: 'title_tagging', providerId: 'use_default', modelId: 'use_default' }
-  },
   betaDiarization: true,
   betaAskMeetings: true,
   betaAutoFollowUp: true,

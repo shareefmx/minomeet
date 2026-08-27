@@ -117,14 +117,11 @@ export const FollowUpEmailModal: React.FC = () => {
           )}
         </div>
 
-        {/* AI Agent Model Section */}
+        {/* Centralized AI Model Section */}
         <div className="px-6 py-2.5 bg-[#f8fafc] border-t border-[#e2e8f0] flex items-center justify-between flex-wrap gap-2 text-xs">
           <div className="flex items-center gap-2">
             <span className="font-bold text-[#475569]">AI Model:</span>
             <span className="font-semibold text-[#1e293b]">{agentModel.providerName} &bull; {agentModel.modelId}</span>
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${agentModel.isOverride ? 'bg-[#fef3c7] text-[#92400e]' : 'bg-[#dbeafe] text-[#1e40af]'}`}>
-              {agentModel.isOverride ? 'Custom Override' : 'Global Default'}
-            </span>
             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${agentModel.status === 'connected' ? 'bg-[#dcfce7] text-[#15803d]' : 'bg-[#f1f5f9] text-[#64748b]'}`}>
               {agentModel.status === 'connected' ? '● Ready' : '● Not Configured'}
             </span>

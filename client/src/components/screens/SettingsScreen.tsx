@@ -31,16 +31,13 @@ import {
   EyeOff,
   AlertCircle,
   RefreshCw,
-  Bot,
   Save,
   RotateCw,
   X
 } from 'lucide-react';
-import { SettingsTab, MOMTemplate, AIConnectionStatus, ProviderCredential, AIAgentOverride } from '../../types/meeting.js';
+import { SettingsTab, MOMTemplate, AIConnectionStatus, ProviderCredential } from '../../types/meeting.js';
 import {
   AI_PROVIDERS_CONFIG,
-  AI_AGENTS_CONFIG,
-  getEffectiveModelForAgent,
   getAvailableModelsForProvider
 } from '../../utils/aiModelConfig.js';
 
@@ -82,7 +79,6 @@ export const SettingsScreen: React.FC = () => {
   const [providerFetchedModels, setProviderFetchedModels] = useState<Record<string, string[]>>({});
   const [connectionStatus, setConnectionStatus] = useState<AIConnectionStatus>('not_configured');
   const [connectionStatusMessage, setConnectionStatusMessage] = useState<string>('');
-  const [agentOverridesState, setAgentOverridesState] = useState<Record<string, AIAgentOverride>>({});
 
   // Sync settings into local AI Model state
   useEffect(() => {
@@ -106,17 +102,6 @@ export const SettingsScreen: React.FC = () => {
         }
       });
       setProviderFetchedModels(fetchedMap);
-
-      const overrides: Record<string, AIAgentOverride> = {};
-      AI_AGENTS_CONFIG.forEach((a) => {
-        const saved = settings.agentOverrides?.[a.id];
-        overrides[a.id] = {
-          agentId: a.id,
-          providerId: saved?.providerId || 'use_default',
-          modelId: saved?.modelId || 'use_default'
-        };
-      });
-      setAgentOverridesState(overrides);
     }
   }, [settings]);
 
@@ -279,8 +264,7 @@ export const SettingsScreen: React.FC = () => {
               statusMessage: finalMessage,
               lastTested: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             }
-          },
-          agentOverrides: agentOverridesState
+          }
         });
         return;
       }
@@ -304,44 +288,10 @@ export const SettingsScreen: React.FC = () => {
       aiProviders: {
         ...currentProviders,
         [selectedProviderId]: updatedCredential
-      },
-      agentOverrides: agentOverridesState
+      }
     });
 
     showToast('Configuration Saved', `Active AI model set to ${selectedModelId} (${provDef.name}).`, 'success');
-  };
-
-  // Handler for Agent Provider Change
-  const handleAgentProviderChange = (agentId: string, provId: string) => {
-    if (provId === 'use_default') {
-      setAgentOverridesState(prev => ({
-        ...prev,
-        [agentId]: { agentId, providerId: 'use_default', modelId: 'use_default' }
-      }));
-      return;
-    }
-
-    const modelsForProv = getAvailableModelsForProvider(
-      { ...settings, aiProviders: { ...settings?.aiProviders, [provId]: { ...settings?.aiProviders?.[provId], fetchedModels: providerFetchedModels[provId] } } } as any,
-      provId
-    );
-    const defaultModel = modelsForProv[0]?.id || 'default';
-    setAgentOverridesState(prev => ({
-      ...prev,
-      [agentId]: { agentId, providerId: provId, modelId: defaultModel }
-    }));
-  };
-
-  // Handler for Agent Model Change
-  const handleAgentModelChange = (agentId: string, modelId: string) => {
-    setAgentOverridesState(prev => ({
-      ...prev,
-      [agentId]: {
-        agentId,
-        providerId: prev[agentId]?.providerId || selectedProviderId,
-        modelId
-      }
-    }));
   };
 
   // Audio Input Devices & Mic Test State
@@ -1492,121 +1442,6 @@ export const SettingsScreen: React.FC = () => {
                   <Save className="w-3.5 h-3.5" />
                   <span>Save Model Configuration</span>
                 </button>
-              </div>
-            </div>
-
-            {/* AI AGENT MODEL OVERRIDE SECTION */}
-            <div className="border border-[#e5e7eb] rounded-2xl p-6 bg-white shadow-xs space-y-4">
-              <div>
-                <h4 className="text-sm font-bold text-[#111827] flex items-center gap-2">
-                  <Bot className="w-4 h-4 text-[#7c3aed]" />
-                  <span>AI Agent Overrides</span>
-                </h4>
-                <p className="text-xs text-[#6b7280] mt-0.5">
-                  Optionally assign specific providers and models to individual AI capabilities. When &quot;Use Global Default&quot; is selected, the agent automatically follows the centralized Model Settings above.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                {AI_AGENTS_CONFIG.map((agent) => {
-                  const effective = getEffectiveModelForAgent(settings, agent.id);
-                  const currentOverride = agentOverridesState[agent.id] || { agentId: agent.id, providerId: 'use_default', modelId: 'use_default' };
-                  const isUsingDefault = currentOverride.providerId === 'use_default' || currentOverride.modelId === 'use_default';
-                  const agentProvId: string = (isUsingDefault ? (settings?.activeAIProvider || 'builtin') : (currentOverride.providerId || 'builtin')) as string;
-
-                  const mergedSettings = {
-                    ...settings,
-                    aiProviders: {
-                      ...settings?.aiProviders,
-                      [agentProvId]: {
-                        ...settings?.aiProviders?.[agentProvId],
-                        fetchedModels: providerFetchedModels[agentProvId] || []
-                      }
-                    }
-                  } as any;
-
-                  const agentModels = getAvailableModelsForProvider(mergedSettings, agentProvId);
-
-                  return (
-                    <div
-                      key={agent.id}
-                      className="p-4 rounded-xl border border-[#e5e7eb] bg-[#fafbfc] hover:border-[#cbd5e1] transition space-y-3"
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div>
-                          <div className="font-bold text-xs text-[#111827] flex items-center gap-2">
-                            <span>{agent.name}</span>
-                            <span className="text-[10px] font-semibold text-[#2563eb] bg-[#eff6ff] px-2 py-0.2 rounded-full border border-[#bfdbfe]">
-                              {agent.role}
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-[#6b7280] mt-0.5">{agent.description}</p>
-                        </div>
-
-                        <span
-                          className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full flex-none ${
-                            effective.isOverride
-                              ? 'bg-[#fef3c7] text-[#92400e] border border-[#fde68a]'
-                              : 'bg-[#dbeafe] text-[#1e40af] border border-[#bfdbfe]'
-                          }`}
-                        >
-                          {effective.isOverride ? 'Custom Override' : 'Global Default'}
-                        </span>
-                      </div>
-
-                      {/* Agent Provider and Model Selection Controls */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                        {/* Agent Provider Selector */}
-                        <div>
-                          <label className="block text-[11px] font-bold text-[#475569] mb-1">
-                            Provider
-                          </label>
-                          <select
-                            value={currentOverride.providerId}
-                            onChange={(e) => handleAgentProviderChange(agent.id, e.target.value)}
-                            aria-label={`Provider for ${agent.name}`}
-                            className="w-full h-8.5 px-3 rounded-lg border border-[#cbd5e1] bg-white text-xs font-semibold text-[#111827] focus:outline-none focus:border-[#2563eb] cursor-pointer"
-                          >
-                            <option value="use_default">
-                              ⚡ Use Global Default ({AI_PROVIDERS_CONFIG.find(p => p.id === (settings.activeAIProvider || 'builtin'))?.name || 'Built-in AI'})
-                            </option>
-                            {AI_PROVIDERS_CONFIG.map((prov) => (
-                              <option key={prov.id} value={prov.id}>
-                                {prov.name}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        {/* Agent Model Selector */}
-                        <div>
-                          <label className="block text-[11px] font-bold text-[#475569] mb-1">
-                            Model
-                          </label>
-                          <select
-                            value={isUsingDefault ? 'use_default' : currentOverride.modelId}
-                            onChange={(e) => handleAgentModelChange(agent.id, e.target.value)}
-                            disabled={isUsingDefault}
-                            aria-label={`Model for ${agent.name}`}
-                            className="w-full h-8.5 px-3 rounded-lg border border-[#cbd5e1] bg-white text-xs font-semibold text-[#111827] focus:outline-none focus:border-[#2563eb] cursor-pointer disabled:bg-gray-100 disabled:text-gray-400"
-                          >
-                            {isUsingDefault ? (
-                              <option value="use_default">
-                                {settings.selectedModel || 'Nimbus 4B (High Quality)'} (Global Default)
-                              </option>
-                            ) : (
-                              agentModels.map((m) => (
-                                <option key={m.id} value={m.id}>
-                                  {m.name} {m.tag ? `[${m.tag}]` : ''}
-                                </option>
-                              ))
-                            )}
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
               </div>
             </div>
           </div>
