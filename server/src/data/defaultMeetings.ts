@@ -13,13 +13,13 @@ export const defaultSettings: AppSettings = {
   echoCancellation: true,
   autoGainControl: true,
   sampleRate: 16000,
-  transcriptionEngine: 'Nimbus Whisper · Local On-Device',
+  transcriptionEngine: 'Parakeet TDT · Local On-Device',
   liveCaptions: true,
   speakerLabels: true,
   autoSummary: true,
   defaultLanguage: 'English',
   defaultTemplate: 'Standard Meeting Notes & MOM',
-  selectedModel: 'Nimbus 4B (High Quality)',
+  selectedModel: 'Qwen 3.5 4B',
   activeAIProvider: 'builtin',
   aiProviders: {
     openai: { apiKey: '', selectedModel: 'gpt-4o', status: 'not_configured', statusMessage: 'Not configured' },
@@ -29,7 +29,7 @@ export const defaultSettings: AppSettings = {
     openrouter: { apiKey: '', selectedModel: 'openai/gpt-4o', status: 'not_configured', statusMessage: 'Not configured' },
     ollama: { baseUrl: 'http://localhost:11434', selectedModel: 'llama3.3:70b', status: 'not_configured', statusMessage: 'Not configured' },
     custom: { baseUrl: 'http://localhost:8000/v1', apiKey: '', selectedModel: 'custom-model', customModelName: 'custom-model', status: 'not_configured', statusMessage: 'Not configured' },
-    builtin: { selectedModel: 'Nimbus 4B (High Quality)', status: 'connected', statusMessage: 'Connected & Ready' }
+    builtin: { selectedModel: 'Qwen 3.5 4B', status: 'connected', statusMessage: 'Connected & Ready' }
   },
   betaDiarization: true,
   betaAskMeetings: true,
@@ -121,7 +121,7 @@ export const defaultMeetings: Meeting[] = [
       ],
       template: 'Standard Meeting Notes',
       language: 'English',
-      modelUsed: 'Nimbus 4B (High Quality)',
+      modelUsed: 'Qwen 3.5 4B',
       generatedAt: '2026-08-24T15:16:00.000Z'
     }
   },
@@ -195,7 +195,7 @@ export const defaultMeetings: Meeting[] = [
       ],
       template: 'Daily Standup',
       language: 'English',
-      modelUsed: 'Nimbus 2B (Balanced)',
+      modelUsed: 'Qwen 3.5 4B',
       generatedAt: '2026-08-23T09:32:00.000Z'
     }
   },
@@ -254,7 +254,7 @@ export const defaultMeetings: Meeting[] = [
       ],
       template: 'Project Sync / Status Update',
       language: 'English',
-      modelUsed: 'Nimbus 4B (High Quality)',
+      modelUsed: 'Qwen 3.5 4B',
       generatedAt: '2026-08-22T10:11:00.000Z'
     }
   },
@@ -325,7 +325,7 @@ export const defaultMeetings: Meeting[] = [
       ],
       template: 'Client / Sales Meeting',
       language: 'English',
-      modelUsed: 'Nimbus 1B (Fast)',
+      modelUsed: 'Qwen 3.5 4B',
       generatedAt: '2026-08-22T08:56:00.000Z'
     }
   }

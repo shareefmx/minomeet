@@ -5,11 +5,11 @@ import { AI_PROVIDERS_CONFIG, getAvailableModelsForProvider } from '../../utils/
 
 export const ModelSettingsModal: React.FC = () => {
   const { modals, closeModal, settings, updateSettings, showToast, setCurrentScreen, setSettingsTab } = useMeeting();
-  const [selected, setSelected] = useState<string>(settings?.selectedModel || 'Nimbus 4B (High Quality)');
+  const [selected, setSelected] = useState<string>(settings?.selectedModel && !settings.selectedModel.startsWith('Nimbus') ? settings.selectedModel : 'Qwen 3.5 4B');
 
   React.useEffect(() => {
     if (settings?.selectedModel) {
-      setSelected(settings.selectedModel);
+      setSelected(settings.selectedModel.startsWith('Nimbus') ? 'Qwen 3.5 4B' : settings.selectedModel);
     }
   }, [settings?.selectedModel, modals.model]);
 

@@ -192,3 +192,23 @@ export interface MOMTemplate {
   updatedAt?: string;
 }
 
+export interface LocalLLMStatus {
+  id: string;
+  name: string;
+  family: string;
+  description: string;
+  sizeBytes: number;
+  sizeFormatted: string;
+  ramRequired: string;
+  speedRating: string;
+  contextWindow: string;
+  status: 'not_downloaded' | 'downloading' | 'downloaded';
+  downloadProgress: number;
+  downloadedAt?: string;
+  localPath?: string;
+  isInstalled: boolean;
+  lastTested?: string;
+  testStatus?: 'passed' | 'failed' | 'untested';
+  testLatencyMs?: number;
+}
+

@@ -52,93 +52,50 @@
 
 ---
 
-## 🚀 Quickstart
+## 🚀 Getting Started & First-Time Installation
+
+Anyone running Minomeet on their local machine can set up the environment and on-device AI models with the following steps:
 
 ### Prerequisites
 
 - **Node.js**: `v18.0.0` or higher
-- **npm** or **yarn** / **pnpm**
-- *(Optional)* [Ollama](https://ollama.com/) running locally for 100% on-device offline LLM inference.
+- **npm** / **pnpm** / **yarn**
+- **Python**: `3.10+` *(Recommended for on-device neural transcription & speech processing)*
+- *(Optional)* [Ollama](https://ollama.com/) for external local models.
 
-### 1. Clone the Repository
+### Step 1: Clone the Repository
 
 ```bash
 git clone https://github.com/shareefmx/minomeet.git
 cd minomeet
 ```
 
-### 2. Install Dependencies
+### Step 2: Install Node.js & Python Dependencies
 
 ```bash
+# Install root, client, and server dependencies
 npm install
+
+# Install optional on-device neural speech & local processing packages
+pip install -r requirements.txt
 ```
 
-### 3. Run Development Servers (Client + Server)
+### Step 3: Run the Development Server
 
 ```bash
 npm run dev
 ```
 
-- **Frontend**: [`http://localhost:5173`](http://localhost:5173)
+- **Frontend Application**: [`http://localhost:5173`](http://localhost:5173)
 - **Backend API**: [`http://localhost:5001`](http://localhost:5001)
 
-### 4. Build for Production
+### Step 4: First-Time On-Device AI Model Setup (Qwen 3.5 4B)
 
-```bash
-npm run build
-```
-
----
-
-## 🎯 Key Capabilities
-
-| Feature | Description |
-| :--- | :--- |
-| **🎙️ Multi-Source Capture** | Capture Microphone, System/Tab Audio, or Mixed dual-stream with live waveforms. |
-| **⚡ Speech Transcription** | Real-time speech recognition with timestamped segments and speaker tagging. |
-| **🤖 Multi-Model AI** | Single Control Panel for Ollama, OpenAI, Claude 3.7, Gemini 2.5, Groq, & OpenRouter. |
-| **📝 Interactive MOM Editor** | Full inline Markdown & structured editing of Executive Summaries, Decisions, & Tasks. |
-| **✅ Action Items Matrix** | Assignees, due dates, task descriptions, context notes, and completion toggles. |
-| **🔍 Ask Your Meetings** | Semantic search across historical transcripts with source attribution. |
-| **📧 1-Click Email Drafter** | Instant follow-up email drafts formatted with action deliverables. |
-| **📤 Universal Export** | Export directly to Markdown, Plain Text, or Printable PDF. |
-| **📦 Audio File Ingestion** | Drag-and-drop audio files (`.mp3`, `.wav`, `.m4a`, `.webm`) with background transcription. |
-
----
-
-## 🏗️ Architecture & Workflow
-
-```mermaid
-flowchart LR
-    subgraph Ingestion["Audio Ingestion"]
-        A1["🎙️ Mic Audio"]
-        A2["🖥️ System / Tab Audio"]
-        A3["📁 File Upload (.wav/.mp3)"]
-    end
-
-    subgraph Core["Minomeet Engine"]
-        B1["Speech Processing & Stream"]
-        B2["Live Transcript Engine"]
-        B3["Storage & Indexed Archives"]
-    end
-
-    subgraph AI["AI Model Resolution"]
-        C1["Ollama (Local)"]
-        C2["OpenAI / Claude / Gemini"]
-        C3["Groq / OpenRouter"]
-    end
-
-    subgraph Output["Synthesized Outputs"]
-        D1["📄 Executive MOM"]
-        D2["✅ Action Items Matrix"]
-        D3["✉️ Follow-Up Email"]
-        D4["💬 Meeting Q&A"]
-    end
-
-    Ingestion --> Core
-    Core --> AI
-    AI --> Output
-```
+When you launch Minomeet for the first time:
+1. You will see the **"First-Time Setup: Download Qwen 3.5 4B"** banner on the Home Screen (or navigate to **Settings ➔ AI Model**).
+2. Click **"Download & Install Model"** to download the on-device **Qwen 3.5 4B (2.6 GB)** neural model.
+3. The weights are stored securely in `server/models/llm/` on your device.
+4. Once installed, Minomeet performs **100% private, offline meeting intelligence, MOM summaries, action items extraction, and multi-meeting Q&A with zero cloud network calls**.
 
 ---
 
@@ -152,10 +109,10 @@ Settings ──► AI Model ──► Provider ──► Model ──► Test Co
 
 ### Supported AI Providers
 
-1. **Built-in / Local AI (Nimbus)**: Zero setup required; runs instantly out of the box.
+1. **Built-in / Local AI (Qwen 3.5 4B)**: Flagship on-device neural model. Zero cloud calls, 100% private and offline.
 2. **Ollama (100% On-Device & Private)**:
    - Endpoint: `http://127.0.0.1:11434`
-   - Supports: `llama3.1:8b`, `qwen2.5:7b`, `mistral:7b`, `deepseek-r1:8b`, `phi4:14b`
+   - Supports: `llama3.3:70b`, `qwen2.5:7b`, `mistral:7b`, `deepseek-r1:8b`, `phi4:14b`
    - Real-time "Fetch Models" and "Test Connection" validation.
 3. **OpenAI**: `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `o1`, `o3-mini`
 4. **Anthropic Claude**: `claude-3-7-sonnet-latest`, `claude-3-5-sonnet-latest`, `claude-3-5-haiku-latest`

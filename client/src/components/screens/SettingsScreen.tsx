@@ -37,7 +37,7 @@ import {
   ArrowUpRight,
   Info
 } from 'lucide-react';
-import { SettingsTab, MOMTemplate, AIConnectionStatus, ProviderCredential, AIAgentOverride } from '../../types/meeting.js';
+import { SettingsTab, MOMTemplate, AIConnectionStatus, ProviderCredential, AIAgentOverride, LocalLLMStatus } from '../../types/meeting.js';
 import {
   AI_PROVIDERS_CONFIG,
   AI_AGENTS_CONFIG,
@@ -83,7 +83,7 @@ export const SettingsScreen: React.FC = () => {
 
   // AI Model Control Panel State
   const [selectedProviderId, setSelectedProviderId] = useState<string>('builtin');
-  const [selectedModelId, setSelectedModelId] = useState<string>('Nimbus 4B (High Quality)');
+  const [selectedModelId, setSelectedModelId] = useState<string>('Qwen 3.5 4B');
   const [apiKeyInput, setApiKeyInput] = useState<string>('');
   const [baseUrlInput, setBaseUrlInput] = useState<string>('http://127.0.0.1:11434');
   const [customModelInput, setCustomModelInput] = useState<string>('custom-model');
@@ -97,12 +97,81 @@ export const SettingsScreen: React.FC = () => {
   // AI Agent Overrides State
   const [agentOverrides, setAgentOverrides] = useState<Record<string, AIAgentOverride>>({});
 
+  // On-Device Local LLM (Qwen 3.5 4B) State
+  const [localLLMStatus, setLocalLLMStatus] = useState<LocalLLMStatus | null>(null);
+  const [isDownloadingLLM, setIsDownloadingLLM] = useState<boolean>(false);
+  const [isVerifyingLLM, setIsVerifyingLLM] = useState<boolean>(false);
+  const [llmVerifyResult, setLlmVerifyResult] = useState<{ success: boolean; message: string; latencyMs: number } | null>(null);
+
+  const loadLocalLLMStatus = async () => {
+    try {
+      const status = await api.getLocalLLMStatus();
+      setLocalLLMStatus(status);
+    } catch {}
+  };
+
+  useEffect(() => {
+    loadLocalLLMStatus();
+  }, [settingsTab]);
+
+  const handleDownloadLocalLLM = async () => {
+    setIsDownloadingLLM(true);
+    try {
+      await api.downloadLocalLLM();
+      showToast('Downloading Model', 'Downloading Qwen 3.5 4B weights (2.6 GB)…', 'info');
+      const interval = setInterval(async () => {
+        try {
+          const status = await api.getLocalLLMStatus();
+          setLocalLLMStatus(status);
+          if (status.status === 'downloaded') {
+            clearInterval(interval);
+            setIsDownloadingLLM(false);
+            showToast('Download Complete', 'Qwen 3.5 4B installed! On-device AI is 100% ready.', 'success');
+          }
+        } catch {}
+      }, 500);
+    } catch (err: any) {
+      setIsDownloadingLLM(false);
+      showToast('Download Failed', err.message || 'Could not download model.', 'error');
+    }
+  };
+
+  const handleVerifyLocalLLM = async () => {
+    setIsVerifyingLLM(true);
+    try {
+      const res = await api.verifyLocalLLM();
+      setLlmVerifyResult({ success: res.success, message: res.message, latencyMs: res.latencyMs });
+      if (res.success) {
+        showToast('Verification Passed ✅', res.message, 'success');
+      } else {
+        showToast('Verification Failed', res.message, 'error');
+      }
+      loadLocalLLMStatus();
+    } catch (err: any) {
+      setLlmVerifyResult({ success: false, message: err.message || 'Verification failed', latencyMs: 0 });
+      showToast('Verification Failed', err.message || 'Diagnostic failed.', 'error');
+    } finally {
+      setIsVerifyingLLM(false);
+    }
+  };
+
+  const handleDeleteLocalLLM = async () => {
+    try {
+      await api.deleteLocalLLM();
+      showToast('Model Weights Deleted', 'Qwen 3.5 4B weights offloaded from disk.', 'info');
+      loadLocalLLMStatus();
+    } catch (err: any) {
+      showToast('Delete Failed', err.message || 'Could not delete model.', 'error');
+    }
+  };
+
   // Sync settings into local AI Model state
   useEffect(() => {
     if (settings) {
       const activeProv = settings.activeAIProvider || 'builtin';
       setSelectedProviderId(activeProv);
-      setSelectedModelId(settings.selectedModel || 'Nimbus 4B (High Quality)');
+      const activeModel = settings.selectedModel && !settings.selectedModel.startsWith('Nimbus') ? settings.selectedModel : 'Qwen 3.5 4B';
+      setSelectedModelId(activeModel);
 
       const savedCred = settings.aiProviders?.[activeProv];
       setApiKeyInput(savedCred?.apiKey || '');
@@ -127,7 +196,7 @@ export const SettingsScreen: React.FC = () => {
         overridesMap[a.id] = {
           useGlobal: saved?.useGlobal ?? true,
           providerId: saved?.providerId || activeProv,
-          modelId: saved?.modelId || settings.selectedModel || 'Nimbus 4B (High Quality)'
+          modelId: (saved?.modelId && !saved.modelId.startsWith('Nimbus')) ? saved.modelId : activeModel
         };
       });
       setAgentOverrides(overridesMap);
@@ -1472,6 +1541,145 @@ export const SettingsScreen: React.FC = () => {
                   <Save className="w-3.5 h-3.5" />
                   <span>Save Global Configuration</span>
                 </button>
+              </div>
+            </div>
+
+            {/* Qwen 3.5 4B On-Device Neural Engine Card */}
+            <div className="border border-[#bfdbfe] bg-[#f8faff] rounded-2xl p-6 shadow-xs space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#e2e8f0] pb-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-extrabold text-[#1e3a8a] flex items-center gap-2">
+                      <Cpu className="w-4 h-4 text-[#2563eb]" />
+                      <span>Built-in / Local AI Engine (Qwen 3.5 4B)</span>
+                    </h4>
+                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#dcfce7] text-[#15803d] border border-[#86efac]">
+                      ● Zero Cloud Network Calls
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#475569] mt-1">
+                    Download and run the Qwen 3.5 4B neural model directly on your device for fast, private meeting summaries and Q&amp;A.
+                  </p>
+                </div>
+
+                {localLLMStatus?.status === 'downloaded' && (
+                  <button
+                    type="button"
+                    onClick={handleVerifyLocalLLM}
+                    disabled={isVerifyingLLM}
+                    className="px-3.5 py-1.5 rounded-xl bg-white border border-[#bfdbfe] hover:bg-[#eff6ff] text-[#1e40af] text-xs font-bold transition shadow-2xs cursor-pointer inline-flex items-center gap-1.5 flex-none disabled:opacity-50"
+                  >
+                    <Activity className={`w-3.5 h-3.5 ${isVerifyingLLM ? 'animate-spin' : ''}`} />
+                    <span>{isVerifyingLLM ? 'Testing Inference…' : 'Test Model Diagnostic'}</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Engine Status & Download Control */}
+              <div className="border border-[#e2e8f0] bg-white rounded-2xl p-4 shadow-2xs">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="space-y-1.5 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-extrabold text-sm text-[#0f172a]">Qwen 3.5 4B (On-Device Neural Model)</span>
+                      <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#eff6ff] text-[#2563eb] border border-[#bfdbfe]">
+                        ⭐ Recommended Default
+                      </span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        localLLMStatus?.status === 'downloaded'
+                          ? 'bg-[#dcfce7] text-[#15803d] border border-[#86efac]'
+                          : localLLMStatus?.status === 'downloading' || isDownloadingLLM
+                          ? 'bg-[#fef9c3] text-[#a16207] border border-[#fde047]'
+                          : 'bg-[#f1f5f9] text-[#64748b] border border-[#e2e8f0]'
+                      }`}>
+                        {localLLMStatus?.status === 'downloaded'
+                          ? '● Ready & Installed'
+                          : localLLMStatus?.status === 'downloading' || isDownloadingLLM
+                          ? `● Downloading (${localLLMStatus?.downloadProgress || 0}%)`
+                          : '○ Not Downloaded'}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-[#475569] leading-relaxed">
+                      {localLLMStatus?.description || 'Flagship 4B on-device reasoning architecture for executive MOM synthesis, action items, and multi-meeting semantic Q&A.'}
+                    </p>
+
+                    {/* Specs Badges */}
+                    <div className="flex items-center gap-2 flex-wrap text-[11px] text-[#475569] pt-1">
+                      <span className="bg-[#f8fafc] px-2.5 py-0.5 rounded-lg border border-[#e2e8f0] font-mono">
+                        💾 Size: <b>{localLLMStatus?.sizeFormatted || '2.6 GB'}</b>
+                      </span>
+                      <span className="bg-[#f8fafc] px-2.5 py-0.5 rounded-lg border border-[#e2e8f0]">
+                        ⚡ Speed: <b>{localLLMStatus?.speedRating || '24 tok/sec ⚡ Fast'}</b>
+                      </span>
+                      <span className="bg-[#f8fafc] px-2.5 py-0.5 rounded-lg border border-[#e2e8f0]">
+                        🧠 RAM: <b>{localLLMStatus?.ramRequired || '~3.5 GB RAM'}</b>
+                      </span>
+                      <span className="bg-[#f8fafc] px-2.5 py-0.5 rounded-lg border border-[#e2e8f0]">
+                        📖 Context: <b>{localLLMStatus?.contextWindow || '32k'}</b>
+                      </span>
+                    </div>
+
+                    {/* Verification Result Banner */}
+                    {llmVerifyResult && (
+                      <div className={`p-2.5 rounded-xl text-xs flex items-center gap-2 mt-2 ${
+                        llmVerifyResult.success
+                          ? 'bg-[#f0fdf4] text-[#15803d] border border-[#bbf7d0]'
+                          : 'bg-[#fef2f2] text-[#b91c1c] border border-[#fecaca]'
+                      }`}>
+                        <CheckCircle2 className="w-4 h-4 flex-none" />
+                        <span className="font-semibold">{llmVerifyResult.message}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 flex-wrap md:flex-col md:items-end justify-end flex-none">
+                    {localLLMStatus?.status === 'downloaded' ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={handleVerifyLocalLLM}
+                          disabled={isVerifyingLLM}
+                          className="px-3.5 py-1.5 bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#cbd5e1] text-[#1e293b] text-xs font-bold rounded-xl transition shadow-2xs inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                        >
+                          <Activity className={`w-3.5 h-3.5 text-[#2563eb] ${isVerifyingLLM ? 'animate-spin' : ''}`} />
+                          <span>{isVerifyingLLM ? 'Testing…' : 'Test Model'}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={handleDeleteLocalLLM}
+                          className="text-[11px] text-[#ef4444] hover:text-[#b91c1c] font-semibold hover:underline inline-flex items-center gap-1 cursor-pointer pt-1"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          <span>Delete Weights</span>
+                        </button>
+                      </>
+                    ) : localLLMStatus?.status === 'downloading' || isDownloadingLLM ? (
+                      <div className="w-44 space-y-1.5">
+                        <div className="flex items-center justify-between text-[11px] font-bold text-[#2563eb]">
+                          <span>Downloading Qwen 3.5…</span>
+                          <span>{localLLMStatus?.downloadProgress || 0}%</span>
+                        </div>
+                        <div className="w-full bg-[#e2e8f0] h-2 rounded-full overflow-hidden">
+                          <div
+                            className="bg-[#2563eb] h-full transition-all duration-300 rounded-full"
+                            style={{ width: `${localLLMStatus?.downloadProgress || 5}%` }}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleDownloadLocalLLM}
+                        className="px-4 py-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold rounded-xl transition shadow-xs inline-flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>Download Qwen 3.5 4B (2.6 GB)</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 

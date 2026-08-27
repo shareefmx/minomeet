@@ -917,7 +917,7 @@ Respond strictly in JSON format with keys: "subject" and "body". Example:
     if (provider === 'builtin') {
       return {
         success: true,
-        models: ['Nimbus 4B (High Quality)', 'Nimbus 2B (Balanced)', 'Nimbus 1B (Fast)'],
+        models: ['Qwen 3.5 4B'],
         status: 'connected'
       };
     }
@@ -1190,7 +1190,7 @@ Respond strictly in JSON format with keys: "subject" and "body". Example:
       return {
         success: true,
         status: 'connected',
-        message: `Built-in / Local AI engine active (100% Offline, ${model || 'Nimbus 4B'} ready).`,
+        message: `Built-in / Local AI engine active (100% Offline, ${model || 'Qwen 3.5 4B'} ready).`,
         fetchedModels: modelsResult.models
       };
     }

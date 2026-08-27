@@ -138,14 +138,12 @@ export const AI_PROVIDERS_CONFIG: AIProviderConfig[] = [
   },
   {
     id: 'builtin',
-    name: 'Built-in / Local AI (Nimbus)',
+    name: 'Built-in / Local AI (Qwen 3.5)',
     category: 'local',
-    description: '100% offline neural synthesis embedded directly into Minomeet. Zero cloud network calls or keys needed.',
+    description: '100% offline neural synthesis powered by Qwen 3.5 4B on-device. Zero cloud network calls or keys needed.',
     requiresKey: false,
     models: [
-      { id: 'Nimbus 4B (High Quality)', name: 'Nimbus 4B (High Quality)', tag: 'Recommended Local', contextWindow: '32k' },
-      { id: 'Nimbus 2B (Balanced)', name: 'Nimbus 2B (Balanced)', tag: 'Modest Footprint', contextWindow: '32k' },
-      { id: 'Nimbus 1B (Fast)', name: 'Nimbus 1B (Fast)', tag: 'Lightweight & Swift', contextWindow: '32k' }
+      { id: 'Qwen 3.5 4B', name: 'Qwen 3.5 4B (On-Device Neural Model)', tag: 'Recommended Default', contextWindow: '32k' }
     ]
   }
 ];
@@ -300,12 +298,13 @@ export function resolveModel(settings: AppSettings | null | undefined, agentId: 
 
   // 2. Global Default Model Configuration
   const globalProviderId = settings?.activeAIProvider || 'builtin';
-  let globalModelId = settings?.selectedModel || 'Nimbus 4B (High Quality)';
+  let globalModelId = settings?.selectedModel || 'Qwen 3.5 4B';
   const globalProvDef = AI_PROVIDERS_CONFIG.find(p => p.id === globalProviderId) || AI_PROVIDERS_CONFIG.find(p => p.id === 'builtin')!;
   const globalCred = settings?.aiProviders?.[globalProviderId];
 
-  if (isNonChatOrTranscriptionModel(globalModelId)) {
-    globalModelId = globalProvDef.models[0]?.id || 'Nimbus 4B (High Quality)';
+  // Migrate legacy model names or non-chat models
+  if (!globalModelId || globalModelId.startsWith('Nimbus') || isNonChatOrTranscriptionModel(globalModelId)) {
+    globalModelId = globalProvDef.models[0]?.id || 'Qwen 3.5 4B';
   }
 
   let isUsable = true;
