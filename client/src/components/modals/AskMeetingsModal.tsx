@@ -45,20 +45,8 @@ export const AskMeetingsModal: React.FC = () => {
 
   const activeModel = getEffectiveModelForAgent(settings, 'ask_meetings');
 
-  // Initialize Chat Messages
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 'welcome-msg',
-      role: 'assistant',
-      content: `👋 **Hello! I am your AI Meeting Assistant.**\n\nI have complete access to your saved meeting notes, decisions, deliverables, and transcripts. Ask me anything or select one of the suggested prompts below!`,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      suggestedFollowUps: [
-        'Summarize all open action items across all meetings',
-        'What were the key decisions made in recent syncs?',
-        'Compare topics discussed between recent meetings'
-      ]
-    }
-  ]);
+  // Initialize with empty chat for natural user conversations
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   // When modal opens, auto-scope to active meeting if available
   useEffect(() => {
@@ -124,7 +112,7 @@ export const AskMeetingsModal: React.FC = () => {
       const errorMessage: ChatMessage = {
         id: `err-${Date.now()}`,
         role: 'assistant',
-        content: `⚠️ **Could not generate answer**: ${err.message}. Please verify your AI Model settings or check connection.`,
+        content: `⚠️ Could not generate answer: ${err.message}. Please check connection or AI model settings.`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -134,19 +122,7 @@ export const AskMeetingsModal: React.FC = () => {
   };
 
   const handleClearChat = () => {
-    setMessages([
-      {
-        id: `welcome-${Date.now()}`,
-        role: 'assistant',
-        content: `🧹 **Chat conversation cleared.**\n\nAsk me any question about your past meetings, action items, or decisions.`,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        suggestedFollowUps: [
-          'What are the key decisions made across all meetings?',
-          'List all open action items with assignees and due dates',
-          'Summarize the latest engineering sprint sync'
-        ]
-      }
-    ]);
+    setMessages([]);
   };
 
   const handleCopyMessage = async (content: string, idx: number) => {
@@ -293,23 +269,33 @@ export const AskMeetingsModal: React.FC = () => {
           </div>
         </div>
 
-        {/* QUICK SUGGESTIONS CHIPS */}
-        <div className="px-6 py-2 bg-white border-b border-[#f1f5f9] flex items-center gap-1.5 overflow-x-auto no-scrollbar text-[11px]">
-          <span className="font-bold text-[#94a3b8] text-[10px] uppercase flex-none">Prompts:</span>
-          {getSuggestionsForMode().map((sq, i) => (
-            <button
-              key={i}
-              onClick={() => handleSendMessage(sq)}
-              className="flex-none px-2.5 py-1 rounded-full bg-[#f8fafc] hover:bg-[#eff6ff] hover:text-[#2563eb] hover:border-[#bfdbfe] text-[#475569] border border-[#e2e8f0] transition shadow-2xs cursor-pointer text-xs font-medium"
-            >
-              {sq}
-            </button>
-          ))}
-        </div>
-
         {/* CHAT CONVERSATION VIEW */}
         <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4 bg-[#fafbfc]">
-          {messages.map((item, idx) => (
+          {messages.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4 my-auto">
+              <div className="w-12 h-12 rounded-2xl bg-[#eff6ff] text-[#2563eb] flex items-center justify-center shadow-xs">
+                <Bot className="w-6 h-6" />
+              </div>
+              <div className="space-y-1 max-w-sm">
+                <h3 className="font-bold text-sm text-[#0f172a]">Ask your meeting notes anything</h3>
+                <p className="text-xs text-[#64748b] leading-relaxed">
+                  Type any question below to get a simple, direct answer from the AI agent based on your meeting notes.
+                </p>
+              </div>
+              <div className="flex flex-wrap justify-center gap-2 pt-2 max-w-lg">
+                {getSuggestionsForMode().slice(0, 3).map((sq, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleSendMessage(sq)}
+                    className="px-3 py-1.5 rounded-full bg-white hover:bg-[#eff6ff] hover:text-[#2563eb] text-[#475569] border border-[#e2e8f0] text-xs font-medium transition shadow-2xs cursor-pointer"
+                  >
+                    {sq}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            messages.map((item, idx) => (
             <div key={item.id || idx} className="space-y-2">
               {/* USER MESSAGE */}
               {item.role === 'user' ? (
@@ -428,7 +414,7 @@ export const AskMeetingsModal: React.FC = () => {
                 </div>
               )}
             </div>
-          ))}
+          )))}
 
           {/* THINKING / LOADING INDICATOR */}
           {loading && (

@@ -461,28 +461,20 @@ Respond with a JSON object strictly matching this schema:
           ? `\n\nRecent Chat Conversation History:\n${history.slice(-6).map(h => `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.content}`).join('\n\n')}`
           : '';
 
-        const sysPrompt = `You are Minomeet AI, an intelligent, conversational executive meeting chatbot and knowledge assistant.
-You have complete access to the user's meeting notes, executive summaries, decisions, action item matrices, and transcripts.
+        const sysPrompt = `You are Minomeet AI, a helpful, intelligent meeting assistant.
+You have access to the user's meeting notes, summaries, decisions, action items, and transcripts.
 
 Instructions:
-1. Answer the user's query thoroughly, directly, and conversationally based on the provided meeting archives.
-2. Structure your response with clean Markdown:
-   - Use bold subheadings (e.g. ### Key Takeaways, ### Action Deliverables)
-   - Use bullet points and checklists ([ ]) for tasks and next steps
-   - Explicitly cite the meeting title (e.g. "**Product Security Sync — Aug 24**") for specific findings.
-3. If the user asks a follow-up or comparison across multiple meetings, contrast the points cleanly.
-4. Mode context: User is currently focusing on "${mode}".
-5. At the very end of your response, always provide 2 to 3 brief, natural follow-up questions formatted strictly under this header:
-### Suggested Follow-ups:
-- [Question 1]
-- [Question 2]`;
+1. Answer the user's question directly, conversationally, and concisely based on the provided meeting records.
+2. Do not use generic boilerplate intros or repetitive canned responses. Answer what is asked naturally.
+3. Use clear markdown (bolding, bullet points, checklists) where appropriate.
+4. Reference the specific meeting name when citing facts.`;
 
-        const userPrompt = `Meeting Archives & Notes Context:\n${meetingContextBlocks.slice(0, 12).join('\n\n---\n\n')}${historyText}\n\nCurrent User Question: ${query}`;
+        const userPrompt = `Meeting Notes & Transcript Context:\n${meetingContextBlocks.slice(0, 12).join('\n\n---\n\n')}${historyText}\n\nUser Question: ${query}`;
 
         const rawLLMOutput = await this.callLLM(effective.providerId, cred?.apiKey, cred?.baseUrl, effective.modelId, sysPrompt, userPrompt);
 
-        // Extract Suggested Follow-ups from LLM Output
-        let cleanedAnswer = rawLLMOutput;
+        let cleanedAnswer = rawLLMOutput.trim();
         const suggestedFollowUps: string[] = [];
 
         const followUpMatch = rawLLMOutput.match(/###?\s*Suggested Follow-?ups?:?([\s\S]*)$/i);
@@ -492,61 +484,114 @@ Instructions:
           suggestedFollowUps.push(...lines.slice(0, 3));
         }
 
-        if (suggestedFollowUps.length === 0) {
-          suggestedFollowUps.push(
-            `Show all pending action items for this topic`,
-            `What decisions were made regarding this in other meetings?`,
-            `Draft a follow-up email about these points`
-          );
-        }
-
         return {
           answer: cleanedAnswer,
           sources: uniqueSources,
-          suggestedFollowUps,
+          suggestedFollowUps: suggestedFollowUps.length > 0 ? suggestedFollowUps : undefined,
           modelUsed: `${effective.providerName} • ${effective.modelId}`
         };
       } catch (err: any) {
-        console.warn(`Live AI Chatbot failed, falling back to local search engine: ${err.message}`);
+        console.warn(`Live AI Chatbot error: ${err.message}`);
       }
     }
 
-    // Heuristic Local Offline Engine
-    if (sources.length === 0 && meetingContextBlocks.length > 0) {
-      // Gather general summary from all meetings
-      const allTitles = targetMeetings.map(m => `• **${m.title}** (${m.createdAt ? new Date(m.createdAt).toLocaleDateString() : 'Recent'})`).join('\n');
-      const allActionCount = targetMeetings.reduce((acc, m) => acc + (m.summary?.actionItems?.length || 0), 0);
-      const allDecisionsCount = targetMeetings.reduce((acc, m) => acc + (m.summary?.keyDecisions?.length || 0), 0);
+    // Natural Built-in AI Agent Synthesis (Direct, human-like answers without rigid templates)
+    const isAskingDecisions = /\b(decision|decisions|decide|decided|agreed|approved|consensus)\b/i.test(lowerQuery);
+    const isAskingTasks = /\b(action|task|tasks|deliverable|deliverables|due|deadline|assigned|todo|todos|assignee)\b/i.test(lowerQuery);
+    const isAskingSummary = /\b(summary|summarize|overview|recap|what happened|discuss|discussed)\b/i.test(lowerQuery);
 
-      const generalAnswer = `### Meeting Archives Overview\n\nI searched through **${targetMeetings.length} saved meeting note(s)** containing **${allDecisionsCount} key decisions** and **${allActionCount} action deliverables**.\n\nHere are the meetings currently indexed:\n${allTitles}\n\n**Tip:** Ask about specific project roadmaps, team assignments, scanner migrations, or blockers.`;
-      return {
-        answer: generalAnswer,
-        sources: targetMeetings.slice(0, 3).map(m => ({
-          meetingId: m.id,
-          meetingTitle: m.title,
-          snippet: m.summary?.summary || 'Meeting notes recorded.',
-          type: 'summary' as const
-        })),
-        suggestedFollowUps: [
-          'What are the key decisions made across all meetings?',
-          'List all open action items with assignees and due dates',
-          'Summarize the latest engineering sprint sync'
-        ],
-        modelUsed: `${effective.providerName} • ${effective.modelId}`
-      };
+    let naturalAnswer = '';
+
+    // Check if matching specific person
+    const allPeople = ['priya', 'marcus', 'chen', 'alex', 'sarah', 'john', 'david', 'emily', 'rachel'];
+    const mentionedPerson = allPeople.find(p => lowerQuery.includes(p));
+
+    if (mentionedPerson) {
+      const personName = mentionedPerson.charAt(0).toUpperCase() + mentionedPerson.slice(1);
+      const personTasks: string[] = [];
+      const personQuotes: string[] = [];
+      let meetingTitle = '';
+
+      for (const m of targetMeetings) {
+        if (m.summary?.actionItems) {
+          for (const a of m.summary.actionItems) {
+            if (a.owner.toLowerCase().includes(mentionedPerson) || a.task.toLowerCase().includes(mentionedPerson)) {
+              meetingTitle = m.title;
+              personTasks.push(`• **${a.task}** (Due: ${a.due || 'Upcoming'}${a.notes ? ` — ${a.notes}` : ''})`);
+            }
+          }
+        }
+        for (const l of m.transcript) {
+          if (l.speaker && l.speaker.toLowerCase().includes(mentionedPerson)) {
+            personQuotes.push(`> "${l.text}"`);
+          }
+        }
+      }
+
+      if (personTasks.length > 0 || personQuotes.length > 0) {
+        naturalAnswer = `In **${meetingTitle || 'recent syncs'}**, **${personName}** has the following updates:\n\n`;
+        if (personTasks.length > 0) {
+          naturalAnswer += `**Assigned Tasks:**\n${personTasks.join('\n')}\n\n`;
+        }
+        if (personQuotes.length > 0) {
+          naturalAnswer += `**Key Comments:**\n${personQuotes.slice(0, 2).join('\n')}`;
+        }
+      }
     }
 
-    const answerIntro = `### Insights for "${query}":\n\nBased on your meeting archives, here are the key findings recorded:`;
-    const bullets = uniqueSources.map(s => `• **${s.meetingTitle}** ${s.timestamp ? `[${s.timestamp}]` : ''} (${s.type || 'note'}): ${s.snippet}`).join('\n\n');
+    if (!naturalAnswer && isAskingDecisions) {
+      const allDecisions: string[] = [];
+      for (const m of targetMeetings) {
+        if (m.summary?.keyDecisions && m.summary.keyDecisions.length > 0) {
+          for (const d of m.summary.keyDecisions) {
+            allDecisions.push(`• **${m.title}**: ${d}`);
+          }
+        }
+      }
+      if (allDecisions.length > 0) {
+        naturalAnswer = `The following key decisions were agreed upon in your meetings:\n\n${allDecisions.slice(0, 5).join('\n')}`;
+      }
+    }
+
+    if (!naturalAnswer && isAskingTasks) {
+      const allTasks: string[] = [];
+      for (const m of targetMeetings) {
+        if (m.summary?.actionItems && m.summary.actionItems.length > 0) {
+          for (const a of m.summary.actionItems) {
+            allTasks.push(`• **${a.owner}**: ${a.task} (Due: ${a.due || 'Sync'}) [${m.title}]`);
+          }
+        }
+      }
+      if (allTasks.length > 0) {
+        naturalAnswer = `Here are the action items and deliverables recorded:\n\n${allTasks.slice(0, 6).join('\n')}`;
+      }
+    }
+
+    if (!naturalAnswer && isAskingSummary) {
+      const summaries: string[] = [];
+      for (const m of targetMeetings) {
+        if (m.summary?.summary) {
+          summaries.push(`• **${m.title}**: ${m.summary.summary}`);
+        }
+      }
+      if (summaries.length > 0) {
+        naturalAnswer = `Here is a summary of your meetings:\n\n${summaries.slice(0, 3).join('\n\n')}`;
+      }
+    }
+
+    // Default conversational synthesis if no specific intent triggered
+    if (!naturalAnswer) {
+      if (uniqueSources.length > 0) {
+        const top = uniqueSources[0];
+        naturalAnswer = `In **${top.meetingTitle}**, here is what was noted regarding "${query}":\n\n${uniqueSources.map(s => `• ${s.snippet}`).join('\n')}`;
+      } else {
+        naturalAnswer = `I searched your saved meetings for "${query}" but didn't find any direct matches. Try asking about specific decisions, action items, or project updates from your meetings.`;
+      }
+    }
 
     return {
-      answer: `${answerIntro}\n\n${bullets}`,
+      answer: naturalAnswer,
       sources: uniqueSources,
-      suggestedFollowUps: [
-        'Who is responsible for completing these items?',
-        'What were the related discussions in prior syncs?',
-        'Draft a follow-up action plan based on these points'
-      ],
       modelUsed: `${effective.providerName} • ${effective.modelId}`
     };
   }
