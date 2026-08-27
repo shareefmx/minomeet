@@ -325,9 +325,14 @@ Respond with a JSON object strictly matching this schema:
   }
 
   /**
-   * "Ask Your Meetings" - Semantic search & question answering across historical meetings.
+   * "Ask Your Meetings" - Intelligent AI Chatbot & semantic assistant across all meeting notes.
    */
-  public async askMeetings(query: string, meetingId?: string): Promise<AskQuestionResponse> {
+  public async askMeetings(
+    query: string,
+    meetingId?: string,
+    history?: { role: 'user' | 'assistant'; content: string }[],
+    mode: 'all' | 'action_items' | 'decisions' | 'attendees' | 'summary' = 'all'
+  ): Promise<AskQuestionResponse> {
     const settings = storageService.getSettings();
     const effective = getEffectiveModelForAgent(settings, 'ask_meetings');
     const cred = settings?.aiProviders?.[effective.providerId];
@@ -337,78 +342,189 @@ Respond with a JSON object strictly matching this schema:
       ? allMeetings.filter(m => m.id === meetingId)
       : allMeetings;
 
-    const lowerQuery = query.toLowerCase();
-    const sources: { meetingId: string; meetingTitle: string; snippet: string; timestamp?: string }[] = [];
-    const matchedContexts: string[] = [];
+    const lowerQuery = query.toLowerCase().trim();
+    const sources: {
+      meetingId: string;
+      meetingTitle: string;
+      snippet: string;
+      timestamp?: string;
+      type?: 'summary' | 'decision' | 'action_item' | 'transcript' | 'highlight';
+    }[] = [];
+
+    const meetingContextBlocks: string[] = [];
 
     for (const meeting of targetMeetings) {
+      const parts: string[] = [];
+      parts.push(`=== MEETING: "${meeting.title}" (Date: ${meeting.createdAt ? new Date(meeting.createdAt).toLocaleDateString() : 'Recent'}) ===`);
+      
       if (meeting.summary) {
-        if (meeting.summary.summary.toLowerCase().includes(lowerQuery) ||
-            meeting.summary.keyDecisions.some(d => d.toLowerCase().includes(lowerQuery)) ||
-            meeting.summary.discussionHighlights.some(h => h.toLowerCase().includes(lowerQuery))) {
-          sources.push({
-            meetingId: meeting.id,
-            meetingTitle: meeting.title,
-            snippet: meeting.summary.summary
-          });
-          matchedContexts.push(`Meeting: "${meeting.title}"\nSummary: ${meeting.summary.summary}\nKey Decisions: ${meeting.summary.keyDecisions.join('; ')}`);
+        if (meeting.summary.attendees && meeting.summary.attendees.length > 0) {
+          parts.push(`Attendees: ${meeting.summary.attendees.join(', ')}`);
         }
-
-        for (const act of meeting.summary.actionItems) {
-          if (act.task.toLowerCase().includes(lowerQuery) || act.owner.toLowerCase().includes(lowerQuery) || act.notes.toLowerCase().includes(lowerQuery)) {
+        if (meeting.summary.summary) {
+          parts.push(`Executive Summary: ${meeting.summary.summary}`);
+          if (mode === 'all' || mode === 'summary' || meeting.summary.summary.toLowerCase().includes(lowerQuery)) {
             sources.push({
               meetingId: meeting.id,
               meetingTitle: meeting.title,
-              snippet: `Action item assigned to ${act.owner}: "${act.task}" (Due: ${act.due})`
+              snippet: meeting.summary.summary,
+              type: 'summary'
             });
-            matchedContexts.push(`Action Item in "${meeting.title}": ${act.owner} -> ${act.task} [Due: ${act.due}]`);
           }
+        }
+        if (meeting.summary.keyDecisions && meeting.summary.keyDecisions.length > 0) {
+          parts.push(`Key Decisions Made:\n${meeting.summary.keyDecisions.map(d => `• ${d}`).join('\n')}`);
+          if (mode === 'all' || mode === 'decisions' || meeting.summary.keyDecisions.some(d => d.toLowerCase().includes(lowerQuery))) {
+            sources.push({
+              meetingId: meeting.id,
+              meetingTitle: meeting.title,
+              snippet: `Key Decisions: ${meeting.summary.keyDecisions.join('; ')}`,
+              type: 'decision'
+            });
+          }
+        }
+        if (meeting.summary.actionItems && meeting.summary.actionItems.length > 0) {
+          parts.push(`Action Items & Deliverables:\n${meeting.summary.actionItems.map(a => `• [${a.completed ? 'x' : ' '}] ${a.owner}: ${a.task} (Due: ${a.due || 'Not specified'}${a.notes ? ` - ${a.notes}` : ''})`).join('\n')}`);
+          if (mode === 'all' || mode === 'action_items' || meeting.summary.actionItems.some(a => a.task.toLowerCase().includes(lowerQuery) || a.owner.toLowerCase().includes(lowerQuery))) {
+            sources.push({
+              meetingId: meeting.id,
+              meetingTitle: meeting.title,
+              snippet: `Action Items: ${meeting.summary.actionItems.map(a => `${a.owner} -> ${a.task} [Due: ${a.due}]`).join('; ')}`,
+              type: 'action_item'
+            });
+          }
+        }
+        if (meeting.summary.discussionHighlights && meeting.summary.discussionHighlights.length > 0) {
+          parts.push(`Discussion Highlights:\n${meeting.summary.discussionHighlights.map(h => `• ${h}`).join('\n')}`);
         }
       }
 
-      for (const line of meeting.transcript) {
-        if (line.text.toLowerCase().includes(lowerQuery) || (line.speaker && line.speaker.toLowerCase().includes(lowerQuery))) {
+      // Add matching transcript lines
+      const matchingLines = meeting.transcript.filter(line => 
+        line.text.toLowerCase().includes(lowerQuery) || (line.speaker && line.speaker.toLowerCase().includes(lowerQuery))
+      );
+      if (matchingLines.length > 0) {
+        parts.push(`Matching Dialogue:\n${matchingLines.slice(0, 4).map(l => `[${l.time || '00:00'}] ${l.speaker ? l.speaker + ': ' : ''}${l.text}`).join('\n')}`);
+        for (const l of matchingLines.slice(0, 2)) {
           sources.push({
             meetingId: meeting.id,
             meetingTitle: meeting.title,
-            snippet: `${line.speaker ? line.speaker + ': ' : ''}${line.text}`,
-            timestamp: line.time
+            snippet: `${l.speaker ? l.speaker + ': ' : ''}${l.text}`,
+            timestamp: l.time,
+            type: 'transcript'
           });
-          matchedContexts.push(`Transcript snippet in "${meeting.title}" (${line.time || 'sync'}): ${line.speaker ? line.speaker + ': ' : ''}${line.text}`);
         }
+      } else if (meeting.transcript.length > 0 && targetMeetings.length <= 3) {
+        parts.push(`Sample Transcript:\n${meeting.transcript.slice(0, 5).map(l => `[${l.time || '00:00'}] ${l.speaker ? l.speaker + ': ' : ''}${l.text}`).join('\n')}`);
+      }
+
+      meetingContextBlocks.push(parts.join('\n'));
+    }
+
+    // Deduplicate sources by meetingId and snippet
+    const uniqueSourcesMap = new Map<string, typeof sources[0]>();
+    sources.forEach(s => {
+      const key = `${s.meetingId}_${s.snippet.slice(0, 40)}`;
+      if (!uniqueSourcesMap.has(key)) {
+        uniqueSourcesMap.set(key, s);
+      }
+    });
+    const uniqueSources = Array.from(uniqueSourcesMap.values()).slice(0, 6);
+
+    // If external AI (Gemini, OpenAI, Claude, Groq, OpenRouter, Ollama) is active, call LLM
+    if (effective.providerId !== 'builtin' && (cred?.apiKey || effective.providerId === 'ollama' || effective.providerId === 'custom')) {
+      try {
+        const historyText = history && history.length > 0
+          ? `\n\nRecent Chat Conversation History:\n${history.slice(-6).map(h => `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.content}`).join('\n\n')}`
+          : '';
+
+        const sysPrompt = `You are Minomeet AI, an intelligent, conversational executive meeting chatbot and knowledge assistant.
+You have complete access to the user's meeting notes, executive summaries, decisions, action item matrices, and transcripts.
+
+Instructions:
+1. Answer the user's query thoroughly, directly, and conversationally based on the provided meeting archives.
+2. Structure your response with clean Markdown:
+   - Use bold subheadings (e.g. ### Key Takeaways, ### Action Deliverables)
+   - Use bullet points and checklists ([ ]) for tasks and next steps
+   - Explicitly cite the meeting title (e.g. "**Product Security Sync — Aug 24**") for specific findings.
+3. If the user asks a follow-up or comparison across multiple meetings, contrast the points cleanly.
+4. Mode context: User is currently focusing on "${mode}".
+5. At the very end of your response, always provide 2 to 3 brief, natural follow-up questions formatted strictly under this header:
+### Suggested Follow-ups:
+- [Question 1]
+- [Question 2]`;
+
+        const userPrompt = `Meeting Archives & Notes Context:\n${meetingContextBlocks.slice(0, 12).join('\n\n---\n\n')}${historyText}\n\nCurrent User Question: ${query}`;
+
+        const rawLLMOutput = await this.callLLM(effective.providerId, cred?.apiKey, cred?.baseUrl, effective.modelId, sysPrompt, userPrompt);
+
+        // Extract Suggested Follow-ups from LLM Output
+        let cleanedAnswer = rawLLMOutput;
+        const suggestedFollowUps: string[] = [];
+
+        const followUpMatch = rawLLMOutput.match(/###?\s*Suggested Follow-?ups?:?([\s\S]*)$/i);
+        if (followUpMatch) {
+          cleanedAnswer = rawLLMOutput.replace(followUpMatch[0], '').trim();
+          const lines = followUpMatch[1].split('\n').map(l => l.replace(/^[-*•\d.]\s*/, '').trim()).filter(l => l.length > 5);
+          suggestedFollowUps.push(...lines.slice(0, 3));
+        }
+
+        if (suggestedFollowUps.length === 0) {
+          suggestedFollowUps.push(
+            `Show all pending action items for this topic`,
+            `What decisions were made regarding this in other meetings?`,
+            `Draft a follow-up email about these points`
+          );
+        }
+
+        return {
+          answer: cleanedAnswer,
+          sources: uniqueSources,
+          suggestedFollowUps,
+          modelUsed: `${effective.providerName} • ${effective.modelId}`
+        };
+      } catch (err: any) {
+        console.warn(`Live AI Chatbot failed, falling back to local search engine: ${err.message}`);
       }
     }
 
-    if (sources.length === 0) {
+    // Heuristic Local Offline Engine
+    if (sources.length === 0 && meetingContextBlocks.length > 0) {
+      // Gather general summary from all meetings
+      const allTitles = targetMeetings.map(m => `• **${m.title}** (${m.createdAt ? new Date(m.createdAt).toLocaleDateString() : 'Recent'})`).join('\n');
+      const allActionCount = targetMeetings.reduce((acc, m) => acc + (m.summary?.actionItems?.length || 0), 0);
+      const allDecisionsCount = targetMeetings.reduce((acc, m) => acc + (m.summary?.keyDecisions?.length || 0), 0);
+
+      const generalAnswer = `### Meeting Archives Overview\n\nI searched through **${targetMeetings.length} saved meeting note(s)** containing **${allDecisionsCount} key decisions** and **${allActionCount} action deliverables**.\n\nHere are the meetings currently indexed:\n${allTitles}\n\n**Tip:** Ask about specific project roadmaps, team assignments, scanner migrations, or blockers.`;
       return {
-        answer: `I searched through your ${targetMeetings.length} saved meeting(s) but couldn't find specific discussions matching "${query}". Try asking about specific projects, blockers, action items, or team assignments.`,
-        sources: []
+        answer: generalAnswer,
+        sources: targetMeetings.slice(0, 3).map(m => ({
+          meetingId: m.id,
+          meetingTitle: m.title,
+          snippet: m.summary?.summary || 'Meeting notes recorded.',
+          type: 'summary' as const
+        })),
+        suggestedFollowUps: [
+          'What are the key decisions made across all meetings?',
+          'List all open action items with assignees and due dates',
+          'Summarize the latest engineering sprint sync'
+        ],
+        modelUsed: `${effective.providerName} • ${effective.modelId}`
       };
     }
 
-    const uniqueSources = sources.slice(0, 4);
-
-    // If external model like Gemini is active, use it to synthesize answer
-    if (effective.providerId !== 'builtin' && (cred?.apiKey || effective.providerId === 'ollama' || effective.providerId === 'custom')) {
-      try {
-        const sysPrompt = 'You are an intelligent meeting assistant. Using the provided meeting context snippets, answer the user question directly, professionally, and accurately. Format with markdown bullet points if helpful.';
-        const userPrompt = `Context Snippets:\n${matchedContexts.slice(0, 8).join('\n---\n')}\n\nQuestion: ${query}`;
-        const answer = await this.callLLM(effective.providerId, cred?.apiKey, cred?.baseUrl, effective.modelId, sysPrompt, userPrompt);
-        return {
-          answer,
-          sources: uniqueSources
-        };
-      } catch (err: any) {
-        console.warn(`Real LLM Q&A failed, falling back to local snippet extraction: ${err.message}`);
-      }
-    }
-
-    const answerIntro = `Based on your meeting archives, here is what was recorded regarding **"${query}"**:`;
-    const bullets = uniqueSources.map(s => `• **${s.meetingTitle}** ${s.timestamp ? `[${s.timestamp}]` : ''}: ${s.snippet}`).join('\n');
+    const answerIntro = `### Insights for "${query}":\n\nBased on your meeting archives, here are the key findings recorded:`;
+    const bullets = uniqueSources.map(s => `• **${s.meetingTitle}** ${s.timestamp ? `[${s.timestamp}]` : ''} (${s.type || 'note'}): ${s.snippet}`).join('\n\n');
 
     return {
       answer: `${answerIntro}\n\n${bullets}`,
-      sources: uniqueSources
+      sources: uniqueSources,
+      suggestedFollowUps: [
+        'Who is responsible for completing these items?',
+        'What were the related discussions in prior syncs?',
+        'Draft a follow-up action plan based on these points'
+      ],
+      modelUsed: `${effective.providerName} • ${effective.modelId}`
     };
   }
 

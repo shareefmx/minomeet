@@ -158,4 +158,39 @@ export interface MOMTemplate {
   updatedAt?: string;
 }
 
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp?: string;
+  sources?: {
+    meetingId: string;
+    meetingTitle: string;
+    snippet: string;
+    timestamp?: string;
+    type?: 'summary' | 'decision' | 'action_item' | 'transcript' | 'highlight';
+  }[];
+  suggestedFollowUps?: string[];
+}
+
+export interface AskQuestionRequest {
+  query: string;
+  meetingId?: string;
+  history?: { role: 'user' | 'assistant'; content: string }[];
+  mode?: 'all' | 'action_items' | 'decisions' | 'attendees' | 'summary';
+}
+
+export interface AskQuestionResponse {
+  answer: string;
+  sources: {
+    meetingId: string;
+    meetingTitle: string;
+    snippet: string;
+    timestamp?: string;
+    type?: 'summary' | 'decision' | 'action_item' | 'transcript' | 'highlight';
+  }[];
+  suggestedFollowUps?: string[];
+  modelUsed?: string;
+}
+
 

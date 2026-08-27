@@ -99,9 +99,26 @@ export interface SummarizeRequest {
   customPrompt?: string;
 }
 
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp?: string;
+  sources?: {
+    meetingId: string;
+    meetingTitle: string;
+    snippet: string;
+    timestamp?: string;
+    type?: 'summary' | 'decision' | 'action_item' | 'transcript' | 'highlight';
+  }[];
+  suggestedFollowUps?: string[];
+}
+
 export interface AskQuestionRequest {
   query: string;
   meetingId?: string; // If omitted, queries across all meetings
+  history?: { role: 'user' | 'assistant'; content: string }[];
+  mode?: 'all' | 'action_items' | 'decisions' | 'attendees' | 'summary';
 }
 
 export interface AskQuestionResponse {
@@ -111,7 +128,10 @@ export interface AskQuestionResponse {
     meetingTitle: string;
     snippet: string;
     timestamp?: string;
+    type?: 'summary' | 'decision' | 'action_item' | 'transcript' | 'highlight';
   }[];
+  suggestedFollowUps?: string[];
+  modelUsed?: string;
 }
 
 export interface FollowUpEmailRequest {

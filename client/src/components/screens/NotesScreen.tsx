@@ -23,6 +23,7 @@ import {
   Trash2,
   MoreVertical,
   Loader2,
+  Bot,
   X
 } from 'lucide-react';
 import { ActionItem } from '../../types/meeting.js';
@@ -340,6 +341,14 @@ export const NotesScreen: React.FC = () => {
           {/* Transcript Toolbar */}
           <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-[#e5e7eb] bg-white h-[53px] flex-none">
             <div className="flex items-center gap-2">
+              <button
+                onClick={() => openModal('ask')}
+                className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-[#eff6ff] border border-[#bfdbfe] text-xs font-bold text-[#1d4ed8] hover:bg-[#dbeafe] shadow-2xs transition cursor-pointer"
+                title="Ask AI Chatbot about this meeting note and past records"
+              >
+                <Bot className="w-3.5 h-3.5 text-[#2563eb]" />
+                <span>Ask AI</span>
+              </button>
               <button
                 onClick={handleCopyTranscript}
                 className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-[#e2e8f0] bg-white text-xs font-semibold text-[#374151] hover:bg-[#f8fafc] hover:border-[#cbd5e1] shadow-2xs transition cursor-pointer"

@@ -1,4 +1,4 @@
-import { Meeting, AppSettings, MOMSummary, TranscriptLine, TranscriptionModel, TranscriptionEngineStatus, StorageStats, MOMTemplate } from '../types/meeting.js';
+import { Meeting, AppSettings, MOMSummary, TranscriptLine, TranscriptionModel, TranscriptionEngineStatus, StorageStats, MOMTemplate, AskQuestionResponse } from '../types/meeting.js';
 
 const API_BASE = '/api';
 
@@ -159,15 +159,25 @@ export const api = {
     return data.summary;
   },
 
-  async askMeetings(query: string, meetingId?: string): Promise<{ answer: string; sources: any[] }> {
+  async askMeetings(
+    query: string,
+    meetingId?: string,
+    history?: { role: 'user' | 'assistant'; content: string }[],
+    mode?: 'all' | 'action_items' | 'decisions' | 'attendees' | 'summary'
+  ): Promise<AskQuestionResponse> {
     const res = await fetch(`${API_BASE}/ai/ask`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, meetingId })
+      body: JSON.stringify({ query, meetingId, history, mode })
     });
     const data = await res.json();
-    if (!data.success) throw new Error(data.error || 'Failed to ask question');
-    return { answer: data.answer, sources: data.sources || [] };
+    if (!data.success) throw new Error(data.error || 'Failed to query meeting assistant');
+    return {
+      answer: data.answer,
+      sources: data.sources || [],
+      suggestedFollowUps: data.suggestedFollowUps || [],
+      modelUsed: data.modelUsed
+    };
   },
 
   async generateFollowUpEmail(meetingId: string, tone?: string): Promise<{ subject: string; body: string }> {

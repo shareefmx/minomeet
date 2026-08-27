@@ -32,17 +32,17 @@ router.post('/summarize', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/ai/ask - "Ask Your Meetings" (Semantic Q&A)
+// POST /api/ai/ask - "Ask Your Meetings" (Semantic Chatbot & Multi-meeting Q&A)
 router.post('/ask', async (req: Request, res: Response) => {
   try {
-    const { query, meetingId }: AskQuestionRequest = req.body;
+    const { query, meetingId, history, mode }: AskQuestionRequest = req.body;
 
     if (!query || typeof query !== 'string') {
       res.status(400).json({ success: false, error: 'Query string is required' });
       return;
     }
 
-    const result = await aiService.askMeetings(query, meetingId);
+    const result = await aiService.askMeetings(query, meetingId, history, mode);
     res.json({ success: true, ...result });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
