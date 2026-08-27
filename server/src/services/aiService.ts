@@ -5,6 +5,218 @@ import { getEffectiveModelForAgent } from '../utils/aiModelConfig.js';
 
 export class AIService {
   /**
+   * Calls a configured LLM provider directly with prompts.
+   */
+  public async callLLM(
+    provider: string,
+    apiKey?: string,
+    baseUrl?: string,
+    model?: string,
+    systemPrompt: string = '',
+    userPrompt: string = ''
+  ): Promise<string> {
+    const key = (apiKey || '').trim().replace(/^['"`]|['"`]$/g, '');
+
+    // 1. Google Gemini
+    if (provider === 'google') {
+      let cleanModel = (model || 'gemini-1.5-flash').replace(/^models\//, '').split(' ')[0].trim();
+      if (!cleanModel || cleanModel.startsWith('Nimbus')) {
+        cleanModel = 'gemini-1.5-flash';
+      }
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${cleanModel}:generateContent?key=${encodeURIComponent(key)}`;
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: `${systemPrompt ? systemPrompt + '\n\n' : ''}${userPrompt}` }]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 3000
+          }
+        })
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as any)?.error?.message || `Google Gemini API returned HTTP ${res.status}`);
+      }
+
+      const data = (await res.json()) as any;
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) {
+        throw new Error('Google Gemini returned an empty response.');
+      }
+      return text;
+    }
+
+    // 2. OpenAI
+    if (provider === 'openai') {
+      const cleanModel = (model || 'gpt-4o').split(' ')[0].trim();
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${key}`
+        },
+        body: JSON.stringify({
+          model: cleanModel,
+          messages: [
+            ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
+            { role: 'user', content: userPrompt }
+          ],
+          temperature: 0.2
+        })
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as any)?.error?.message || `OpenAI API returned HTTP ${res.status}`);
+      }
+
+      const data = (await res.json()) as any;
+      return data.choices?.[0]?.message?.content || '';
+    }
+
+    // 3. Anthropic Claude
+    if (provider === 'anthropic') {
+      const cleanModel = (model || 'claude-3-5-sonnet-20241022').split(' ')[0].trim();
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': key,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: cleanModel,
+          max_tokens: 3000,
+          system: systemPrompt || undefined,
+          messages: [{ role: 'user', content: userPrompt }]
+        })
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as any)?.error?.message || `Anthropic API returned HTTP ${res.status}`);
+      }
+
+      const data = (await res.json()) as any;
+      return data.content?.[0]?.text || '';
+    }
+
+    // 4. Groq
+    if (provider === 'groq') {
+      const cleanModel = (model || 'llama-3.3-70b-versatile').split(' ')[0].trim();
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${key}`
+        },
+        body: JSON.stringify({
+          model: cleanModel,
+          messages: [
+            ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
+            { role: 'user', content: userPrompt }
+          ],
+          temperature: 0.2
+        })
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as any)?.error?.message || `Groq API returned HTTP ${res.status}`);
+      }
+
+      const data = (await res.json()) as any;
+      return data.choices?.[0]?.message?.content || '';
+    }
+
+    // 5. OpenRouter
+    if (provider === 'openrouter') {
+      const cleanModel = (model || 'openai/gpt-4o').split(' ')[0].trim();
+      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${key}`
+        },
+        body: JSON.stringify({
+          model: cleanModel,
+          messages: [
+            ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
+            { role: 'user', content: userPrompt }
+          ]
+        })
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as any)?.error?.message || `OpenRouter API returned HTTP ${res.status}`);
+      }
+
+      const data = (await res.json()) as any;
+      return data.choices?.[0]?.message?.content || '';
+    }
+
+    // 6. Ollama
+    if (provider === 'ollama') {
+      const endpoint = (baseUrl || 'http://localhost:11434').replace(/\/+$/, '');
+      const cleanModel = (model || 'llama3.1:8b').split(' ')[0].trim();
+      const res = await fetch(`${endpoint}/api/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: cleanModel,
+          prompt: `${systemPrompt ? systemPrompt + '\n\n' : ''}${userPrompt}`,
+          stream: false
+        })
+      });
+
+      if (!res.ok) {
+        throw new Error(`Ollama daemon returned HTTP ${res.status}`);
+      }
+
+      const data = (await res.json()) as any;
+      return data.response || '';
+    }
+
+    // 7. Custom OpenAI-Compatible Server
+    if (provider === 'custom') {
+      const endpoint = (baseUrl || 'http://localhost:8000/v1').replace(/\/+$/, '');
+      const cleanModel = (model || 'custom-model').split(' ')[0].trim();
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (key) headers['Authorization'] = `Bearer ${key}`;
+
+      const res = await fetch(`${endpoint}/chat/completions`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          model: cleanModel,
+          messages: [
+            ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
+            { role: 'user', content: userPrompt }
+          ]
+        })
+      });
+
+      if (!res.ok) {
+        throw new Error(`Custom server returned HTTP ${res.status}`);
+      }
+
+      const data = (await res.json()) as any;
+      return data.choices?.[0]?.message?.content || '';
+    }
+
+    throw new Error(`Unsupported provider ${provider} for LLM execution.`);
+  }
+
+  /**
    * Generates a structured Minutes of Meeting (MOM) document from transcript text.
    */
   public async generateMOM(
@@ -16,7 +228,11 @@ export class AIService {
     meetingTitle?: string
   ): Promise<MOMSummary> {
     const settings = storageService.getSettings();
-    const effectiveModel = model || getEffectiveModelForAgent(settings, 'mom_synthesis').modelId;
+    const effective = getEffectiveModelForAgent(settings, 'mom_synthesis');
+    const effectiveModel = model || effective.modelId;
+    const effectiveProvider = effective.providerId;
+    const cred = settings?.aiProviders?.[effectiveProvider];
+
     const fullText = transcript.map(t => `${t.speaker ? t.speaker + ': ' : ''}${t.text}`).join('\n');
     const speakers = Array.from(new Set(transcript.map(t => t.speaker).filter(Boolean))) as string[];
     const attendeesList = speakers.length > 0
@@ -25,45 +241,66 @@ export class AIService {
 
     const title = meetingTitle || (transcript.length > 0 ? `Meeting Sync — ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : 'Untitled Meeting');
     const dateFormatted = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-
-    // Lookup matching template definition from storage
     const templateDef = storageService.getTemplateById(template);
 
-    // Extract action items intelligently based on text patterns
+    // If external cloud or local LLM is configured and ready, try calling real LLM
+    if (effectiveProvider !== 'builtin' && (cred?.apiKey || effectiveProvider === 'ollama' || effectiveProvider === 'custom') && fullText.trim().length > 0) {
+      try {
+        const sysPrompt = `You are an expert executive meeting assistant. You synthesize meeting transcripts into structured Minutes of Meeting (MOM) in ${language}.
+Template style to adhere to: "${template}".
+Respond with a JSON object strictly matching this schema:
+{
+  "summary": "Concise executive summary of the meeting",
+  "keyDecisions": ["Decision 1", "Decision 2"],
+  "actionItems": [{"task": "Task description", "owner": "Assignee name", "due": "Target date", "notes": "Tracking note"}],
+  "discussionHighlights": ["Highlight 1", "Highlight 2"],
+  "nextSteps": ["Next step 1", "Next step 2"]
+}`;
+        const userPrompt = `Meeting Title: ${title}\nAttendees: ${attendeesList.join(', ')}\n${customPrompt ? `Custom Instructions: ${customPrompt}\n` : ''}\nTranscript:\n${fullText}`;
+
+        const llmResponse = await this.callLLM(effectiveProvider, cred?.apiKey, cred?.baseUrl, effectiveModel, sysPrompt, userPrompt);
+        
+        // Extract JSON from markdown backticks if wrapped
+        const cleanJsonStr = llmResponse.replace(/^```json\s*|\s*```$/gi, '').trim();
+        const parsed = JSON.parse(cleanJsonStr);
+
+        return {
+          title,
+          date: dateFormatted,
+          attendees: attendeesList,
+          summary: parsed.summary || 'Summary generated by AI.',
+          keyDecisions: parsed.keyDecisions || ['Key decisions recorded.'],
+          actionItems: (parsed.actionItems || []).map((a: any) => ({
+            id: uuidv4(),
+            owner: a.owner || 'Team Member',
+            task: a.task || 'Follow up',
+            due: a.due || 'Upcoming',
+            notes: a.notes || '',
+            completed: false
+          })),
+          discussionHighlights: parsed.discussionHighlights || ['Discussed roadmap deliverables.'],
+          nextSteps: parsed.nextSteps || ['Follow up on assigned action items.'],
+          template: templateDef ? templateDef.name : template,
+          language,
+          modelUsed: `${effective.providerName} • ${effectiveModel}`,
+          generatedAt: new Date().toISOString()
+        };
+      } catch (err: any) {
+        console.warn(`Real LLM synthesis failed, falling back to local engine: ${err.message}`);
+      }
+    }
+
+    // Heuristic Local Synthesis Fallback
     const actionItems: ActionItem[] = this.extractActionItems(transcript, speakers);
     const keyDecisions: string[] = this.extractKeyDecisions(transcript, template);
     const discussionHighlights: string[] = this.extractHighlights(transcript);
     const nextSteps: string[] = this.extractNextSteps(actionItems);
 
-    let executiveSummary = '';
-    if (transcript.length === 0) {
-      executiveSummary = 'No dialogue recorded during this meeting session.';
-    } else {
-      const topicSentence = transcript[0]?.text || '';
-      const cleanedTopic = topicSentence.toLowerCase().replace(/^(alright|hey|hi|hello|ok|let's start with)\s*/i, '');
-      
-      if (templateDef) {
-        if (templateDef.id === 'template-executive' || template.toLowerCase().includes('executive') || template.toLowerCase().includes('board')) {
-          executiveSummary = `Strategic Executive Summary: The leadership team convened to evaluate roadmap progress and key governance deliverables. Strategic initiatives reviewed include ${cleanedTopic}. Concrete approvals and milestone directives were established.`;
-        } else if (templateDef.id === 'template-standup' || template.toLowerCase().includes('standup')) {
-          executiveSummary = `Daily Standup Summary: The engineering team synced on active work streams and sprint deliverables. Key updates centered on ${cleanedTopic}. Active blockers were triaged and peer pairing sessions aligned.`;
-        } else if (templateDef.id === 'template-sales' || template.toLowerCase().includes('sales') || template.toLowerCase().includes('client')) {
-          executiveSummary = `Client & Commercial Alignment: Aligned with client stakeholders on project scope, core pain points, and commercial deliverables regarding ${cleanedTopic}. Action matrix and milestone commitments were established.`;
-        } else if (templateDef.id === 'template-retrospective' || template.toLowerCase().includes('retrospective')) {
-          executiveSummary = `Milestone & Retrospective Review: Evaluated milestone deliverables and sprint performance relating to ${cleanedTopic}. The team identified key operational wins, triaged process friction points, and agreed on corrective action items.`;
-        } else {
-          executiveSummary = `Executive Meeting Summary: The meeting focused on key project deliverables and strategic alignments. Topics discussed included ${cleanedTopic}. The team reviewed current status and established concrete next steps.`;
-        }
-      } else {
-        executiveSummary = `The meeting focused on key project deliverables and strategic alignments. Topics discussed included ${cleanedTopic}. The team reviewed current status and established concrete next steps.`;
-      }
-    }
-
     return {
       title,
       date: dateFormatted,
       attendees: attendeesList,
-      summary: executiveSummary,
+      summary: 'Executive Summary generated via local heuristics.',
       keyDecisions: keyDecisions.length > 0 ? keyDecisions : ['Approved current project roadmap milestones.'],
       actionItems: actionItems.length > 0 ? actionItems : [
         {
@@ -82,7 +319,7 @@ export class AIService {
       nextSteps: nextSteps,
       template: templateDef ? templateDef.name : template,
       language,
-      modelUsed: effectiveModel,
+      modelUsed: `${effective.providerName} • ${effectiveModel}`,
       generatedAt: new Date().toISOString()
     };
   }
@@ -91,6 +328,10 @@ export class AIService {
    * "Ask Your Meetings" - Semantic search & question answering across historical meetings.
    */
   public async askMeetings(query: string, meetingId?: string): Promise<AskQuestionResponse> {
+    const settings = storageService.getSettings();
+    const effective = getEffectiveModelForAgent(settings, 'ask_meetings');
+    const cred = settings?.aiProviders?.[effective.providerId];
+
     const allMeetings = storageService.getMeetings();
     const targetMeetings = meetingId
       ? allMeetings.filter(m => m.id === meetingId)
@@ -98,10 +339,9 @@ export class AIService {
 
     const lowerQuery = query.toLowerCase();
     const sources: { meetingId: string; meetingTitle: string; snippet: string; timestamp?: string }[] = [];
-    const matchedPoints: string[] = [];
+    const matchedContexts: string[] = [];
 
     for (const meeting of targetMeetings) {
-      // Check in summary
       if (meeting.summary) {
         if (meeting.summary.summary.toLowerCase().includes(lowerQuery) ||
             meeting.summary.keyDecisions.some(d => d.toLowerCase().includes(lowerQuery)) ||
@@ -111,23 +351,21 @@ export class AIService {
             meetingTitle: meeting.title,
             snippet: meeting.summary.summary
           });
-          matchedPoints.push(`In "${meeting.title}": ${meeting.summary.summary}`);
+          matchedContexts.push(`Meeting: "${meeting.title}"\nSummary: ${meeting.summary.summary}\nKey Decisions: ${meeting.summary.keyDecisions.join('; ')}`);
         }
 
-        // Check in action items
         for (const act of meeting.summary.actionItems) {
           if (act.task.toLowerCase().includes(lowerQuery) || act.owner.toLowerCase().includes(lowerQuery) || act.notes.toLowerCase().includes(lowerQuery)) {
             sources.push({
               meetingId: meeting.id,
               meetingTitle: meeting.title,
-              snippet: `Action Item assigned to ${act.owner}: "${act.task}" (Due: ${act.due})`
+              snippet: `Action item assigned to ${act.owner}: "${act.task}" (Due: ${act.due})`
             });
-            matchedPoints.push(`Action Item (${act.owner}): ${act.task} [Due: ${act.due}]`);
+            matchedContexts.push(`Action Item in "${meeting.title}": ${act.owner} -> ${act.task} [Due: ${act.due}]`);
           }
         }
       }
 
-      // Check in transcript lines
       for (const line of meeting.transcript) {
         if (line.text.toLowerCase().includes(lowerQuery) || (line.speaker && line.speaker.toLowerCase().includes(lowerQuery))) {
           sources.push({
@@ -136,18 +374,35 @@ export class AIService {
             snippet: `${line.speaker ? line.speaker + ': ' : ''}${line.text}`,
             timestamp: line.time
           });
+          matchedContexts.push(`Transcript snippet in "${meeting.title}" (${line.time || 'sync'}): ${line.speaker ? line.speaker + ': ' : ''}${line.text}`);
         }
       }
     }
 
     if (sources.length === 0) {
       return {
-        answer: `I searched through your ${targetMeetings.length} saved meeting(s) but couldn't find specific discussions matching "${query}". Try asking about scanners (Argus / Pulse), Redis caching, OAuth token rotation, or team assignments.`,
+        answer: `I searched through your ${targetMeetings.length} saved meeting(s) but couldn't find specific discussions matching "${query}". Try asking about specific projects, blockers, action items, or team assignments.`,
         sources: []
       };
     }
 
     const uniqueSources = sources.slice(0, 4);
+
+    // If external model like Gemini is active, use it to synthesize answer
+    if (effective.providerId !== 'builtin' && (cred?.apiKey || effective.providerId === 'ollama' || effective.providerId === 'custom')) {
+      try {
+        const sysPrompt = 'You are an intelligent meeting assistant. Using the provided meeting context snippets, answer the user question directly, professionally, and accurately. Format with markdown bullet points if helpful.';
+        const userPrompt = `Context Snippets:\n${matchedContexts.slice(0, 8).join('\n---\n')}\n\nQuestion: ${query}`;
+        const answer = await this.callLLM(effective.providerId, cred?.apiKey, cred?.baseUrl, effective.modelId, sysPrompt, userPrompt);
+        return {
+          answer,
+          sources: uniqueSources
+        };
+      } catch (err: any) {
+        console.warn(`Real LLM Q&A failed, falling back to local snippet extraction: ${err.message}`);
+      }
+    }
+
     const answerIntro = `Based on your meeting archives, here is what was recorded regarding **"${query}"**:`;
     const bullets = uniqueSources.map(s => `• **${s.meetingTitle}** ${s.timestamp ? `[${s.timestamp}]` : ''}: ${s.snippet}`).join('\n');
 
@@ -161,6 +416,10 @@ export class AIService {
    * Generates a professional follow-up email draft based on meeting details and action items.
    */
   public async generateFollowUpEmail(meetingId: string, tone: 'professional' | 'concise' | 'action-oriented' = 'professional'): Promise<FollowUpEmailResponse> {
+    const settings = storageService.getSettings();
+    const effective = getEffectiveModelForAgent(settings, 'follow_up_email');
+    const cred = settings?.aiProviders?.[effective.providerId];
+
     const meeting = storageService.getMeetingById(meetingId);
     if (!meeting) {
       throw new Error(`Meeting with ID ${meetingId} not found`);
@@ -170,6 +429,26 @@ export class AIService {
     const summaryText = meeting.summary?.summary || 'We had a productive sync discussing recent updates and next steps.';
     const actionItems = meeting.summary?.actionItems || [];
     const attendees = meeting.summary?.attendees?.join(', ') || 'Team';
+
+    // If external model like Gemini is active, call real LLM to draft email
+    if (effective.providerId !== 'builtin' && (cred?.apiKey || effective.providerId === 'ollama' || effective.providerId === 'custom')) {
+      try {
+        const sysPrompt = `You are a corporate communication specialist. Draft a clear, impactful follow-up email after a meeting.
+Tone requested: ${tone}.
+Respond in JSON format with keys: "subject" and "body".`;
+        const userPrompt = `Meeting Title: ${title}\nAttendees: ${attendees}\nSummary: ${summaryText}\nKey Decisions: ${meeting.summary?.keyDecisions?.join('; ') || 'None'}\nAction Items: ${actionItems.map(a => `${a.owner}: ${a.task} (Due: ${a.due})`).join('; ')}`;
+
+        const llmResponse = await this.callLLM(effective.providerId, cred?.apiKey, cred?.baseUrl, effective.modelId, sysPrompt, userPrompt);
+        const cleanJsonStr = llmResponse.replace(/^```json\s*|\s*```$/gi, '').trim();
+        const parsed = JSON.parse(cleanJsonStr);
+        return {
+          subject: parsed.subject || `Follow-up & Action Items: ${title}`,
+          body: parsed.body || `Dear Team,\n\nThank you for attending "${title}".`
+        };
+      } catch (err: any) {
+        console.warn(`Real LLM follow-up email generation failed, falling back to template: ${err.message}`);
+      }
+    }
 
     let subject = `Follow-up & Minutes: ${title}`;
     let body = '';
@@ -190,7 +469,7 @@ export class AIService {
 
   /**
    * Fetches real available models dynamically from any provider's API.
-   * Performs strict validation: if the key is invalid or unauthorized, returns success: false.
+   * Performs resilient validation against live provider APIs.
    */
   public async fetchProviderModels(
     provider: string,
@@ -230,11 +509,11 @@ export class AIService {
 
     if (provider === 'custom') {
       const endpoint = (baseUrl || 'http://localhost:8000/v1').replace(/\/+$/, '');
+      const key = (apiKey || '').trim().replace(/^['"`]|['"`]$/g, '');
       try {
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-        if (apiKey && apiKey.trim()) {
-          headers['Authorization'] = `Bearer ${apiKey.trim()}`;
-        }
+        if (key) headers['Authorization'] = `Bearer ${key}`;
+
         const res = await fetch(`${endpoint}/models`, { headers });
         if (res.ok) {
           const data = (await res.json()) as any;
@@ -250,7 +529,7 @@ export class AIService {
       }
     }
 
-    const key = (apiKey || '').trim();
+    const key = (apiKey || '').trim().replace(/^['"`]|['"`]$/g, '');
     if (!key) {
       return {
         success: false,
@@ -262,43 +541,40 @@ export class AIService {
 
     // Google Gemini API
     if (provider === 'google') {
-      if (!key.startsWith('AIza') || key.length < 20) {
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(key)}`);
+        if (res.ok) {
+          const data = (await res.json()) as any;
+          const rawModels: any[] = data.models || [];
+          let geminiModels = rawModels
+            .map((m: any) => (m.name || '').replace(/^models\//, ''))
+            .filter((name: string) => name.toLowerCase().includes('gemini'));
+
+          if (geminiModels.length === 0) {
+            geminiModels = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'];
+          } else {
+            const priority = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-1.5-flash'];
+            geminiModels.sort((a, b) => {
+              const idxA = priority.indexOf(a);
+              const idxB = priority.indexOf(b);
+              if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+              if (idxA !== -1) return -1;
+              if (idxB !== -1) return 1;
+              return a.localeCompare(b);
+            });
+          }
+          return { success: true, models: geminiModels, status: 'connected' };
+        }
+
+        // Check if error response from Google
+        const errData = (await res.json().catch(() => ({}))) as any;
+        const msg = errData.error?.message || (res.status === 400 ? 'API key not valid. Please pass a valid API key from Google AI Studio.' : `Google API returned HTTP ${res.status}`);
         return {
           success: false,
           models: [],
-          error: 'Invalid Google Gemini API key format (must start with "AIza...").',
+          error: `Google Gemini authentication failed: ${msg}`,
           status: 'invalid'
         };
-      }
-      try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
-        if (!res.ok) {
-          const errData = (await res.json().catch(() => ({}))) as any;
-          const msg = errData.error?.message || `Google API returned HTTP ${res.status}`;
-          return {
-            success: false,
-            models: [],
-            error: `Google Gemini authentication failed: ${msg}`,
-            status: 'invalid'
-          };
-        }
-        const data = (await res.json()) as any;
-        const rawModels: any[] = data.models || [];
-        const geminiModels = rawModels
-          .filter((m: any) => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
-          .map((m: any) => m.name.replace(/^models\//, ''))
-          .filter((name: string) => name.startsWith('gemini'));
-
-        const priority = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-1.5-flash'];
-        geminiModels.sort((a, b) => {
-          const idxA = priority.indexOf(a);
-          const idxB = priority.indexOf(b);
-          if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-          if (idxA !== -1) return -1;
-          if (idxB !== -1) return 1;
-          return a.localeCompare(b);
-        });
-        return { success: true, models: geminiModels, status: 'connected' };
       } catch (err: any) {
         return {
           success: false,
@@ -311,14 +587,6 @@ export class AIService {
 
     // OpenAI API
     if (provider === 'openai') {
-      if (!key.startsWith('sk-') || key.length < 20) {
-        return {
-          success: false,
-          models: [],
-          error: 'Invalid OpenAI API key format (must start with "sk-...").',
-          status: 'invalid'
-        };
-      }
       try {
         const res = await fetch('https://api.openai.com/v1/models', {
           headers: { Authorization: `Bearer ${key}` }
@@ -348,7 +616,7 @@ export class AIService {
           if (idxB !== -1) return 1;
           return a.localeCompare(b);
         });
-        return { success: true, models: chatModels, status: 'connected' };
+        return { success: true, models: chatModels.length > 0 ? chatModels : ['gpt-4o', 'gpt-4o-mini'], status: 'connected' };
       } catch (err: any) {
         return {
           success: false,
@@ -361,14 +629,6 @@ export class AIService {
 
     // Groq API
     if (provider === 'groq') {
-      if (!key.startsWith('gsk_') || key.length < 20) {
-        return {
-          success: false,
-          models: [],
-          error: 'Invalid Groq API key format (expected "gsk_...").',
-          status: 'invalid'
-        };
-      }
       try {
         const res = await fetch('https://api.groq.com/openai/v1/models', {
           headers: { Authorization: `Bearer ${key}` }
@@ -386,7 +646,7 @@ export class AIService {
         const data = (await res.json()) as any;
         const rawModels: any[] = data.data || [];
         const groqModels = rawModels.map((m: any) => m.id);
-        return { success: true, models: groqModels, status: 'connected' };
+        return { success: true, models: groqModels.length > 0 ? groqModels : ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'], status: 'connected' };
       } catch (err: any) {
         return {
           success: false,
@@ -399,14 +659,6 @@ export class AIService {
 
     // OpenRouter API
     if (provider === 'openrouter') {
-      if (!key.startsWith('sk-or-') || key.length < 20) {
-        return {
-          success: false,
-          models: [],
-          error: 'Invalid OpenRouter API key format (expected "sk-or-...").',
-          status: 'invalid'
-        };
-      }
       try {
         const res = await fetch('https://openrouter.ai/api/v1/auth/key', {
           headers: { Authorization: `Bearer ${key}` }
@@ -421,7 +673,6 @@ export class AIService {
             status: 'invalid'
           };
         }
-        // Fetch models
         const modelsRes = await fetch('https://openrouter.ai/api/v1/models', {
           headers: { Authorization: `Bearer ${key}` }
         });
@@ -452,14 +703,6 @@ export class AIService {
 
     // Anthropic API
     if (provider === 'anthropic') {
-      if (!key.startsWith('sk-ant-') || key.length < 20) {
-        return {
-          success: false,
-          models: [],
-          error: 'Invalid Anthropic API key format (expected "sk-ant-...").',
-          status: 'invalid'
-        };
-      }
       try {
         const res = await fetch('https://api.anthropic.com/v1/models', {
           headers: {
@@ -540,68 +783,132 @@ export class AIService {
     return {
       success: true,
       status: 'connected',
-      message: `${provider.toUpperCase()} API verified & connected successfully! (${fetched.models.length} model(s) available).`,
+      message: `${provider.toUpperCase()} API key verified & connected successfully! (${fetched.models.length} model(s) available).`,
       fetchedModels: fetched.models
     };
   }
 
-  // --- Internal extraction helpers ---
+  // --- Helper Extraction Methods for Smart Synthesis Engine ---
 
   private extractActionItems(transcript: TranscriptLine[], speakers: string[]): ActionItem[] {
-    const items: ActionItem[] = [];
-    const actionKeywords = ['i will', "i'll", 'will have', 'need to', 'let’s', "let's", 'confirm', 'rollout', 'add', 'flag', 'deploy', 'send', 'email', 'pair'];
+    const actionItems: ActionItem[] = [];
+    const actionTriggers = [
+      /i will\s+(.+)/i,
+      /i'll\s+(.+)/i,
+      /can you\s+(.+)/i,
+      /let's\s+(.+)/i,
+      /we need to\s+(.+)/i,
+      /please\s+(.+)/i,
+      /make sure to\s+(.+)/i,
+      /take care of\s+(.+)/i,
+      /assigned to\s+(\w+)\s*:\s*(.+)/i,
+      /owner\s*:\s*(\w+)\s*,\s*task\s*:\s*(.+)/i
+    ];
 
-    for (const line of transcript) {
-      const lower = line.text.toLowerCase();
-      const matched = actionKeywords.some(kw => lower.includes(kw));
-      if (matched) {
-        let owner = line.speaker || (speakers.length > 0 ? speakers[items.length % speakers.length] : 'Team');
-        let task = line.text.replace(/^(alright|yeah|nice|got it|sounds good)[.,]?\s*/i, '');
-        task = task.charAt(0).toUpperCase() + task.slice(1);
+    for (let i = 0; i < transcript.length; i++) {
+      const line = transcript[i];
+      const speaker = line.speaker || speakers[i % (speakers.length || 1)] || 'Team Member';
 
-        items.push({
-          id: uuidv4(),
-          owner,
-          task,
-          due: 'By Friday',
-          notes: `Mentioned at [${line.time}]`,
-          completed: false
-        });
+      for (const trigger of actionTriggers) {
+        const match = line.text.match(trigger);
+        if (match) {
+          let task = match[1] || match[2] || line.text;
+          let owner = speaker;
+          if (match[2] && match[1]) {
+            owner = match[1];
+            task = match[2];
+          }
+
+          task = task.replace(/[.!?]$/, '').trim();
+          task = task.charAt(0).toUpperCase() + task.slice(1);
+
+          if (task.length > 5 && !actionItems.some(a => a.task.toLowerCase() === task.toLowerCase())) {
+            actionItems.push({
+              id: uuidv4(),
+              task,
+              owner,
+              due: 'End of Sprint',
+              notes: `Identified from discussion at ${line.time || 'meeting'}`,
+              completed: false
+            });
+          }
+        }
       }
     }
 
-    return items.slice(0, 5);
+    if (actionItems.length === 0 && transcript.length > 0) {
+      actionItems.push({
+        id: uuidv4(),
+        task: 'Document and share meeting discussion points with team',
+        owner: speakers[0] || 'Team Lead',
+        due: 'Tomorrow',
+        notes: 'Follow-up deliverable',
+        completed: false
+      });
+    }
+
+    return actionItems;
   }
 
   private extractKeyDecisions(transcript: TranscriptLine[], template: string): string[] {
     const decisions: string[] = [];
+    const decisionTriggers = [
+      /decided (?:that|to)\s+(.+)/i,
+      /agreed (?:that|to|on)\s+(.+)/i,
+      /approved\s+(.+)/i,
+      /confirmed\s+(.+)/i,
+      /finalized\s+(.+)/i,
+      /concluded\s+(.+)/i,
+      /consensus is\s+(.+)/i
+    ];
+
     for (const line of transcript) {
-      if (line.text.toLowerCase().includes('swapped') ||
-          line.text.toLowerCase().includes('replaced') ||
-          line.text.toLowerCase().includes('decided') ||
-          line.text.toLowerCase().includes('stays in') ||
-          line.text.toLowerCase().includes('approved') ||
-          line.text.toLowerCase().includes('agreed')) {
-        decisions.push(line.text);
+      for (const trigger of decisionTriggers) {
+        const match = line.text.match(trigger);
+        if (match) {
+          let dec = match[1].replace(/[.!?]$/, '').trim();
+          dec = dec.charAt(0).toUpperCase() + dec.slice(1);
+          if (!decisions.includes(dec) && dec.length > 5) {
+            decisions.push(dec);
+          }
+        }
       }
     }
-    if (decisions.length === 0 && transcript.length > 0) {
-      decisions.push(`Agreed on milestones outlined in ${transcript[0]?.text.slice(0, 60)}...`);
+
+    if (decisions.length === 0) {
+      if (template.toLowerCase().includes('standup')) {
+        decisions.push('Approved current sprint board task priorities.');
+      } else if (template.toLowerCase().includes('sales')) {
+        decisions.push('Confirmed client engagement timeline and deliverables.');
+      } else {
+        decisions.push('Approved current project roadmap milestones.');
+      }
     }
-    return decisions.slice(0, 4);
+
+    return decisions;
   }
 
   private extractHighlights(transcript: TranscriptLine[]): string[] {
-    return transcript.slice(0, 4).map(t => `${t.speaker ? t.speaker + ' noted: ' : ''}${t.text}`);
+    const highlights: string[] = [];
+    if (transcript.length === 0) return ['No notes recorded.'];
+
+    const step = Math.max(1, Math.floor(transcript.length / 3));
+    for (let i = 0; i < transcript.length && highlights.length < 3; i += step) {
+      const line = transcript[i];
+      if (line && line.text.trim()) {
+        const clean = line.text.replace(/^(alright|hey|hi|hello|ok)\s*,?\s*/i, '');
+        highlights.push(`${line.speaker ? line.speaker + ': ' : ''}${clean}`);
+      }
+    }
+    return highlights;
   }
 
   private extractNextSteps(actionItems: ActionItem[]): string[] {
-    if (actionItems.length === 0) {
-      return ['Schedule follow-up review sync.'];
+    if (actionItems.length > 0) {
+      return actionItems.slice(0, 3).map(a => `${a.owner} to complete "${a.task}" (${a.due}).`);
     }
-    return actionItems.slice(0, 2).map(a => `${a.owner} to finish: ${a.task} (${a.due})`);
+    return ['Review meeting minutes and align on next sync date.'];
   }
 }
 
 export const aiService = new AIService();
-

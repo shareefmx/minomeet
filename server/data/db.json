@@ -6710,8 +6710,8 @@
     "autoSummary": true,
     "defaultLanguage": "English",
     "defaultTemplate": "Standard Meeting Notes & MOM",
-    "selectedModel": "qwen3-64k:latest",
-    "activeAIProvider": "ollama",
+    "selectedModel": "dots-studio/dots-3-note-preview:free",
+    "activeAIProvider": "openrouter",
     "aiProviders": {
       "openai": {
         "apiKey": "",
@@ -6739,16 +6739,54 @@
       },
       "openrouter": {
         "apiKey": "",
-        "selectedModel": "openai/gpt-4o",
-        "status": "not_configured",
-        "statusMessage": "Not configured"
+        "selectedModel": "dots-studio/dots-3-note-preview:free",
+        "fetchedModels": [
+          "qwen/qwen3.8-flash",
+          "z-ai/glm-5.3-flash",
+          "meta/muse-spark-1.2-contributor",
+          "deepseek/deepseek-v4-flash-vision-exp",
+          "tencent/hy-mt2-1.8b",
+          "tencent/hy-mt2-30b-a3b",
+          "~z-ai/glm-latest",
+          "tencent/hy-mt2-7b",
+          "z-ai/glm-5.3",
+          "qwen/qwen3.8-27b",
+          "dots-studio/dots-3-note-preview:free",
+          "google/gemini-3.7-flash",
+          "google/gemini-3.7-flash:batch",
+          "bytedance-seed/seed-2-1-turbo",
+          "qwen/qwen3.8-2.4t-a95b",
+          "bytedance-seed/seed-2.0-code",
+          "deepseek/deepseek-v4-pro-0813",
+          "x-ai/grok-4.6",
+          "liquid/lfm-2.5-2.6b:free",
+          "nvidia/nemotron-3.5-lightning",
+          "nvidia/nemotron-3.5-lightning:free",
+          "sakana/sakana-namazu",
+          "upstage/solar-pro4",
+          "meta/muse-glimmer-30b",
+          "meta/muse-spark-1.2",
+          "qwen/qwen3.8-max",
+          "~deepseek/deepseek-v4-flash-latest",
+          "deepseek/deepseek-v4-flash-0731",
+          "thinkingmachines/inkling-small",
+          "thinkingmachines/inkling-small:free"
+        ],
+        "status": "connected",
+        "statusMessage": "OPENROUTER API verified & connected successfully! (30 model(s) available).",
+        "lastTested": "07:30"
       },
       "ollama": {
         "baseUrl": "http://localhost:11434",
         "selectedModel": "qwen3-64k:latest",
+        "fetchedModels": [
+          "qwen3-64k:latest",
+          "qwen3:8b",
+          "gemma3:12b"
+        ],
         "status": "connected",
-        "statusMessage": "Connected to Ollama! 3 local model(s) available (Model qwen3-64k:latest verified).",
-        "lastTested": "07:12"
+        "statusMessage": "OLLAMA API verified & connected successfully! (3 model(s) available).",
+        "lastTested": "07:30"
       },
       "custom": {
         "baseUrl": "http://localhost:8000/v1",

@@ -53,7 +53,6 @@ export const AskMeetingsModal: React.FC = () => {
   return (
     <div className="fixed inset-0 bg-[#0f1117]/65 backdrop-blur-xs flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl border border-[#e5e7eb] w-full max-w-2xl h-[640px] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-150">
-        {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#e5e7eb] bg-gradient-to-r from-[#eef2ff] to-[#f8f9fc]">
           <div className="flex items-center gap-2 font-black text-base text-[#111827]">
             <div className="w-6 h-6 rounded-lg bg-[#4f46e5] text-white flex items-center justify-center">
