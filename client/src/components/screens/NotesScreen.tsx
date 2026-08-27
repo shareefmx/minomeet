@@ -177,33 +177,36 @@ export const NotesScreen: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Dynamic 1-100% animation when generating summary
+  // Dynamic 1-100% steady animation when generating summary
   useEffect(() => {
     if (isGeneratingSummary) {
       setSummaryProgress(1);
-      setSummaryPhase('Reading and tokenizing transcript lines…');
+      setSummaryPhase('Reading & parsing transcript segments…');
       let pct = 1;
       summaryIntervalRef.current = setInterval(() => {
-        if (pct < 30) {
-          pct += Math.floor(Math.random() * 4) + 2;
-          setSummaryPhase('Analyzing topic shifts and discussion context…');
-        } else if (pct < 65) {
-          pct += Math.floor(Math.random() * 2) + 1;
-          setSummaryPhase('Extracting Key Decisions and strategic alignments…');
-        } else if (pct < 88) {
+        if (pct < 98) {
           pct += 1;
-          setSummaryPhase('Formatting Action Items table with owners and due dates…');
-        } else if (pct < 96) {
-          if (Math.random() > 0.4) pct += 1;
-          setSummaryPhase('Synthesizing Executive Summary and Next Steps…');
         }
-        if (pct > 96) pct = 96;
+
+        // Synchronize phase description with percentage
+        if (pct < 25) {
+          setSummaryPhase('Reading & parsing transcript segments…');
+        } else if (pct < 50) {
+          setSummaryPhase('Analyzing discussion context & key topics…');
+        } else if (pct < 75) {
+          setSummaryPhase('Extracting Key Decisions & Action Items matrix…');
+        } else if (pct < 99) {
+          setSummaryPhase('Formatting & structuring Minutes of Meeting document…');
+        } else {
+          setSummaryPhase('Finalizing Minutes of Meeting document…');
+        }
+
         setSummaryProgress(pct);
-      }, 70);
+      }, 85);
     } else {
       if (summaryIntervalRef.current) clearInterval(summaryIntervalRef.current);
       setSummaryProgress(100);
-      setSummaryPhase('MOM Synthesis Complete!');
+      setSummaryPhase('Minutes of Meeting Document Prepared!');
     }
 
     return () => {

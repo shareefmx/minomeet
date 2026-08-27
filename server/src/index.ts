@@ -9,11 +9,33 @@ import transcriptionRouter from './routes/transcription.js';
 import { templatesRouter } from './routes/templates.js';
 import { liveStreamService } from './services/liveStreamService.js';
 
+import fs from 'fs';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Ensure essential local directories exist on startup
+const DATA_DIR = path.join(__dirname, '../data');
+const UPLOADS_DIR = path.join(__dirname, '../uploads');
+const MODELS_DIR = path.join(__dirname, '../models');
+
+for (const dir of [DATA_DIR, UPLOADS_DIR, MODELS_DIR]) {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+}
+
 const app = express();
 const PORT = process.env.PORT || 5001;
+
+// Security Headers
+app.use((_req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  next();
+});
 
 // Middleware
 app.use(cors({
@@ -24,8 +46,11 @@ app.use(cors({
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Static uploads folder
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// Static uploads folder with security restrictions
+app.use('/uploads', express.static(UPLOADS_DIR, {
+  dotfiles: 'ignore',
+  maxAge: '1d'
+}));
 
 // Routes
 app.use('/api/meetings', meetingsRouter);
@@ -237,7 +262,7 @@ app.get('/', (req, res) => {
     status: 'online',
     app: 'Minomeet AI Backend',
     message: 'Minomeet AI Backend Server is running.',
-    version: '1.0.0',
+    version: '1.2.0',
     frontendUrl: 'http://localhost:5173',
     endpoints: {
       health: '/api/health',
@@ -255,7 +280,7 @@ app.get('/api/health', (_req, res) => {
   res.json({
     status: 'online',
     app: 'Minomeet AI Backend',
-    version: '1.0.0',
+    version: '1.2.0',
     timestamp: new Date().toISOString()
   });
 });
@@ -265,6 +290,15 @@ app.use((req, res) => {
   res.status(404).json({
     success: false,
     error: `Route not found: ${req.method} ${req.originalUrl}`
+  });
+});
+
+// Global Error Handler
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error('[Server Error]', err);
+  res.status(err.status || 500).json({
+    success: false,
+    error: err.message || 'Internal Server Error'
   });
 });
 

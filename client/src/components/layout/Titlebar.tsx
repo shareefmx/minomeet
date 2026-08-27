@@ -1,7 +1,6 @@
 import React from 'react';
 import { useMeeting } from '../../context/MeetingContext.js';
 import {
-  Network,
   Sparkles,
   Mic,
   FileText,
@@ -80,18 +79,8 @@ export const Titlebar: React.FC = () => {
         </span>
       </div>
 
-      {/* Right: Quick Action Controls & Flow Map Button */}
+      {/* Right: Quick Action Controls */}
       <div className="flex items-center gap-3">
-        {/* Flow Map Inside Header */}
-        <button
-          onClick={() => openModal('flowmap')}
-          className="inline-flex items-center gap-2 text-xs font-bold text-[#374151] bg-[#f8f9fb] border border-[#d6dbe2] hover:border-[#bfdbfe] hover:bg-[#eff6ff] hover:text-[#2563eb] px-3.5 py-2 rounded-xl shadow-2xs transition cursor-pointer"
-          title="Open complete architecture & execution flow map"
-        >
-          <Network className="w-4 h-4 text-[#4f46e5]" />
-          <span>Flow map</span>
-        </button>
-
         {/* Ask Your Meetings AI Quick Button */}
         <button
           onClick={() => openModal('ask')}

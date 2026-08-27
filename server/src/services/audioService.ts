@@ -1,4 +1,4 @@
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -36,10 +36,12 @@ export class AudioService {
     if (filePath && fs.existsSync(filePath)) {
       try {
         const result = await new Promise<TranscribeResult>((resolve) => {
-          const langParam = language ? `--language "${language}"` : '';
-          const cmd = `python3 "${pyScript}" --audio "${filePath}" --model "${chosenModel}" ${langParam} --download_root "${MODELS_DIR}"`;
+          const args = [pyScript, '--audio', filePath, '--model', chosenModel, '--download_root', MODELS_DIR];
+          if (language) {
+            args.push('--language', language);
+          }
 
-          exec(cmd, { maxBuffer: 10 * 1024 * 1024 }, (err, stdout, stderr) => {
+          execFile('python3', args, { maxBuffer: 10 * 1024 * 1024 }, (err, stdout, stderr) => {
             if (err) {
               console.warn('Whisper python script returned warning/error, checking stdout:', stderr || err.message);
             }
@@ -101,10 +103,12 @@ export class AudioService {
 
     try {
       const segments = await new Promise<TranscriptLine[]>((resolve) => {
-        const langParam = language ? `--language "${language}"` : '';
-        const cmd = `python3 "${pyScript}" --audio "${filePath}" --model "${chosenModel}" ${langParam} --download_root "${MODELS_DIR}"`;
+        const args = [pyScript, '--audio', filePath, '--model', chosenModel, '--download_root', MODELS_DIR];
+        if (language) {
+          args.push('--language', language);
+        }
 
-        exec(cmd, { maxBuffer: 5 * 1024 * 1024, timeout: 8000 }, (err, stdout) => {
+        execFile('python3', args, { maxBuffer: 5 * 1024 * 1024, timeout: 8000 }, (err, stdout) => {
           if (stdout) {
             try {
               const output = JSON.parse(stdout.trim());

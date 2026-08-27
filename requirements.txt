@@ -1,0 +1,7 @@
+# Minomeet Local Speech-to-Text (Whisper & Parakeet) Requirements
+openai-whisper>=20231117
+torch>=2.0.0
+torchaudio>=2.0.0
+numpy>=1.24.0
+soundfile>=0.12.1
+ffmpeg-python>=0.2.0

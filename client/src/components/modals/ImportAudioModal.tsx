@@ -119,35 +119,16 @@ export const ImportAudioModal: React.FC = () => {
 
     setIsUploading(true);
     setProgressPercent(1);
-    setProgressPhase('Ingesting audio stream & normalizing audio channels…');
+    setProgressPhase(getPhaseDescription(1));
 
-    const startTime = Date.now();
-    // Dynamically pace progress based on file size
-    const fileSizeMB = selectedFile.size / (1024 * 1024);
-    const estimatedTotalMs = Math.max(5000, Math.min(22000, 3500 + fileSizeMB * 1200));
-
+    let currentPct = 1;
     progressIntervalRef.current = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const progressRatio = elapsed / estimatedTotalMs;
-      
-      let nextPct: number;
-      if (progressRatio < 0.85) {
-        // Steady acceleration up to ~85%
-        nextPct = Math.round(progressRatio * 100);
-      } else {
-        // Continuous smooth incremental progression from 85% up to 99% without stalling
-        const extraRatio = 1 - Math.exp(-(elapsed - estimatedTotalMs * 0.85) / (estimatedTotalMs * 0.4));
-        nextPct = Math.min(99, Math.round(85 + extraRatio * 14));
+      if (currentPct < 98) {
+        currentPct += 1;
       }
-
-      nextPct = Math.max(1, Math.min(99, nextPct));
-
-      setProgressPercent((prev) => {
-        const val = Math.max(prev, nextPct);
-        setProgressPhase(getPhaseDescription(val));
-        return val;
-      });
-    }, 120);
+      setProgressPercent(currentPct);
+      setProgressPhase(getPhaseDescription(currentPct));
+    }, 85);
 
     try {
       const meeting = await api.importAudio({
@@ -176,7 +157,7 @@ export const ImportAudioModal: React.FC = () => {
         setProgressPercent(0);
         selectMeeting(meeting);
         showToast('Audio transcribed successfully!', `Meeting duration: ${meeting.duration} • MOM ready.`, 'success');
-      }, 450);
+      }, 350);
     } catch (err: any) {
       if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
       setIsUploading(false);

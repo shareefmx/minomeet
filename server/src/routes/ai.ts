@@ -8,7 +8,7 @@ const router = Router();
 // POST /api/ai/summarize - generate or regenerate MOM summary
 router.post('/summarize', async (req: Request, res: Response) => {
   try {
-    const { transcript, title, template, language, model, customPrompt }: SummarizeRequest = req.body;
+    const { transcript, title, template, language, model, customPrompt, agentId }: SummarizeRequest = req.body;
 
     if (!transcript || !Array.isArray(transcript)) {
       res.status(400).json({ success: false, error: 'Transcript lines array is required' });
@@ -21,9 +21,10 @@ router.post('/summarize', async (req: Request, res: Response) => {
       transcript,
       template || settings.defaultTemplate || 'Standard Meeting Notes & MOM',
       language || settings.defaultLanguage || 'English',
-      model || settings.selectedModel || 'Nimbus 4B (High Quality)',
+      model,
       customPrompt,
-      title
+      title,
+      agentId || 'mom_synthesis'
     );
 
     res.json({ success: true, summary });
@@ -35,14 +36,14 @@ router.post('/summarize', async (req: Request, res: Response) => {
 // POST /api/ai/ask - "Ask Your Meetings" (Semantic Chatbot & Multi-meeting Q&A)
 router.post('/ask', async (req: Request, res: Response) => {
   try {
-    const { query, meetingId, history, mode }: AskQuestionRequest = req.body;
+    const { query, meetingId, history, mode, agentId }: AskQuestionRequest = req.body;
 
     if (!query || typeof query !== 'string') {
       res.status(400).json({ success: false, error: 'Query string is required' });
       return;
     }
 
-    const result = await aiService.askMeetings(query, meetingId, history, mode);
+    const result = await aiService.askMeetings(query, meetingId, history, mode, agentId || 'ask_meetings');
     res.json({ success: true, ...result });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -52,14 +53,14 @@ router.post('/ask', async (req: Request, res: Response) => {
 // POST /api/ai/follow-up-email - generate professional follow up email
 router.post('/follow-up-email', async (req: Request, res: Response) => {
   try {
-    const { meetingId, tone, recipientGroup }: FollowUpEmailRequest = req.body;
+    const { meetingId, tone, recipientGroup, agentId } = req.body;
 
     if (!meetingId) {
       res.status(400).json({ success: false, error: 'Meeting ID is required' });
       return;
     }
 
-    const email = await aiService.generateFollowUpEmail(meetingId, tone);
+    const email = await aiService.generateFollowUpEmail(meetingId, tone, agentId || 'follow_up_email');
     res.json({ success: true, ...email });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });

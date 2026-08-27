@@ -19,19 +19,31 @@ if (!fs.existsSync(UPLOADS_DIR)) {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
 
+const ALLOWED_AUDIO_EXTENSIONS = new Set(['.mp3', '.wav', '.m4a', '.webm', '.ogg', '.flac', '.aac', '.m4p', '.wma']);
+
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
     cb(null, UPLOADS_DIR);
   },
   filename: (_req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeExt = ALLOWED_AUDIO_EXTENSIONS.has(ext) ? ext : '.mp3';
+    const safeFilename = `${Date.now()}-${uuidv4().slice(0, 12)}${safeExt}`;
+    cb(null, safeFilename);
   }
 });
 
 const upload = multer({
   storage,
-  limits: { fileSize: 150 * 1024 * 1024 } // 150MB
+  limits: { fileSize: 150 * 1024 * 1024 }, // 150MB
+  fileFilter: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (ALLOWED_AUDIO_EXTENSIONS.has(ext) || file.mimetype.startsWith('audio/') || file.mimetype === 'video/webm') {
+      cb(null, true);
+    } else {
+      cb(new Error(`Invalid file type: only audio files (${Array.from(ALLOWED_AUDIO_EXTENSIONS).join(', ')}) are allowed.`));
+    }
+  }
 });
 
 // GET /api/meetings - list all meetings
@@ -85,9 +97,10 @@ router.post('/', async (req: Request, res: Response) => {
         transcript,
         template || settings.defaultTemplate || 'Standard Meeting Notes & MOM',
         language || settings.defaultLanguage || 'English',
-        model || settings.selectedModel || 'Nimbus 4B (High Quality)',
         undefined,
-        meetingTitle
+        undefined,
+        meetingTitle,
+        'mom_synthesis'
       );
     }
 
@@ -143,7 +156,7 @@ router.post('/import', upload.single('audio'), async (req: Request, res: Respons
     const file = req.file;
     const originalName = file ? file.originalname : (req.body.fileName || 'imported_audio.mp3');
     const autoSummarize = req.body.autoSummarize === 'true' || req.body.autoSummarize === true;
-    const model = req.body.model as string | undefined;
+    const transcriptionModel = (req.body.transcriptionModel || req.body.model) as string | undefined;
     const language = req.body.language as string | undefined;
     const template = req.body.template as string | undefined;
     const clientDuration = req.body.duration as string | undefined;
@@ -152,7 +165,7 @@ router.post('/import', upload.single('audio'), async (req: Request, res: Respons
     const transcribeResult = await audioService.transcribeAudioFile(
       file ? file.path : undefined,
       originalName,
-      model,
+      transcriptionModel,
       language,
       clientDuration
     );
@@ -172,9 +185,10 @@ router.post('/import', upload.single('audio'), async (req: Request, res: Respons
         transcript,
         template || importSettings.defaultTemplate || 'Standard Meeting Notes & MOM',
         language || importSettings.defaultLanguage || 'English',
-        model || importSettings.selectedModel || 'Nimbus 4B (High Quality)',
+        undefined, // Explicitly undefined so resolveModel resolves the proper LLM for mom_synthesis
         undefined,
-        title
+        title,
+        'mom_synthesis'
       );
     }
 

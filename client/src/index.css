@@ -157,6 +157,15 @@ html, body, #root {
   background: #94a3b8;
 }
 
+/* Hide scrollbar completely utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Editable content focus styling */
 [contenteditable="true"]:focus {
   outline: none;

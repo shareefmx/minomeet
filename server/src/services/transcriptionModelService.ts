@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { exec, spawn } from 'child_process';
+import { execFile, spawn } from 'child_process';
 import { TranscriptionModel, TranscriptionEngineStatus } from '../types/index.js';
 import { storageService } from './storageService.js';
 
@@ -296,7 +296,7 @@ class TranscriptionModelService {
   public async getEngineStatus(): Promise<TranscriptionEngineStatus> {
     return new Promise((resolve) => {
       const pyScript = path.join(SCRIPTS_DIR, 'model_manager.py');
-      exec(`python3 "${pyScript}" --action check`, (err, stdout) => {
+      execFile('python3', [pyScript, '--action', 'check'], (err, stdout) => {
         let envData: any = {
           pythonInstalled: true,
           pythonVersion: '3.12.x',
@@ -330,7 +330,7 @@ class TranscriptionModelService {
   public async installPackages(): Promise<{ success: boolean; output: string }> {
     return new Promise((resolve) => {
       const reqPath = path.join(__dirname, '../../requirements.txt');
-      exec(`pip3 install -r "${reqPath}" || python3 -m pip install openai-whisper torch torchaudio ffmpeg-python`, (err, stdout, stderr) => {
+      execFile('pip3', ['install', '-r', reqPath], (err, stdout, stderr) => {
         resolve({
           success: !err,
           output: stdout || stderr || 'Installed successfully'

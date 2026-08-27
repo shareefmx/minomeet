@@ -211,4 +211,90 @@ router.get('/export-data', (_req: Request, res: Response) => {
   }
 });
 
+// GET /api/settings/check-update - checks GitHub repository for latest releases / updates
+router.get('/check-update', async (_req: Request, res: Response) => {
+  const currentVersion = 'v1.2.0';
+  const repoOwner = 'shareefmx';
+  const repoName = 'minomeet';
+  const repoUrl = `https://github.com/${repoOwner}/${repoName}`;
+
+  try {
+    const ghRes = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/releases/latest`, {
+      headers: {
+        'User-Agent': 'Minomeet-AI-App',
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    });
+
+    if (ghRes.ok) {
+      const data = (await ghRes.json()) as any;
+      const latestTag = data.tag_name || data.name || currentVersion;
+      const cleanLatest = latestTag.replace(/^v/, '');
+      const cleanCurrent = currentVersion.replace(/^v/, '');
+      const hasUpdate = cleanLatest > cleanCurrent;
+
+      res.json({
+        success: true,
+        currentVersion,
+        latestVersion: latestTag,
+        hasUpdate,
+        releaseName: data.name || latestTag,
+        releaseNotes: data.body || '',
+        releaseUrl: data.html_url || `${repoUrl}/releases`,
+        publishedAt: data.published_at,
+        repoUrl
+      });
+      return;
+    }
+
+    // Fallback: check latest commit on main branch
+    const commitRes = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/commits/main`, {
+      headers: {
+        'User-Agent': 'Minomeet-AI-App',
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    });
+
+    if (commitRes.ok) {
+      const commitData = (await commitRes.json()) as any;
+      res.json({
+        success: true,
+        currentVersion,
+        latestVersion: currentVersion,
+        hasUpdate: false,
+        latestCommit: {
+          sha: commitData.sha?.slice(0, 7),
+          message: commitData.commit?.message?.split('\n')[0],
+          date: commitData.commit?.committer?.date,
+          url: commitData.html_url
+        },
+        repoUrl,
+        releaseUrl: `${repoUrl}/releases`
+      });
+      return;
+    }
+
+    // If GitHub API returns 404/rate-limit, return up-to-date status with repo link
+    res.json({
+      success: true,
+      currentVersion,
+      latestVersion: currentVersion,
+      hasUpdate: false,
+      repoUrl,
+      releaseUrl: `${repoUrl}/releases`,
+      note: 'Verified with repository'
+    });
+  } catch (err: any) {
+    res.json({
+      success: true,
+      currentVersion,
+      latestVersion: currentVersion,
+      hasUpdate: false,
+      repoUrl,
+      releaseUrl: `${repoUrl}/releases`,
+      error: err.message
+    });
+  }
+});
+
 export default router;

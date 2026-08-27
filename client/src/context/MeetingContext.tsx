@@ -28,7 +28,6 @@ interface MeetingContextType {
     import: boolean;
     model: boolean;
     about: boolean;
-    flowmap: boolean;
     ask: boolean;
     email: boolean;
     delete: boolean;
@@ -106,7 +105,6 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
     import: false,
     model: false,
     about: false,
-    flowmap: false,
     ask: false,
     email: false,
     delete: false,
@@ -276,7 +274,6 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
       import: false,
       model: false,
       about: false,
-      flowmap: false,
       ask: false,
       email: false,
       delete: false,
@@ -366,7 +363,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
       if (settings?.saveAudio && audioBlob && audioBlob.size > 0) {
         try {
           const ext = (settings?.audioFormat || 'mp4').toLowerCase();
-          const timestamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 15);
+          const timestamp = new Date().toISOString().replace(/[^\d]/g, '').slice(0, 15);
           const filename = `recording_${timestamp}.${ext}`;
           const file = new File([audioBlob], filename, { type: audioBlob.type });
           const uploadRes = await api.uploadAudio(file);
@@ -383,7 +380,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
         transcript: lines,
         duration,
         audioPath,
-        autoSummarize: shouldAutoSummarize,
+        autoSummarize: false,
         template: settings?.defaultTemplate,
         language: settings?.defaultLanguage
       });
@@ -394,6 +391,31 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
       showToast('Recording saved successfully!', `${lines.length} transcript segments captured.${audioPath ? ' Audio file saved.' : ''}`, 'success');
       sendDesktopNotification('Meeting Saved Successfully', `Recorded ${duration} with ${lines.length} transcript lines.`);
       await refreshStorageStats();
+
+      // Trigger AI Minutes of Meeting generation with live progress animation
+      if (shouldAutoSummarize && lines.length > 0) {
+        setIsGeneratingSummary(true);
+        try {
+          const summary = await api.summarize({
+            transcript: newMeeting.transcript,
+            title: newMeeting.title,
+            template: settings?.defaultTemplate || 'Standard Meeting Notes & MOM',
+            language: settings?.defaultLanguage || 'English',
+            agentId: 'mom_synthesis'
+          });
+
+          const updated = await api.updateMeeting(newMeeting.id, { summary });
+          setActiveMeeting(updated);
+          setMeetings(prev => prev.map(m => m.id === updated.id ? updated : m));
+          showToast('Summary generated successfully!', 'Your meeting minutes are ready.', 'success');
+          sendDesktopNotification('AI Minutes of Meeting Ready', `Summary generated for "${newMeeting.title}"`);
+        } catch (sumErr: any) {
+          console.error('Auto summary generation error:', sumErr);
+          showToast('Summary Notice', sumErr.message || 'Could not generate summary.', 'warning');
+        } finally {
+          setIsGeneratingSummary(false);
+        }
+      }
     } catch (err: any) {
       showToast('Failed to save meeting', err.message, 'error');
     }
@@ -413,7 +435,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
     showToast('Recording cancelled', '', 'info');
   };
 
-  const generateSummaryForActive = async (template?: string, language?: string, model?: string) => {
+  const generateSummaryForActive = async (template?: string, language?: string) => {
     if (!activeMeeting) return;
     setIsGeneratingSummary(true);
 
@@ -421,9 +443,9 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
       const summary = await api.summarize({
         transcript: activeMeeting.transcript,
         title: activeMeeting.title,
-        template: template || activeMeeting.summary?.template || settings?.defaultTemplate || 'Standard Meeting Notes',
+        template: template || activeMeeting.summary?.template || settings?.defaultTemplate || 'Standard Meeting Notes & MOM',
         language: language || activeMeeting.summary?.language || settings?.defaultLanguage || 'English',
-        model: model || activeMeeting.summary?.modelUsed || settings?.selectedModel || 'Nimbus 4B (High Quality)'
+        agentId: 'mom_synthesis'
       });
 
       const updated = await api.updateMeeting(activeMeeting.id, { summary });

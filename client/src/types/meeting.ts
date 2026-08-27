@@ -56,7 +56,8 @@ export interface ProviderCredential {
 }
 
 export interface AIAgentOverride {
-  agentId: string;
+  agentId?: string;
+  useGlobal?: boolean;
   providerId?: string;
   modelId?: string;
 }
@@ -179,6 +180,7 @@ export interface AskQuestionRequest {
   meetingId?: string;
   history?: { role: 'user' | 'assistant'; content: string }[];
   mode?: 'all' | 'action_items' | 'decisions' | 'attendees' | 'summary';
+  agentId?: string;
 }
 
 export interface AskQuestionResponse {

@@ -1,6 +1,6 @@
 {
   "name": "minomeet",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Minomeet - AI-Powered Minutes of Meeting Assistant",
   "private": true,
   "workspaces": [

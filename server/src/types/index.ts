@@ -56,7 +56,8 @@ export interface ProviderCredential {
 }
 
 export interface AIAgentOverride {
-  agentId: string;
+  agentId?: string;
+  useGlobal?: boolean;
   providerId?: string;
   modelId?: string;
 }
@@ -97,6 +98,7 @@ export interface SummarizeRequest {
   language?: string;
   model?: string;
   customPrompt?: string;
+  agentId?: string;
 }
 
 export interface ChatMessage {
@@ -120,6 +122,7 @@ export interface AskQuestionRequest {
   meetingId?: string; // If omitted, queries across all meetings
   history?: { role: 'user' | 'assistant'; content: string }[];
   mode?: 'all' | 'action_items' | 'decisions' | 'attendees' | 'summary';
+  agentId?: string;
 }
 
 export interface AskQuestionResponse {

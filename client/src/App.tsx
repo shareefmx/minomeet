@@ -9,7 +9,6 @@ import { NotesScreen } from './components/screens/NotesScreen.js';
 import { SettingsScreen } from './components/screens/SettingsScreen.js';
 import { ImportAudioModal } from './components/modals/ImportAudioModal.js';
 import { ModelSettingsModal } from './components/modals/ModelSettingsModal.js';
-import { FlowMapModal } from './components/modals/FlowMapModal.js';
 import { AskMeetingsModal } from './components/modals/AskMeetingsModal.js';
 import { FollowUpEmailModal } from './components/modals/FollowUpEmailModal.js';
 import { AboutModal } from './components/modals/AboutModal.js';
@@ -80,7 +79,6 @@ export const App: React.FC = () => {
       {/* Modals & Overlays */}
       <ImportAudioModal />
       <ModelSettingsModal />
-      <FlowMapModal />
       <AskMeetingsModal />
       <FollowUpEmailModal />
       <AboutModal />

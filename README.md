@@ -1,357 +1,241 @@
-# Minomeet — AI Meeting Recorder & Minutes of Meeting Assistant
+<div align="center">
 
-Minomeet is a modern, privacy-first AI-powered meeting assistant built with React, TypeScript, and Node.js. It captures microphone and system audio, provides real-time live transcription, and automatically synthesizes structured Executive Summaries, Key Decisions, Action Item matrices, and follow-up emails.
+  # ⚡ Minomeet AI
 
----
+  ### Autonomous On-Device & Cloud Meeting Intelligence & Minutes of Meeting (MOM) Assistant
 
-## Table of Contents
+  <p align="center">
+    <a href="https://github.com/shareefmx/minomeet/releases"><img src="https://img.shields.io/github/v/release/shareefmx/minomeet?color=4f46e5&label=version&style=for-the-badge" alt="Release" /></a>
+    <a href="https://github.com/shareefmx/minomeet/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge" alt="License" /></a>
+    <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-18-blue.svg?style=for-the-badge&logo=react" alt="React 18" /></a>
+    <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.8-3178c6.svg?style=for-the-badge&logo=typescript" alt="TypeScript" /></a>
+    <a href="https://vitejs.dev/"><img src="https://img.shields.io/badge/Vite-6.0-646cff.svg?style=for-the-badge&logo=vite" alt="Vite" /></a>
+    <a href="https://ollama.com/"><img src="https://img.shields.io/badge/Ollama-Local_AI-black.svg?style=for-the-badge&logo=ollama" alt="Ollama" /></a>
+    <a href="https://github.com/shareefmx/minomeet/stargazers"><img src="https://img.shields.io/github/stars/shareefmx/minomeet?style=for-the-badge&color=eab308" alt="Stars" /></a>
+  </p>
 
-- [Overview](#overview)
-- [Key Features](#key-features)
-- [Application Flow](#application-flow)
-- [System Architecture](#system-architecture)
-- [Technology Stack](#technology-stack)
-- [Project Structure](#project-structure)
-- [Requirements](#requirements)
-- [Installation & Setup](#installation--setup)
-- [Environment Configuration](#environment-configuration)
-- [Running the Application](#running-the-application)
-- [Meeting Recording Flow](#meeting-recording-flow)
-- [AI MOM Generation & Intelligence](#ai-mom-generation--intelligence)
-- [MOM Structure](#mom-structure)
-- [MOM Editor & Exporting](#mom-editor--exporting)
-- [API Overview](#api-overview)
-- [Data Storage Overview](#data-storage-overview)
-- [Audio & Browser Permissions](#audio--browser-permissions)
-- [Privacy & Security](#privacy--security)
-- [Troubleshooting](#troubleshooting)
-- [Roadmap](#roadmap)
-- [Contributing](#contributing)
-- [License](#license)
-- [Disclaimer](#disclaimer)
+  <p align="center">
+    <b>Private, Multi-Source Audio Capture • Real-Time Speech-to-Text • Structured Minutes of Meeting (MOM) • Multi-Model AI Orchestration</b>
+  </p>
 
----
+  <p align="center">
+    <a href="#-quickstart">Quickstart</a> •
+    <a href="#-key-capabilities">Key Capabilities</a> •
+    <a href="#-architecture--workflow">Architecture</a> •
+    <a href="#-ai-model-control-panel">AI Control Panel</a> •
+    <a href="#-exporting--email">Export & Email</a> •
+    <a href="https://github.com/shareefmx/minomeet">GitHub Repo</a>
+  </p>
 
-## Overview
+  ---
 
-Documenting meeting discussions, recording action items, and drafting follow-up emails manually is time-consuming and error-prone. **Minomeet** streamlines the entire lifecycle of meeting notes with minimal manual effort.
+</div>
 
-### What Minomeet Does:
+<br />
 
-1. **Captures Multi-Source Audio**: Supports Microphone, System/Tab Audio, or Mixed dual-stream capture.
-2. **Streams Live Transcription**: Displays timestamped speaker-tagged transcripts in real time.
-3. **Generates Structured Minutes (MOM)**: Synthesizes Executive Summaries, Key Decisions, and Action Items.
-4. **Interactive MOM Editor**: Allows complete in-place editing of generated notes, attendees, and action checklists.
-5. **Cross-Meeting Intelligence**: Features an **"Ask Your Meetings"** semantic search engine across historical archives.
-6. **One-Click Follow-Up Emails**: Generates tailored email drafts based on decisions and action item ownership.
-7. **Multiple Export Formats**: Exports meeting minutes directly to Markdown, Plain Text, or Printable PDF.
+## 🌟 Highlights
 
-### Main Goal
-
-> Transform live conversations and recorded audio into structured, actionable, and searchable Minutes of Meeting with zero friction.
-
----
-
-## Key Features
-
-### 🎙️ Audio Recording & Capture
-- **Microphone Capture**: Standard desktop or headset input via Web Audio APIs.
-- **System Audio Capture**: Capture computer audio from Google Meet, Zoom, Microsoft Teams, or browser tabs.
-- **Mixed Audio Stream**: Combine local mic and incoming remote audio into a unified transcript stream.
-- **Recording Controls**: Start, stop, cancel, and live duration timer with dynamic audio waveform visualizations.
-
-### 📝 Live Transcription
-- Real-time speech-to-text with timestamped segments.
-- Automatic speaker differentiation and clean formatting.
-- Searchable transcript viewer alongside generated meeting notes.
-
-### 🤖 AI Meeting Intelligence
-- **Executive Summary**: High-level synthesis of discussion highlights.
-- **Key Decisions**: Clear bulleted list of approved decisions and roadmap alignments.
-- **Action Items Matrix**: Assignee, task description, due dates, context notes, and completion toggles.
-- **Multi-Template Support**: Standard Notes, Daily Standup, Project Sync, Agile Retro, Client/Sales Meeting, Executive Brief.
-- **English-Specialized Neural Generation**: High-precision English transcription and MOM synthesis.
-- **Ask Your Meetings (Semantic Q&A)**: Ask natural language questions across all past meeting transcripts.
-- **Automated Follow-Up Emails**: Generate email recaps in Professional, Concise, or Action-Oriented tones.
-
-### ✏️ Interactive MOM Editor & Library
-- Edit titles, dates, attendees, executive summaries, decisions, and action items in real time.
-- Search meeting history with instant title, tag, and transcript filtering.
-- Rename and delete meetings with safe confirmation prompts.
-- Audio file import (`.mp3`, `.wav`, `.m4a`, `.webm`) with automated transcription.
-
----
-
-## Application Flow
-
-```text
-┌─────────────────────────┐
-│          User           │
-└────────────┬────────────┘
-             │
-             ▼
-┌─────────────────────────┐
-│ Select Audio Source     │
-│ (Mic / System / Mixed)  │
-└────────────┬────────────┘
-             │
-             ▼
-┌─────────────────────────┐
-│ Live Audio Capture &    │
-│ Real-Time Transcription │
-└────────────┬────────────┘
-             │
-             ▼
-┌─────────────────────────┐
-│ Conclude Meeting        │
-└────────────┬────────────┘
-             │
-             ▼
-┌─────────────────────────┐
-│ AI MOM Synthesis        │
-│ (Summary, Action Items) │
-└────────────┬────────────┘
-             │
-             ▼
-┌─────────────────────────┐
-│ Review, Edit & Assign   │
-└────────────┬────────────┘
-             │
-             ├──────────────────────────┐
-             ▼                          ▼
-┌─────────────────────────┐   ┌───────────────────┐
-│ Export (MD / PDF / TXT) │   │ Draft Follow-Up   │
-└─────────────────────────┘   │ Email / Q&A Search│
-                              └───────────────────┘
+```
+ ┌─────────────────┐     ┌──────────────────┐     ┌────────────────────────┐
+ │ 🎙️ Dual Audio   │ ──► │ ⚡ Whisper Neural│ ──► │ 🤖 Multi-Model LLM     │ ──►  📄 Executive MOM
+ │ (Mic + System)  │     │    Transcription │     │ (Ollama/Claude/GPT/...)│      + Action Matrix
+ └─────────────────┘     └──────────────────┘     └────────────────────────┘
 ```
 
----
-
-## System Architecture
-
-Minomeet adopts a clean client-server architecture with proxy routing for development and production:
-
-```text
-                     ┌───────────────────────┐
-                     │         User          │
-                     └───────────┬───────────┘
-                                 │
-                                 ▼
-                     ┌───────────────────────┐
-                     │ React + Vite (Client) │
-                     │   http://localhost:5173│
-                     └───────────┬───────────┘
-                                 │
-                  ┌──────────────┴──────────────┐
-                  ▼                             ▼
-        ┌───────────────────┐         ┌───────────────────┐
-        │  Web Audio / Mic  │         │  MOM Editor & UI  │
-        │  Speech-to-Text   │         │  Meeting Context  │
-        └─────────┬─────────┘         └─────────┬─────────┘
-                  │                             │
-                  └──────────────┬──────────────┘
-                                 │ HTTP / JSON Proxy
-                                 ▼
-                     ┌───────────────────────┐
-                     │ Node.js Express (API) │
-                     │   http://localhost:5001│
-                     └───────────┬───────────┘
-                                 │
-            ┌────────────────────┼────────────────────┐
-            ▼                    ▼                    ▼
-     ┌─────────────┐      ┌─────────────┐      ┌─────────────┐
-     │ AI Service  │      │ Audio Parser│      │ Local JSON  │
-     │ MOM / Q&A   │      │ & Multer    │      │ Storage DB  │
-     └─────────────┘      └─────────────┘      └─────────────┘
-```
+- 🛡️ **100% Privacy-First Architecture**: Audio streams, live transcripts, and embeddings stay strictly local on your machine.
+- ⚡ **Multi-Source Audio Ingestion**: Record microphone audio, browser tabs, Google Meet, Zoom, Slack Huddles, or import `.mp3`, `.wav`, `.m4a`, `.webm` files.
+- 🧠 **Dynamic AI Model Resolution**: Single source of truth for all AI tasks. Seamlessly switch between **Ollama (Local LLMs)**, **OpenAI (GPT-4o)**, **Anthropic (Claude 3.7 Sonnet)**, **Google Gemini 2.5**, **Groq**, and **OpenRouter**.
+- 📋 **Executive MOM Generation**: Automatically generates structured Executive Summaries, Key Decisions, Discussion Highlights, Next Steps, and interactive Action Item matrices.
+- 💬 **Ask Your Meetings AI**: Semantic natural-language Q&A assistant across your historical meeting archives.
+- ✉️ **One-Click Follow-Up Emails**: Generates tailored email drafts in Professional, Concise, or Action-Oriented formats.
+- 🔄 **Live GitHub Updates**: Direct built-in release verification connecting to [`shareefmx/minomeet`](https://github.com/shareefmx/minomeet).
 
 ---
 
-## Technology Stack
+## 🚀 Quickstart
 
-### Frontend (`client/`)
-- **React 18**: Modern component architecture with hooks and state management.
-- **TypeScript**: Complete type safety for meeting models and API payloads.
-- **Vite 6**: Blazing fast development server and optimized production bundler.
-- **Tailwind CSS**: Responsive, dark-mode modern user interface.
-- **Lucide React**: Clean and consistent icon set.
-- **Web Audio & MediaStream APIs**: Multi-channel audio recording and waveform visualization.
+### Prerequisites
 
-### Backend (`server/`)
-- **Node.js & Express**: High-performance RESTful API service.
-- **TypeScript & TSX**: Type-safe development with live reload.
-- **Python 3 & OpenAI Whisper**: On-device speech recognition engine (`whisper.load_model('turbo')`, `large-v3`, `medium`, `small`, `base`, `tiny`).
-- **NVIDIA / Fast STT**: Parakeet TDT Lightning (sub-50ms streaming latency architecture).
-- **Multer**: Multi-part audio file upload handling.
-- **Local File Database (`data/db.json`)**: Lightweight, zero-setup local persistence.
-- **CORS & Proxy Middleware**: Seamless local and containerized communication.
+- **Node.js**: `v18.0.0` or higher
+- **npm** or **yarn** / **pnpm**
+- *(Optional)* [Ollama](https://ollama.com/) running locally for 100% on-device offline LLM inference.
 
----
-
-## Transcription Model Catalog
-
-Minomeet includes an offline model manager supporting both high-accuracy transformer models and low-latency streaming models:
-
-| Model | Family | Size | Decoding Speed | Recommended Use Case |
-|---|---|---|---|---|
-| **Whisper Large-v3 Turbo** | Whisper | 1.5 GB | 8x Real-Time | ★ **Recommended Default** — Top accuracy with ultra-fast inference |
-| **Whisper Large-v3** | Whisper | 3.1 GB | 2x Real-Time | Studio-grade accuracy across 99+ languages |
-| **Whisper Large-v3 Compressed (INT8)** | Whisper | 1.5 GB | 5x Real-Time | Quantized weights for memory-constrained machines |
-| **Whisper Medium** | Whisper | 1.5 GB | 4x Real-Time | Balanced multi-speaker meetings and conferences |
-| **Whisper Small** | Whisper | 461 MB | 6x Real-Time | Quick standups and standard 1-on-1 calls |
-| **Whisper Base** | Whisper | 142 MB | 10x Real-Time | Lightweight, low memory footprint |
-| **Whisper Tiny** | Whisper | 75 MB | 16x Real-Time | Ultra-lightweight rapid transcription |
-| **Parakeet TDT 1.1B Lightning** | Parakeet | 620 MB | Real-Time (<50ms) | ★ **Recommended Streaming** — Instant live captions with sub-50ms latency |
-| **Parakeet Compact 0.6B** | Parakeet | 290 MB | Real-Time (<30ms) | Ultra-low latency for constrained hardware |
-
----
-
-## Python AI Engine & Setup
-
-Minomeet can utilize local Python-based Whisper for offline audio file transcription:
+### 1. Clone the Repository
 
 ```bash
-cd server
-pip3 install -r requirements.txt
+git clone https://github.com/shareefmx/minomeet.git
+cd minomeet
 ```
 
-### Python Dependencies (`server/requirements.txt`):
-- `openai-whisper>=20231117`
-- `torch>=2.0.0`
-- `torchaudio>=2.0.0`
-- `numpy>=1.24.0`
-- `soundfile>=0.12.1`
-- `ffmpeg-python>=0.2.0`
+### 2. Install Dependencies
 
----
-
-## API Overview
-
-The Minomeet backend exposes a comprehensive RESTful API:
-
-### 📋 Meetings API
-
-```http
-GET    /api/meetings         # List all meetings (supports ?search= query)
-GET    /api/meetings/:id     # Retrieve single meeting details & transcript
-POST   /api/meetings         # Create a new meeting
-PUT    /api/meetings/:id     # Update meeting details, summary, or action items
-DELETE /api/meetings/:id     # Delete meeting permanently
-POST   /api/meetings/import  # Upload audio file & transcribe with selected Whisper model
-```
-
-### 🎙️ Transcription & Model Management API
-
-```http
-GET    /api/transcription/models             # List all available Whisper & Parakeet models
-POST   /api/transcription/models/:id/download # Download model weights to local disk
-DELETE /api/transcription/models/:id          # Delete / offload local model weights
-POST   /api/transcription/models/:id/select   # Set active transcription engine
-GET    /api/transcription/status             # Check Python, Whisper, PyTorch & FFmpeg status
-POST   /api/transcription/install-packages   # 1-Click pip package installer
-```
-
-### 🧠 AI & Intelligence API
-
-```http
-POST   /api/ai/summarize        # Generate / regenerate MOM summary from transcript
-POST   /api/ai/ask              # Semantic Q&A search across meeting history
-POST   /api/ai/follow-up-email  # Generate professional follow-up email draft
-```
-
-### ⚙️ Settings & System API
-
-```http
-GET    /                 # Backend status & API route dashboard
-GET    /api/health       # Server health check endpoint
-GET    /api/settings     # Retrieve application settings
-PUT    /api/settings     # Update application settings
-```
-
----
-
-## Data Storage Overview
-
-Minomeet uses a local JSON-based storage engine:
-
-- **Storage Location**: `server/data/db.json`
-- **Audio Uploads**: `server/uploads/`
-- **Zero Configuration**: No external database setup (PostgreSQL, MongoDB) required for local usage.
-- **Portability**: All data stays on your local machine for complete privacy.
-
----
-
-## Audio & Browser Permissions
-
-When recording in Minomeet, the browser will request:
-
-1. **Microphone Access**: Required to record your local microphone audio.
-2. **Tab / Screen Audio Access**: When choosing *System Audio* or *Mixed Audio*, the browser prompts to share a tab or screen audio stream.
-   > **Tip**: In Chrome/Edge, select **Chrome Tab** or **Entire Screen** and make sure the **"Share tab audio"** / **"Also share system audio"** checkbox is enabled.
-
----
-
-## Privacy & Security
-
-- 🔒 **Local-First Processing**: Meeting transcripts and database records are stored locally on your machine.
-- 🚫 **No Unsolicited Cloud Uploads**: Audio streams and notes remain private and are not shared with external trackers.
-- 🗑️ **Full User Control**: You can delete meetings, clear transcripts, or edit action items permanently at any time.
-
----
-
-## Troubleshooting
-
-### Port 5001 or 5173 is already in use
-If another process is occupying the ports, free them with:
 ```bash
-lsof -ti :5001 -ti :5173 | xargs kill -9
+npm install
 ```
 
-### Microphone is not capturing sound
-1. Verify browser microphone permissions in `chrome://settings/content/microphone` or equivalent.
-2. Ensure the correct microphone input is selected in your Operating System settings.
+### 3. Run Development Servers (Client + Server)
 
-### System audio capture is silent
-1. When sharing your screen/tab, verify that the **"Share Audio"** toggle was checked in the browser sharing popup.
-2. Note that macOS requires sharing a specific browser tab or window that produces audio.
+```bash
+npm run dev
+```
 
----
+- **Frontend**: [`http://localhost:5173`](http://localhost:5173)
+- **Backend API**: [`http://localhost:5001`](http://localhost:5001)
 
-## Roadmap
+### 4. Build for Production
 
-- [x] Multi-source audio capture (Mic, System, Mixed)
-- [x] Real-time live speech-to-text transcription
-- [x] Automated AI MOM summary & action item extraction
-- [x] Inline editable MOM editor with action item toggles
-- [x] Multi-template and multi-language support
-- [x] Cross-meeting semantic Q&A ("Ask Your Meetings")
-- [x] Follow-up email draft generator
-- [x] Markdown, Plain Text, and Printable PDF export
-- [ ] Speaker diarization and voiceprint identification
-- [ ] Local offline Whisper STT model integration
-- [ ] Google Calendar & Outlook meeting synchronization
-- [ ] Automated Slack / Microsoft Teams webhook sharing
+```bash
+npm run build
+```
 
 ---
 
-## Contributing
+## 🎯 Key Capabilities
 
-Contributions, issues, and feature requests are welcome!
+| Feature | Description |
+| :--- | :--- |
+| **🎙️ Multi-Source Capture** | Capture Microphone, System/Tab Audio, or Mixed dual-stream with live waveforms. |
+| **⚡ Speech Transcription** | Real-time speech recognition with timestamped segments and speaker tagging. |
+| **🤖 Multi-Model AI** | Single Control Panel for Ollama, OpenAI, Claude 3.7, Gemini 2.5, Groq, & OpenRouter. |
+| **📝 Interactive MOM Editor** | Full inline Markdown & structured editing of Executive Summaries, Decisions, & Tasks. |
+| **✅ Action Items Matrix** | Assignees, due dates, task descriptions, context notes, and completion toggles. |
+| **🔍 Ask Your Meetings** | Semantic search across historical transcripts with source attribution. |
+| **📧 1-Click Email Drafter** | Instant follow-up email drafts formatted with action deliverables. |
+| **📤 Universal Export** | Export directly to Markdown, Plain Text, or Printable PDF. |
+| **📦 Audio File Ingestion** | Drag-and-drop audio files (`.mp3`, `.wav`, `.m4a`, `.webm`) with background transcription. |
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'feat: add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
+---
+
+## 🏗️ Architecture & Workflow
+
+```mermaid
+flowchart LR
+    subgraph Ingestion["Audio Ingestion"]
+        A1["🎙️ Mic Audio"]
+        A2["🖥️ System / Tab Audio"]
+        A3["📁 File Upload (.wav/.mp3)"]
+    end
+
+    subgraph Core["Minomeet Engine"]
+        B1["Speech Processing & Stream"]
+        B2["Live Transcript Engine"]
+        B3["Storage & Indexed Archives"]
+    end
+
+    subgraph AI["AI Model Resolution"]
+        C1["Ollama (Local)"]
+        C2["OpenAI / Claude / Gemini"]
+        C3["Groq / OpenRouter"]
+    end
+
+    subgraph Output["Synthesized Outputs"]
+        D1["📄 Executive MOM"]
+        D2["✅ Action Items Matrix"]
+        D3["✉️ Follow-Up Email"]
+        D4["💬 Meeting Q&A"]
+    end
+
+    Ingestion --> Core
+    Core --> AI
+    AI --> Output
+```
+
+---
+
+## 🎛️ AI Model Control Panel
+
+Minomeet enforces **Dynamic Model Resolution** as the single source of truth across all AI agents:
+
+```
+Settings ──► AI Model ──► Provider ──► Model ──► Test Connection ──► Save ──► AI Agent ──► Synthesize
+```
+
+### Supported AI Providers
+
+1. **Built-in / Local AI (Nimbus)**: Zero setup required; runs instantly out of the box.
+2. **Ollama (100% On-Device & Private)**:
+   - Endpoint: `http://127.0.0.1:11434`
+   - Supports: `llama3.1:8b`, `qwen2.5:7b`, `mistral:7b`, `deepseek-r1:8b`, `phi4:14b`
+   - Real-time "Fetch Models" and "Test Connection" validation.
+3. **OpenAI**: `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `o1`, `o3-mini`
+4. **Anthropic Claude**: `claude-3-7-sonnet-latest`, `claude-3-5-sonnet-latest`, `claude-3-5-haiku-latest`
+5. **Google Gemini**: `gemini-2.5-flash`, `gemini-2.0-flash`, `gemini-1.5-pro`
+6. **Groq (Ultra High-Speed)**: `llama-3.3-70b-versatile`, `deepseek-r1-distill-llama-70b`
+7. **OpenRouter**: Access any open-source or proprietary LLM with custom base URLs.
+
+---
+
+## 📂 Project Structure
+
+```text
+minomeet/
+├── client/                     # React 18 + Vite Frontend
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── layout/         # Titlebar, Sidebar, ToastHost
+│   │   │   ├── modals/         # AboutModal, ImportAudio, AskMeetings, FollowUpEmail
+│   │   │   └── screens/        # HomeScreen, RecordingScreen, NotesScreen, SettingsScreen
+│   │   ├── context/            # MeetingContext (State management & Audio streaming)
+│   │   ├── services/           # API Client & Export Handlers
+│   │   ├── types/              # TypeScript Type Definitions
+│   │   └── utils/              # AI Model Config & Formatters
+│   ├── index.html
+│   ├── package.json
+│   └── vite.config.ts
+├── server/                     # Node.js + Express + TypeScript Backend
+│   ├── src/
+│   │   ├── routes/             # Meetings, AI, Audio, Settings, Templates
+│   │   ├── services/           # AIService, AudioService, StorageService
+│   │   ├── types/              # Server Type Definitions
+│   │   ├── utils/              # Model Resolution & Robust AI JSON Parser
+│   │   └── index.ts            # Server Entrypoint
+│   ├── package.json
+│   └── tsconfig.json
+├── package.json                # Root Workspace Configuration
+└── README.md                   # Project Documentation
+```
+
+---
+
+## ⌨️ Keyboard Shortcuts & Controls
+
+| Shortcut / Action | Action |
+| :--- | :--- |
+| `Click Record` | Start recording (Microphone, System audio, or Mixed) |
+| `Click Stop` | Stop stream and automatically synthesize Minutes of Meeting |
+| `Ask AI` | Launch the historical meeting semantic Q&A chatbot |
+| `Export MOM` | Export notes to Markdown, Plain Text, or Print to PDF |
+| `Email Draft` | Generate an instant email recap formatted with action deliverables |
+
+---
+
+## 🔒 Privacy & Security
+
+- **Zero Cloud Recording**: Audio captures are recorded directly on your hardware.
+- **Local Transcripts**: All speech-to-text outputs are stored in local JSON archives.
+- **Local LLM Compatibility**: Use Ollama to ensure that zero meeting data ever leaves your computer.
+- **No Third-Party Telemetry**: Zero external tracking scripts or telemetry data collection.
+
+---
+
+## 🤝 Contributing
+
+Contributions, bug reports, and feature suggestions are welcome!
+
+1. Fork the Project ([`https://github.com/shareefmx/minomeet`](https://github.com/shareefmx/minomeet))
+2. Create your Feature Branch (`git checkout -b feat/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'feat: Add AmazingFeature'`)
+4. Push to the Branch (`git push origin feat/AmazingFeature`)
 5. Open a Pull Request
 
 ---
 
-## License
+## 📄 License
 
-Distributed under the **MIT License**. See [`LICENSE`](file:///Users/muhammedshraeef/Documents/GitHub/minomeet/LICENSE) for more information.
+Distributed under the **MIT License**. See [`LICENSE`](file:///Users/muhammedshraeef/Documents/GitHub/minomeet/LICENSE) for more details.
 
 ---
 
-## Disclaimer
-
-Minomeet is a meeting productivity assistant. Users are responsible for complying with applicable regional wiretapping, privacy laws, and obtaining participant consent prior to recording any meeting.
+<div align="center">
+  <sub>Crafted with precision by <a href="https://github.com/shareefmx">@shareefmx</a></sub>
+</div>

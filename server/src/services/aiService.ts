@@ -1,7 +1,100 @@
 import { v4 as uuidv4 } from 'uuid';
 import { TranscriptLine, MOMSummary, ActionItem, AskQuestionResponse, FollowUpEmailResponse, AIConnectionStatus } from '../types/index.js';
 import { storageService } from './storageService.js';
-import { getEffectiveModelForAgent } from '../utils/aiModelConfig.js';
+import {
+  resolveModel,
+  ResolvedAIModel,
+  getAvailableModelsForProvider,
+  AI_PROVIDERS_CONFIG,
+  isNonChatOrTranscriptionModel
+} from '../utils/aiModelConfig.js';
+
+/**
+ * Strips internal thinking tokens (<think>...</think>) from reasoning models (e.g., DeepSeek-R1, QwQ).
+ */
+export function cleanModelOutput(rawText: string): string {
+  if (!rawText) return '';
+  return rawText.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+}
+
+/**
+ * Resiliently extracts and parses JSON from diverse LLM response formats.
+ * Handles Markdown code fences (```json, ``` json, ```), surrounding conversational text,
+ * trailing commas, unescaped newlines in string literals, and custom fallback extraction.
+ */
+export function parseAIJsonResponse<T extends Record<string, any>>(
+  rawText: string,
+  fallbackExtractor?: (text: string) => T
+): T {
+  const cleaned = cleanModelOutput(rawText);
+
+  // Strategy 1: Extract from markdown code blocks (```json ... ``` or ``` json ... ``` or ``` ... ```)
+  const codeBlockMatches = [...cleaned.matchAll(/```(?:json)?\s*([\s\S]*?)\s*```/gi)];
+  const candidates: string[] = [];
+
+  for (const match of codeBlockMatches) {
+    if (match[1]?.trim()) {
+      candidates.push(match[1].trim());
+    }
+  }
+
+  // Strategy 2: Extract between outermost JSON braces { ... }
+  const firstBrace = cleaned.indexOf('{');
+  const lastBrace = cleaned.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    candidates.push(cleaned.substring(firstBrace, lastBrace + 1).trim());
+  }
+
+  // Strategy 3: Cleaned raw text without markdown backtick tokens
+  const strippedFences = cleaned.replace(/```(?:json)?/gi, '').replace(/```/g, '').trim();
+  if (strippedFences) {
+    candidates.push(strippedFences);
+  }
+
+  // Add the cleaned string itself
+  candidates.push(cleaned);
+
+  // Try parsing candidate strings
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+
+    // Direct JSON.parse
+    try {
+      const parsed = JSON.parse(candidate);
+      if (parsed && typeof parsed === 'object') return parsed;
+    } catch (_) {}
+
+    // Comprehensive sanitization: fix trailing commas before closing brackets AND unescaped newlines/tabs
+    try {
+      let sanitized = candidate.replace(/,\s*([\}\]])/g, '$1');
+
+      // Replace literal unescaped newlines/control characters inside strings
+      sanitized = sanitized.replace(/"((?:[^"\\]|\\.)*)"/gs, (_, inner) => {
+        const escaped = inner
+          .split('\r\n').join('\\n')
+          .split('\n').join('\\n')
+          .split('\r').join('\\r')
+          .split('\t').join('\\t');
+        return '"' + escaped + '"';
+      });
+
+      const parsed = JSON.parse(sanitized);
+      if (parsed && typeof parsed === 'object') return parsed;
+    } catch (_) {}
+  }
+
+  // Strategy 4: Fallback extractor if provided
+  if (fallbackExtractor) {
+    try {
+      const extracted = fallbackExtractor(cleaned);
+      if (extracted && typeof extracted === 'object') return extracted;
+    } catch (fallbackErr) {
+      console.warn('[AI] Fallback JSON extractor failed:', fallbackErr);
+    }
+  }
+
+  throw new Error(`Failed to parse AI response into valid JSON. Raw output: "${cleaned.slice(0, 120)}..."`);
+}
 
 export class AIService {
   /**
@@ -20,7 +113,7 @@ export class AIService {
     // 1. Google Gemini
     if (provider === 'google') {
       let cleanModel = (model || 'gemini-1.5-flash').replace(/^models\//, '').split(' ')[0].trim();
-      if (!cleanModel || cleanModel.startsWith('Nimbus')) {
+      if (!cleanModel || cleanModel.startsWith('Nimbus') || isNonChatOrTranscriptionModel(cleanModel)) {
         cleanModel = 'gemini-1.5-flash';
       }
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${cleanModel}:generateContent?key=${encodeURIComponent(key)}`;
@@ -56,7 +149,10 @@ export class AIService {
 
     // 2. OpenAI
     if (provider === 'openai') {
-      const cleanModel = (model || 'gpt-4o').split(' ')[0].trim();
+      let cleanModel = (model || 'gpt-4o').split(' ')[0].trim();
+      if (isNonChatOrTranscriptionModel(cleanModel)) {
+        cleanModel = 'gpt-4o';
+      }
       const res = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -84,7 +180,10 @@ export class AIService {
 
     // 3. Anthropic Claude
     if (provider === 'anthropic') {
-      const cleanModel = (model || 'claude-3-5-sonnet-20241022').split(' ')[0].trim();
+      let cleanModel = (model || 'claude-3-5-sonnet-20241022').split(' ')[0].trim();
+      if (isNonChatOrTranscriptionModel(cleanModel)) {
+        cleanModel = 'claude-3-5-sonnet-20241022';
+      }
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
@@ -111,7 +210,10 @@ export class AIService {
 
     // 4. Groq
     if (provider === 'groq') {
-      const cleanModel = (model || 'llama-3.3-70b-versatile').split(' ')[0].trim();
+      let cleanModel = (model || 'llama-3.3-70b-versatile').split(' ')[0].trim();
+      if (isNonChatOrTranscriptionModel(cleanModel)) {
+        cleanModel = 'llama-3.3-70b-versatile';
+      }
       const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -139,7 +241,10 @@ export class AIService {
 
     // 5. OpenRouter
     if (provider === 'openrouter') {
-      const cleanModel = (model || 'openai/gpt-4o').split(' ')[0].trim();
+      let cleanModel = (model || 'openai/gpt-4o').split(' ')[0].trim();
+      if (isNonChatOrTranscriptionModel(cleanModel)) {
+        cleanModel = 'openai/gpt-4o';
+      }
       const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -166,9 +271,53 @@ export class AIService {
 
     // 6. Ollama
     if (provider === 'ollama') {
-      const endpoint = (baseUrl || 'http://localhost:11434').replace(/\/+$/, '');
-      const cleanModel = (model || 'llama3.1:8b').split(' ')[0].trim();
-      const res = await fetch(`${endpoint}/api/generate`, {
+      const endpoint = (baseUrl || 'http://127.0.0.1:11434').replace(/\/+$/, '');
+      const cleanModel = (model || '').trim();
+      if (!cleanModel) {
+        throw new Error('No Ollama model specified. Please select an installed model.');
+      }
+
+      // Check if installed models exist
+      try {
+        const tagsRes = await fetch(`${endpoint}/api/tags`);
+        if (tagsRes.ok) {
+          const tagsData = (await tagsRes.json()) as any;
+          const installed: string[] = (tagsData.models || []).map((m: any) => m.name || m.model);
+          if (installed.length > 0 && !installed.includes(cleanModel)) {
+            const match = installed.find(m => m === cleanModel || m.split(':')[0] === cleanModel.split(':')[0] || m.startsWith(cleanModel));
+            if (!match) {
+              throw new Error(`Selected Ollama model '${cleanModel}' is not installed. Fetch models or choose another model.`);
+            }
+          }
+        }
+      } catch (tagErr: any) {
+        if (tagErr.message.includes('not installed')) throw tagErr;
+      }
+
+      // Try /api/chat first
+      try {
+        const res = await fetch(`${endpoint}/api/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: cleanModel,
+            messages: [
+              ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
+              { role: 'user', content: userPrompt }
+            ],
+            stream: false
+          })
+        });
+
+        if (res.ok) {
+          const data = (await res.json()) as any;
+          return data.message?.content || data.response || '';
+        }
+      } catch {
+        // Fallback to /api/generate
+      }
+
+      const fallbackRes = await fetch(`${endpoint}/api/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -178,11 +327,12 @@ export class AIService {
         })
       });
 
-      if (!res.ok) {
-        throw new Error(`Ollama daemon returned HTTP ${res.status}`);
+      if (!fallbackRes.ok) {
+        const errText = await fallbackRes.text().catch(() => '');
+        throw new Error(`Ollama daemon returned HTTP ${fallbackRes.status}${errText ? `: ${errText}` : ''}`);
       }
 
-      const data = (await res.json()) as any;
+      const data = (await fallbackRes.json()) as any;
       return data.response || '';
     }
 
@@ -217,61 +367,6 @@ export class AIService {
   }
 
   /**
-   * Helper to resolve the active LLM credentials from settings or environment.
-   */
-  public resolveActiveLLM(settings: any, agentRole: string = 'general'): {
-    provider: string;
-    apiKey?: string;
-    baseUrl?: string;
-    model: string;
-    isLLMAvailable: boolean;
-  } {
-    const effective = getEffectiveModelForAgent(settings, agentRole);
-    let activeProvider = effective.providerId;
-    let activeKey = settings?.aiProviders?.[activeProvider]?.apiKey;
-    let activeBaseUrl = settings?.aiProviders?.[activeProvider]?.baseUrl;
-    let activeModelName = effective.modelId;
-
-    if (!activeKey && settings?.aiProviders) {
-      for (const [pId, pCred] of Object.entries(settings.aiProviders as Record<string, any>)) {
-        if (pCred?.apiKey && pCred.apiKey.trim()) {
-          activeProvider = pId;
-          activeKey = pCred.apiKey;
-          activeBaseUrl = pCred.baseUrl;
-          activeModelName = pCred.selectedModel || effective.modelId;
-          break;
-        }
-      }
-    }
-
-    if (!activeKey) {
-      if (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY) {
-        activeProvider = 'google';
-        activeKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-        activeModelName = 'gemini-1.5-flash';
-      } else if (process.env.OPENAI_API_KEY) {
-        activeProvider = 'openai';
-        activeKey = process.env.OPENAI_API_KEY;
-        activeModelName = 'gpt-4o';
-      } else if (process.env.GROQ_API_KEY) {
-        activeProvider = 'groq';
-        activeKey = process.env.GROQ_API_KEY;
-        activeModelName = 'llama-3.3-70b-versatile';
-      }
-    }
-
-    const isLLMAvailable = activeProvider !== 'builtin' && (Boolean(activeKey) || activeProvider === 'ollama' || activeProvider === 'custom');
-
-    return {
-      provider: activeProvider,
-      apiKey: activeKey,
-      baseUrl: activeBaseUrl,
-      model: activeModelName,
-      isLLMAvailable
-    };
-  }
-
-  /**
    * Generates a structured Minutes of Meeting (MOM) document from transcript text.
    */
   public async generateMOM(
@@ -280,11 +375,25 @@ export class AIService {
     language: string = 'English',
     model?: string,
     customPrompt?: string,
-    meetingTitle?: string
+    meetingTitle?: string,
+    agentId: string = 'mom_synthesis'
   ): Promise<MOMSummary> {
     const settings = storageService.getSettings();
-    const llmInfo = this.resolveActiveLLM(settings, 'mom_synthesis');
-    const effectiveModel = model || llmInfo.model;
+    const resolved = resolveModel(settings, agentId);
+    let effectiveModel = (model && !isNonChatOrTranscriptionModel(model)) ? model : resolved.modelId;
+    if (isNonChatOrTranscriptionModel(effectiveModel)) {
+      effectiveModel = resolved.modelId;
+    }
+
+    console.log(`[AI] Agent: ${agentId}`);
+    console.log(`[AI] Provider: ${resolved.providerName}`);
+    console.log(`[AI] Model: ${effectiveModel}`);
+    console.log(`[AI] Endpoint: ${resolved.baseUrl || 'Cloud API'}`);
+    console.log(`[AI] Sending request...`);
+
+    if (!resolved.isUsable && resolved.providerId !== 'builtin') {
+      throw new Error(resolved.error || `AI Agent '${agentId}' model '${effectiveModel}' (${resolved.providerName}) is not configured or not installed.`);
+    }
 
     const fullText = transcript.map(t => `${t.speaker ? t.speaker + ': ' : ''}${t.text}`).join('\n');
     const speakers = Array.from(new Set(transcript.map(t => t.speaker).filter(Boolean))) as string[];
@@ -297,7 +406,7 @@ export class AIService {
     const templateDef = storageService.getTemplateById(template);
 
     // If external cloud or local LLM is configured and ready, try calling real LLM
-    if (llmInfo.isLLMAvailable && fullText.trim().length > 0) {
+    if (resolved.providerId !== 'builtin' && fullText.trim().length > 0) {
       try {
         const sysPrompt = `You are an expert executive meeting assistant. You synthesize meeting transcripts into structured Minutes of Meeting (MOM) in ${language}.
 Template style to adhere to: "${template}".
@@ -311,35 +420,44 @@ Respond with a JSON object strictly matching this schema:
 }`;
         const userPrompt = `Meeting Title: ${title}\nAttendees: ${attendeesList.join(', ')}\n${customPrompt ? `Custom Instructions: ${customPrompt}\n` : ''}\nTranscript:\n${fullText}`;
 
-        const llmResponse = await this.callLLM(llmInfo.provider, llmInfo.apiKey, llmInfo.baseUrl, effectiveModel, sysPrompt, userPrompt);
+        const llmResponse = await this.callLLM(resolved.providerId, resolved.apiKey, resolved.baseUrl, effectiveModel, sysPrompt, userPrompt);
         
-        // Extract JSON from markdown backticks if wrapped
-        const cleanJsonStr = llmResponse.replace(/^```json\s*|\s*```$/gi, '').trim();
-        const parsed = JSON.parse(cleanJsonStr);
+        const fallbackMOMExtractor = (text: string): any => {
+          const cleanText = text.replace(/```(?:json)?/gi, '').replace(/```/g, '').trim();
+          return {
+            summary: cleanText || 'Summary generated by AI.',
+            keyDecisions: ['Key decisions discussed and agreed.'],
+            actionItems: [],
+            discussionHighlights: ['Key meeting points reviewed.'],
+            nextSteps: ['Follow up on discussed action items.']
+          };
+        };
+
+        const parsed = parseAIJsonResponse<any>(llmResponse, fallbackMOMExtractor);
 
         return {
           title,
           date: dateFormatted,
           attendees: attendeesList,
           summary: parsed.summary || 'Summary generated by AI.',
-          keyDecisions: parsed.keyDecisions || ['Key decisions recorded.'],
-          actionItems: (parsed.actionItems || []).map((a: any) => ({
+          keyDecisions: Array.isArray(parsed.keyDecisions) ? parsed.keyDecisions : ['Key decisions recorded.'],
+          actionItems: (Array.isArray(parsed.actionItems) ? parsed.actionItems : []).map((a: any) => ({
             id: uuidv4(),
-            owner: a.owner || 'Team Member',
-            task: a.task || 'Follow up',
-            due: a.due || 'Upcoming',
-            notes: a.notes || '',
+            owner: typeof a === 'string' ? 'Team Member' : (a?.owner || 'Team Member'),
+            task: typeof a === 'string' ? a : (a?.task || 'Follow up'),
+            due: typeof a === 'object' ? (a?.due || 'Upcoming') : 'Upcoming',
+            notes: typeof a === 'object' ? (a?.notes || '') : '',
             completed: false
           })),
-          discussionHighlights: parsed.discussionHighlights || ['Discussed roadmap deliverables.'],
-          nextSteps: parsed.nextSteps || ['Follow up on assigned action items.'],
+          discussionHighlights: Array.isArray(parsed.discussionHighlights) ? parsed.discussionHighlights : ['Discussed agenda items.'],
+          nextSteps: Array.isArray(parsed.nextSteps) ? parsed.nextSteps : ['Follow up on assigned items.'],
           template: templateDef ? templateDef.name : template,
           language,
-          modelUsed: `${llmInfo.provider} • ${effectiveModel}`,
+          modelUsed: `${resolved.providerName} • ${effectiveModel}`,
           generatedAt: new Date().toISOString()
         };
       } catch (err: any) {
-        console.warn(`Real LLM synthesis failed, falling back to local engine: ${err.message}`);
+        throw new Error(`AI Synthesis error (${resolved.providerName} • ${effectiveModel}): ${err.message}`);
       }
     }
 
@@ -372,7 +490,7 @@ Respond with a JSON object strictly matching this schema:
       nextSteps: nextSteps,
       template: templateDef ? templateDef.name : template,
       language,
-      modelUsed: `${llmInfo.provider} • ${effectiveModel}`,
+      modelUsed: `${resolved.providerName} • ${effectiveModel}`,
       generatedAt: new Date().toISOString()
     };
   }
@@ -384,11 +502,21 @@ Respond with a JSON object strictly matching this schema:
     query: string,
     meetingId?: string,
     history?: { role: 'user' | 'assistant'; content: string }[],
-    mode: 'all' | 'action_items' | 'decisions' | 'attendees' | 'summary' = 'all'
+    mode: 'all' | 'action_items' | 'decisions' | 'attendees' | 'summary' = 'all',
+    agentId: string = 'ask_meetings'
   ): Promise<AskQuestionResponse> {
     const settings = storageService.getSettings();
-    const effective = getEffectiveModelForAgent(settings, 'ask_meetings');
-    const cred = settings?.aiProviders?.[effective.providerId];
+    const resolved = resolveModel(settings, agentId);
+
+    console.log(`[AI] Agent: ${agentId}`);
+    console.log(`[AI] Provider: ${resolved.providerName}`);
+    console.log(`[AI] Model: ${resolved.modelId}`);
+    console.log(`[AI] Endpoint: ${resolved.baseUrl || 'Cloud API'}`);
+    console.log(`[AI] Sending request...`);
+
+    if (!resolved.isUsable && resolved.providerId !== 'builtin') {
+      throw new Error(resolved.error || `AI Agent '${agentId}' model '${resolved.modelId}' (${resolved.providerName}) is not configured or not installed.`);
+    }
 
     const allMeetings = storageService.getMeetings();
     const targetMeetings = meetingId
@@ -507,43 +635,8 @@ Respond with a JSON object strictly matching this schema:
     });
     const uniqueSources = Array.from(uniqueSourcesMap.values()).slice(0, 6);
 
-    // Check if effective provider or any provider in settings/env has a usable LLM key
-    let activeProvider = effective.providerId;
-    let activeKey = cred?.apiKey;
-    let activeBaseUrl = cred?.baseUrl;
-    let activeModelName = effective.modelId;
-
-    if (!activeKey && settings?.aiProviders) {
-      for (const [pId, pCred] of Object.entries(settings.aiProviders)) {
-        if (pCred?.apiKey && pCred.apiKey.trim()) {
-          activeProvider = pId;
-          activeKey = pCred.apiKey;
-          activeBaseUrl = pCred.baseUrl;
-          activeModelName = pCred.selectedModel || effective.modelId;
-          break;
-        }
-      }
-    }
-
-    // Check environment variables as fallback
-    if (!activeKey) {
-      if (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY) {
-        activeProvider = 'google';
-        activeKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-        activeModelName = 'gemini-1.5-flash';
-      } else if (process.env.OPENAI_API_KEY) {
-        activeProvider = 'openai';
-        activeKey = process.env.OPENAI_API_KEY;
-        activeModelName = 'gpt-4o';
-      } else if (process.env.GROQ_API_KEY) {
-        activeProvider = 'groq';
-        activeKey = process.env.GROQ_API_KEY;
-        activeModelName = 'llama-3.3-70b-versatile';
-      }
-    }
-
-    // If an LLM model is available, call it to produce a simple, small, direct answer
-    if (activeProvider !== 'builtin' && (activeKey || activeProvider === 'ollama' || activeProvider === 'custom')) {
+    // Call LLM if not builtin
+    if (resolved.providerId !== 'builtin') {
       try {
         const historyText = history && history.length > 0
           ? `\n\nRecent Chat Conversation History:\n${history.slice(-4).map(h => `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.content}`).join('\n')}`
@@ -557,16 +650,16 @@ Answer the user's question directly, simply, and concisely in 1 to 3 short sente
 
         const userPrompt = `Meeting Notes Context:\n${meetingContextBlocks.slice(0, 8).join('\n\n---\n\n')}${historyText}\n\nQuestion: ${query}`;
 
-        const rawLLMOutput = await this.callLLM(activeProvider, activeKey, activeBaseUrl, activeModelName, sysPrompt, userPrompt);
-        const cleanedAnswer = rawLLMOutput.trim();
+        const rawLLMOutput = await this.callLLM(resolved.providerId, resolved.apiKey, resolved.baseUrl, resolved.modelId, sysPrompt, userPrompt);
+        const cleanedAnswer = cleanModelOutput(rawLLMOutput);
 
         return {
           answer: cleanedAnswer,
           sources: uniqueSources.slice(0, 3),
-          modelUsed: `${activeProvider} • ${activeModelName}`
+          modelUsed: `${resolved.providerName} • ${resolved.modelId}`
         };
       } catch (err: any) {
-        console.warn(`Live AI Chatbot call failed: ${err.message}`);
+        throw new Error(`AI Chatbot error (${resolved.providerName} • ${resolved.modelId}): ${err.message}`);
       }
     }
 
@@ -588,7 +681,7 @@ Answer the user's question directly, simply, and concisely in 1 to 3 short sente
       return {
         answer: 'Hello! Ask me any specific question about your meeting notes, decisions, or action items.',
         sources: [],
-        modelUsed: `${effective.providerName} • ${effective.modelId}`
+        modelUsed: `${resolved.providerName} • ${resolved.modelId}`
       };
     }
 
@@ -719,16 +812,30 @@ Answer the user's question directly, simply, and concisely in 1 to 3 short sente
     return {
       answer: directAnswer,
       sources: relevantSources,
-      modelUsed: `${effective.providerName} • ${effective.modelId}`
+      modelUsed: `${resolved.providerName} • ${resolved.modelId}`
     };
   }
 
   /**
    * Generates a professional follow-up email draft based on meeting details and action items.
    */
-  public async generateFollowUpEmail(meetingId: string, tone: 'professional' | 'concise' | 'action-oriented' = 'professional'): Promise<FollowUpEmailResponse> {
+  public async generateFollowUpEmail(
+    meetingId: string,
+    tone: 'professional' | 'concise' | 'action-oriented' = 'professional',
+    agentId: string = 'follow_up_email'
+  ): Promise<FollowUpEmailResponse> {
     const settings = storageService.getSettings();
-    const llmInfo = this.resolveActiveLLM(settings, 'follow_up_email');
+    const resolved = resolveModel(settings, agentId);
+
+    console.log(`[AI] Agent: ${agentId}`);
+    console.log(`[AI] Provider: ${resolved.providerName}`);
+    console.log(`[AI] Model: ${resolved.modelId}`);
+    console.log(`[AI] Endpoint: ${resolved.baseUrl || 'Cloud API'}`);
+    console.log(`[AI] Sending request...`);
+
+    if (!resolved.isUsable && resolved.providerId !== 'builtin') {
+      throw new Error(resolved.error || `AI Agent '${agentId}' model '${resolved.modelId}' (${resolved.providerName}) is not configured or not installed.`);
+    }
 
     const meeting = storageService.getMeetingById(meetingId);
     if (!meeting) {
@@ -741,22 +848,38 @@ Answer the user's question directly, simply, and concisely in 1 to 3 short sente
     const attendees = meeting.summary?.attendees?.join(', ') || 'Team';
 
     // If external model like Gemini is active, call real LLM to draft email
-    if (llmInfo.isLLMAvailable) {
+    if (resolved.providerId !== 'builtin') {
       try {
         const sysPrompt = `You are a corporate communication specialist. Draft a clear, impactful follow-up email after a meeting.
 Tone requested: ${tone}.
-Respond in JSON format with keys: "subject" and "body".`;
+Respond strictly in JSON format with keys: "subject" and "body". Example:
+{"subject": "Follow-up: Meeting Title", "body": "Dear Team,\\n\\nThank you for attending..."}`;
         const userPrompt = `Meeting Title: ${title}\nAttendees: ${attendees}\nSummary: ${summaryText}\nKey Decisions: ${meeting.summary?.keyDecisions?.join('; ') || 'None'}\nAction Items: ${actionItems.map(a => `${a.owner}: ${a.task} (Due: ${a.due})`).join('; ')}`;
 
-        const llmResponse = await this.callLLM(llmInfo.provider, llmInfo.apiKey, llmInfo.baseUrl, llmInfo.model, sysPrompt, userPrompt);
-        const cleanJsonStr = llmResponse.replace(/^```json\s*|\s*```$/gi, '').trim();
-        const parsed = JSON.parse(cleanJsonStr);
+        const llmResponse = await this.callLLM(resolved.providerId, resolved.apiKey, resolved.baseUrl, resolved.modelId, sysPrompt, userPrompt);
+        
+        const fallbackEmailExtractor = (text: string): { subject: string; body: string } => {
+          const subjectMatch = text.match(/(?:Subject|Title)\s*:\s*(.+?)(?:\n|$)/i);
+          const emailSubject = subjectMatch ? subjectMatch[1].trim().replace(/^['"`]|['"`]$/g, '') : `Follow-up & Action Items: ${title}`;
+          let emailBody = text
+            .replace(/```(?:json)?/gi, '')
+            .replace(/```/g, '')
+            .replace(/(?:Subject|Title)\s*:\s*.+?(?:\n|$)/i, '')
+            .trim();
+          if (!emailBody) {
+            emailBody = `Dear Attendees (${attendees}),\n\nThank you for participating in "${title}".\n\n### Summary\n${summaryText}`;
+          }
+          return { subject: emailSubject, body: emailBody };
+        };
+
+        const parsed = parseAIJsonResponse<{ subject?: string; body?: string }>(llmResponse, fallbackEmailExtractor);
+
         return {
           subject: parsed.subject || `Follow-up & Action Items: ${title}`,
           body: parsed.body || `Dear Team,\n\nThank you for attending "${title}".`
         };
       } catch (err: any) {
-        console.warn(`Real LLM follow-up email generation failed, falling back to template: ${err.message}`);
+        throw new Error(`AI Email generation error (${resolved.providerName} • ${resolved.modelId}): ${err.message}`);
       }
     }
 
@@ -800,14 +923,14 @@ Respond in JSON format with keys: "subject" and "body".`;
     }
 
     if (provider === 'ollama') {
-      const endpoint = (baseUrl || 'http://localhost:11434').replace(/\/+$/, '');
+      const endpoint = (baseUrl || 'http://127.0.0.1:11434').replace(/\/+$/, '');
       try {
         const res = await fetch(`${endpoint}/api/tags`);
         if (res.ok) {
           const data = (await res.json()) as any;
           const models: string[] = (data.models || []).map((m: any) => m.name || m.model);
           if (models.length === 0) {
-            return { success: false, models: [], error: `Ollama is running at ${endpoint}, but no local models are installed yet. Run 'ollama pull llama3.3' first.`, status: 'invalid' };
+            return { success: false, models: [], error: `Ollama is running at ${endpoint}, but no local models are installed yet. Run 'ollama pull <model>' first.`, status: 'invalid' };
           }
           return { success: true, models, status: 'connected' };
         }
@@ -899,7 +1022,7 @@ Respond in JSON format with keys: "subject" and "body".`;
     if (provider === 'openai') {
       try {
         const res = await fetch('https://api.openai.com/v1/models', {
-          headers: { Authorization: `Bearer ${key}` }
+          headers: { 'Authorization': `Bearer ${key}` }
         });
         if (!res.ok) {
           const errData = (await res.json().catch(() => ({}))) as any;
@@ -913,20 +1036,15 @@ Respond in JSON format with keys: "subject" and "body".`;
         }
         const data = (await res.json()) as any;
         const rawModels: any[] = data.data || [];
-        const chatModels = rawModels
+        const gptModels = rawModels
           .map((m: any) => m.id)
-          .filter((id: string) => id.startsWith('gpt') || id.startsWith('o1') || id.startsWith('o3') || id.startsWith('chatgpt'));
-
-        const priority = ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'o1', 'o3-mini', 'gpt-4', 'gpt-3.5-turbo'];
-        chatModels.sort((a, b) => {
-          const idxA = priority.indexOf(a);
-          const idxB = priority.indexOf(b);
-          if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-          if (idxA !== -1) return -1;
-          if (idxB !== -1) return 1;
-          return a.localeCompare(b);
-        });
-        return { success: true, models: chatModels.length > 0 ? chatModels : ['gpt-4o', 'gpt-4o-mini'], status: 'connected' };
+          .filter((id: string) => id.startsWith('gpt-') || id.startsWith('o1') || id.startsWith('o3') || id.startsWith('chatgpt'))
+          .sort();
+        return {
+          success: true,
+          models: gptModels.length > 0 ? gptModels : ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'o1', 'o3-mini'],
+          status: 'connected'
+        };
       } catch (err: any) {
         return {
           success: false,
@@ -941,7 +1059,7 @@ Respond in JSON format with keys: "subject" and "body".`;
     if (provider === 'groq') {
       try {
         const res = await fetch('https://api.groq.com/openai/v1/models', {
-          headers: { Authorization: `Bearer ${key}` }
+          headers: { 'Authorization': `Bearer ${key}` }
         });
         if (!res.ok) {
           const errData = (await res.json().catch(() => ({}))) as any;
@@ -956,7 +1074,11 @@ Respond in JSON format with keys: "subject" and "body".`;
         const data = (await res.json()) as any;
         const rawModels: any[] = data.data || [];
         const groqModels = rawModels.map((m: any) => m.id);
-        return { success: true, models: groqModels.length > 0 ? groqModels : ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'], status: 'connected' };
+        return {
+          success: true,
+          models: groqModels.length > 0 ? groqModels : ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768', 'gemma2-9b-it'],
+          status: 'connected'
+        };
       } catch (err: any) {
         return {
           success: false,
@@ -970,8 +1092,8 @@ Respond in JSON format with keys: "subject" and "body".`;
     // OpenRouter API
     if (provider === 'openrouter') {
       try {
-        const res = await fetch('https://openrouter.ai/api/v1/auth/key', {
-          headers: { Authorization: `Bearer ${key}` }
+        const res = await fetch('https://openrouter.ai/api/v1/models', {
+          headers: { 'Authorization': `Bearer ${key}` }
         });
         if (!res.ok) {
           const errData = (await res.json().catch(() => ({}))) as any;
@@ -983,24 +1105,16 @@ Respond in JSON format with keys: "subject" and "body".`;
             status: 'invalid'
           };
         }
-        const modelsRes = await fetch('https://openrouter.ai/api/v1/models', {
-          headers: { Authorization: `Bearer ${key}` }
-        });
-        let topModels = [
-          'openai/gpt-4o',
-          'anthropic/claude-3.7-sonnet',
-          'deepseek/deepseek-r1',
-          'google/gemini-2.5-pro',
-          'meta-llama/llama-3.3-70b-instruct'
-        ];
-        if (modelsRes.ok) {
-          const data = (await modelsRes.json()) as any;
-          const rawModels: any[] = data.data || [];
-          if (rawModels.length > 0) {
-            topModels = rawModels.slice(0, 30).map((m: any) => m.id);
-          }
-        }
-        return { success: true, models: topModels, status: 'connected' };
+        const data = (await res.json()) as any;
+        const rawModels: any[] = data.data || [];
+        const orModels = rawModels
+          .map((m: any) => m.id)
+          .filter((id: string) => !isNonChatOrTranscriptionModel(id));
+        return {
+          success: true,
+          models: orModels.length > 0 ? orModels : ['openai/gpt-4o', 'anthropic/claude-3.7-sonnet', 'deepseek/deepseek-r1', 'meta-llama/llama-3.3-70b-instruct', 'mistralai/mistral-large-2411'],
+          status: 'connected'
+        };
       } catch (err: any) {
         return {
           success: false,
@@ -1058,7 +1172,7 @@ Respond in JSON format with keys: "subject" and "body".`;
 
   /**
    * Tests API key credentials, endpoint connectivity, and model availability.
-   * Performs live authentication check.
+   * Performs live authentication check and model verification.
    */
   public async testConnection(
     provider: string,
@@ -1090,10 +1204,24 @@ Respond in JSON format with keys: "subject" and "body".`;
       };
     }
 
+    // If model specified, verify model existence
+    if (model && model.trim()) {
+      const cleanModel = model.trim();
+      const exists = (fetched.models || []).some(m => m === cleanModel || m.split(':')[0] === cleanModel.split(':')[0] || m.startsWith(cleanModel) || cleanModel.startsWith(m));
+      if (!exists && provider === 'ollama') {
+        return {
+          success: false,
+          status: 'invalid',
+          message: `Selected Ollama model '${cleanModel}' is not installed. Fetch models or choose another model.`,
+          fetchedModels: fetched.models
+        };
+      }
+    }
+
     return {
       success: true,
       status: 'connected',
-      message: `${provider.toUpperCase()} API key verified & connected successfully! (${fetched.models.length} model(s) available).`,
+      message: `${provider.toUpperCase()} verified & connected successfully! (${(fetched.models || []).length} model(s) available).`,
       fetchedModels: fetched.models
     };
   }

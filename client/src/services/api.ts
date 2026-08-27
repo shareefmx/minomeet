@@ -148,6 +148,7 @@ export const api = {
     language?: string;
     model?: string;
     customPrompt?: string;
+    agentId?: string;
   }): Promise<MOMSummary> {
     const res = await fetch(`${API_BASE}/ai/summarize`, {
       method: 'POST',
@@ -163,12 +164,13 @@ export const api = {
     query: string,
     meetingId?: string,
     history?: { role: 'user' | 'assistant'; content: string }[],
-    mode?: 'all' | 'action_items' | 'decisions' | 'attendees' | 'summary'
+    mode?: 'all' | 'action_items' | 'decisions' | 'attendees' | 'summary',
+    agentId?: string
   ): Promise<AskQuestionResponse> {
     const res = await fetch(`${API_BASE}/ai/ask`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, meetingId, history, mode })
+      body: JSON.stringify({ query, meetingId, history, mode, agentId: agentId || 'ask_meetings' })
     });
     const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Failed to query meeting assistant');
@@ -180,11 +182,11 @@ export const api = {
     };
   },
 
-  async generateFollowUpEmail(meetingId: string, tone?: string): Promise<{ subject: string; body: string }> {
+  async generateFollowUpEmail(meetingId: string, tone?: string, agentId?: string): Promise<{ subject: string; body: string }> {
     const res = await fetch(`${API_BASE}/ai/follow-up-email`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ meetingId, tone })
+      body: JSON.stringify({ meetingId, tone, agentId: agentId || 'follow_up_email' })
     });
     const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Failed to generate follow-up email');
@@ -337,6 +339,52 @@ export const api = {
     } catch {
       return [];
     }
+  },
+
+  async checkUpdate(): Promise<{
+    currentVersion: string;
+    latestVersion: string;
+    hasUpdate: boolean;
+    releaseName?: string;
+    releaseNotes?: string;
+    releaseUrl: string;
+    repoUrl: string;
+    publishedAt?: string;
+    latestCommit?: { sha: string; message: string; date: string; url: string };
+  }> {
+    try {
+      const res = await fetch(`${API_BASE}/settings/check-update`);
+      if (res.ok) {
+        const data = await res.json();
+        return data;
+      }
+    } catch {}
+
+    // Fallback: direct browser fetch to GitHub
+    try {
+      const ghRes = await fetch('https://api.github.com/repos/shareefmx/minomeet/releases/latest');
+      if (ghRes.ok) {
+        const data = await ghRes.json();
+        return {
+          currentVersion: 'v1.2.0',
+          latestVersion: data.tag_name || 'v1.2.0',
+          hasUpdate: (data.tag_name || 'v1.2.0').replace(/^v/, '') > '1.2.0',
+          releaseName: data.name,
+          releaseNotes: data.body,
+          releaseUrl: data.html_url || 'https://github.com/shareefmx/minomeet/releases',
+          repoUrl: 'https://github.com/shareefmx/minomeet',
+          publishedAt: data.published_at
+        };
+      }
+    } catch {}
+
+    return {
+      currentVersion: 'v1.2.0',
+      latestVersion: 'v1.2.0',
+      hasUpdate: false,
+      releaseUrl: 'https://github.com/shareefmx/minomeet/releases',
+      repoUrl: 'https://github.com/shareefmx/minomeet'
+    };
   }
 };
 

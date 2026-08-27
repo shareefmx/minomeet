@@ -188,24 +188,28 @@ def main():
                     "text": f"Starting our recorded audio review regarding \"{base_name}\". Let's go over the core agenda items."
                 },
                 {
+                    "id": f"t-2-{uuid.uuid4().hex[:6]}",
                     "time": format_timestamp(t2),
                     "speaker": "Team Member",
                     "text": "The latest service build passed integration tests with no major regression warnings."
                 },
                 {
                     "id": f"t-3-{uuid.uuid4().hex[:6]}",
+                    "time": format_timestamp(t3),
                     "speaker": "Team Member",
                     "text": "Let’s verify telemetry metrics and alerting thresholds before public rollout."
                 },
                 {
                     "id": f"t-4-{uuid.uuid4().hex[:6]}",
                     "time": format_timestamp(t4),
+                    "speaker": "Team Member",
                     "text": "I will prepare the telemetry dashboards and email the staging link to the team by tomorrow."
                 },
                 {
                     "id": f"t-5-{uuid.uuid4().hex[:6]}",
                     "time": format_timestamp(t5),
                     "speaker": "Team Member",
+                    "text": "Meeting concluded. All deliverables documented in the action items matrix."
                 }
             ]
         }

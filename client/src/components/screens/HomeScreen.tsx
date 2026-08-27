@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useMeeting } from '../../context/MeetingContext.js';
+import { getActiveAIModel } from '../../utils/aiModelConfig.js';
 import {
   Mic,
   Upload,
   MessageSquare,
   FileText,
   Clock,
-  CheckCircle2,
+  FileCheck,
   Calendar,
   Sparkles,
   ArrowRight,
-  ShieldCheck,
-  Zap,
+  Cpu,
   MoreVertical,
   Edit3,
   Trash2
@@ -20,11 +20,14 @@ import {
 export const HomeScreen: React.FC = () => {
   const {
     meetings,
+    settings,
     startRecording,
     openModal,
     openDeleteModal,
     openRenameModal,
-    selectMeeting
+    selectMeeting,
+    setCurrentScreen,
+    setSettingsTab
   } = useMeeting();
 
   const [openCardMenuId, setOpenCardMenuId] = useState<string | null>(null);
@@ -38,11 +41,13 @@ export const HomeScreen: React.FC = () => {
 
   // Compute metrics
   const totalMeetings = meetings.length;
-  const totalActionItems = meetings.reduce((acc, m) => acc + (m.summary?.actionItems.length || 0), 0);
-  const pendingActionItems = meetings.reduce(
-    (acc, m) => acc + (m.summary?.actionItems.filter(a => !a.completed).length || 0),
-    0
-  );
+  const momConvertedMeetings = meetings.filter(
+    m => !!(m.summary && (m.summary.summary || (m.summary.actionItems && m.summary.actionItems.length > 0) || (m.summary.keyDecisions && m.summary.keyDecisions.length > 0)))
+  ).length;
+  const momConversionRate = totalMeetings > 0 ? Math.round((momConvertedMeetings / totalMeetings) * 100) : 0;
+
+  // Active Default AI Model Resolution
+  const activeAI = getActiveAIModel(settings);
 
   return (
     <div className="flex-1 overflow-y-auto p-8 bg-gradient-to-b from-white via-[#fcfdff] to-[#f8fafd]">
@@ -95,33 +100,94 @@ export const HomeScreen: React.FC = () => {
 
         {/* Metrics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white rounded-xl border border-[#e5e7eb] p-5 shadow-sm hover:shadow-md transition">
-            <div className="flex items-center justify-between text-[#6b7280] mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider">Total Meetings</span>
-              <FileText className="w-4 h-4 text-[#4f46e5]" />
+          {/* Total Meetings Card */}
+          <div className="bg-white rounded-xl border border-[#e5e7eb] p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between text-[#6b7280] mb-2">
+                <span className="text-xs font-bold uppercase tracking-wider">Total Meetings</span>
+                <FileText className="w-4 h-4 text-[#4f46e5]" />
+              </div>
+              <div className="text-2xl font-black text-[#111827]">{totalMeetings}</div>
+              <p className="text-xs text-[#9aa2af] mt-1">Transcribed and archived</p>
             </div>
-            <div className="text-2xl font-black text-[#111827]">{totalMeetings}</div>
-            <p className="text-xs text-[#9aa2af] mt-1">Transcribed and archived</p>
+            <div className="mt-3 text-[11.5px] font-medium text-[#6b7280]">
+              {totalMeetings === 0 ? 'No recorded meetings yet' : `${totalMeetings} stored on device`}
+            </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-[#e5e7eb] p-5 shadow-sm hover:shadow-md transition">
-            <div className="flex items-center justify-between text-[#6b7280] mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider">Open Action Items</span>
-              <CheckCircle2 className="w-4 h-4 text-[#15803d]" />
+          {/* MOM Docs Converted Card */}
+          <div className="bg-white rounded-xl border border-[#e5e7eb] p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between text-[#6b7280] mb-2">
+                <span className="text-xs font-bold uppercase tracking-wider">MOM Docs Converted</span>
+                <FileCheck className="w-4 h-4 text-[#15803d]" />
+              </div>
+              <div className="flex items-baseline gap-2">
+                <div className="text-2xl font-black text-[#111827]">{momConvertedMeetings}</div>
+                <span className="text-xs font-extrabold text-[#15803d] bg-[#f0fdf4] px-2 py-0.5 rounded-full border border-[#bbf7d0]">
+                  {momConversionRate}% converted
+                </span>
+              </div>
+              <p className="text-xs text-[#9aa2af] mt-1">
+                {momConvertedMeetings} of {totalMeetings} {totalMeetings === 1 ? 'meeting' : 'meetings'} converted to MOM
+              </p>
             </div>
-            <div className="text-2xl font-black text-[#111827]">{pendingActionItems}</div>
-            <p className="text-xs text-[#9aa2af] mt-1">{totalActionItems} total tracked tasks</p>
+            {/* Progress Bar */}
+            <div className="mt-3 w-full bg-[#f1f5f9] rounded-full h-1.5 overflow-hidden">
+              <div
+                className="bg-[#22c55e] h-1.5 rounded-full transition-all duration-500"
+                style={{ width: `${momConversionRate}%` }}
+              />
+            </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-[#e5e7eb] p-5 shadow-sm hover:shadow-md transition">
-            <div className="flex items-center justify-between text-[#6b7280] mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider">Privacy Engine</span>
-              <ShieldCheck className="w-4 h-4 text-[#2563eb]" />
+          {/* Default AI LLM Model Card */}
+          <div
+            onClick={() => {
+              setCurrentScreen('settings');
+              setSettingsTab('model');
+            }}
+            className="bg-white rounded-xl border border-[#e5e7eb] hover:border-[#bfdbfe] p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between cursor-pointer group"
+          >
+            <div>
+              <div className="flex items-center justify-between text-[#6b7280] mb-2">
+                <span className="text-xs font-bold uppercase tracking-wider">Default AI Model</span>
+                <Cpu className="w-4 h-4 text-[#7c3aed] group-hover:scale-110 transition-transform" />
+              </div>
+
+              <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                <span className="text-[10px] uppercase font-extrabold tracking-wider px-2 py-0.5 rounded-md bg-[#eff6ff] text-[#2563eb] border border-[#bfdbfe]">
+                  {activeAI.providerName}
+                </span>
+              </div>
+
+              <div className="text-sm font-extrabold text-[#111827] mt-1.5 truncate" title={activeAI.modelId}>
+                {activeAI.modelId}
+              </div>
             </div>
-            <div className="text-lg font-extrabold text-[#111827] mt-1">Nimbus 4B Active</div>
-            <p className="text-xs text-[#15803d] mt-1 flex items-center gap-1 font-semibold">
-              <Zap className="w-3 h-3" /> On-Device &bull; 0 Cloud Leaks
-            </p>
+
+            <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-[#f3f4f6] text-[11px]">
+              <div className="flex items-center gap-1.5 font-semibold">
+                <span className={`w-2 h-2 rounded-full ${
+                  activeAI.status === 'connected' ? 'bg-[#22c55e] animate-pulse' :
+                  activeAI.status === 'testing' ? 'bg-[#eab308] animate-pulse' :
+                  'bg-[#ef4444]'
+                }`} />
+                <span className={
+                  activeAI.status === 'connected' ? 'text-[#15803d]' :
+                  activeAI.status === 'testing' ? 'text-[#b45309]' :
+                  'text-[#dc2626]'
+                }>
+                  {activeAI.status === 'connected' ? 'Ready & Active' :
+                   activeAI.status === 'testing' ? 'Testing…' :
+                   'Configure in Settings'}
+                </span>
+              </div>
+
+              <span className="text-[#2563eb] group-hover:underline flex items-center gap-0.5 font-bold">
+                Change <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+              </span>
+            </div>
           </div>
         </div>
 
@@ -162,7 +228,7 @@ export const HomeScreen: React.FC = () => {
                             e.stopPropagation();
                             setOpenCardMenuId(isMenuOpen ? null : meeting.id);
                           }}
-                          className="p-1 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition opacity-0 group-hover:opacity-100"
+                          className="p-1 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition opacity-0 group-hover:opacity-100 cursor-pointer"
                           title="Options"
                         >
                           <MoreVertical className="w-3.5 h-3.5" />

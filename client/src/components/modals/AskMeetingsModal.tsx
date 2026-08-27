@@ -8,16 +8,10 @@ import {
   Send,
   Sparkles,
   Loader2,
-  ArrowRight,
   RotateCcw,
   Copy,
   Check,
   Layers,
-  CheckSquare,
-  Award,
-  Users,
-  FileText,
-  Filter,
   Bot
 } from 'lucide-react';
 
@@ -25,7 +19,6 @@ export const AskMeetingsModal: React.FC = () => {
   const {
     modals,
     closeModal,
-    selectMeeting,
     meetings,
     activeMeeting,
     showToast,
@@ -37,7 +30,6 @@ export const AskMeetingsModal: React.FC = () => {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedMeetingScope, setSelectedMeetingScope] = useState<string>('all');
-  const [activeMode, setActiveMode] = useState<'all' | 'action_items' | 'decisions' | 'attendees' | 'summary'>('all');
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
   const chatBottomRef = useRef<HTMLDivElement>(null);
@@ -94,9 +86,10 @@ export const AskMeetingsModal: React.FC = () => {
         textToSend,
         selectedMeetingScope === 'all' ? undefined : selectedMeetingScope,
         historyPayload,
-        activeMode
+        'all',
+        'ask_meetings'
       );
-
+      
       const assistantMessage: ChatMessage = {
         id: `assistant-${Date.now()}`,
         role: 'assistant',
@@ -137,42 +130,12 @@ export const AskMeetingsModal: React.FC = () => {
     }
   };
 
-  // Dynamic suggestion chips based on mode
-  const getSuggestionsForMode = () => {
-    switch (activeMode) {
-      case 'action_items':
-        return [
-          'List all pending action items with assignees',
-          'What tasks are assigned for this week?',
-          'Which deliverables are currently unassigned?'
-        ];
-      case 'decisions':
-        return [
-          'What key decisions were approved across all syncs?',
-          'List all architecture and technical decisions',
-          'What was agreed upon regarding product rollout?'
-        ];
-      case 'attendees':
-        return [
-          'Who participated in the recent syncs?',
-          'What updates did the engineering team provide?',
-          'Summarize contributions by speaker'
-        ];
-      case 'summary':
-        return [
-          'Summarize the primary objectives of all meetings',
-          'Compare recent meeting topics',
-          'What were the top roadblocks discussed?'
-        ];
-      default:
-        return [
-          'What was decided about the Argus and Pulse scanners?',
-          'Summarize all pending action deliverables',
-          'What did the team discuss regarding Redis caching?',
-          'Who has upcoming task deadlines?'
-        ];
-    }
-  };
+  const sampleSuggestions = [
+    'What was decided in the latest meetings?',
+    'Summarize all pending action deliverables',
+    'What key topics or roadblocks were discussed?',
+    'Who has upcoming task deadlines?'
+  ];
 
   return (
     <div className="fixed inset-0 bg-[#0f1117]/65 backdrop-blur-xs flex items-center justify-center z-50 p-3 sm:p-4">
@@ -189,9 +152,6 @@ export const AskMeetingsModal: React.FC = () => {
                 <span className="font-extrabold text-sm text-[#111827]">Ask Your Meetings AI</span>
                 <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-[#f2e9ff] text-[#7c3aed] border border-[#e9d5ff]">
                   Chatbot
-                </span>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${activeModel.status === 'connected' ? 'bg-[#dcfce7] text-[#15803d] border border-[#bbf7d0]' : 'bg-[#f1f5f9] text-[#64748b]'}`}>
-                  {activeModel.status === 'connected' ? `● ${activeModel.modelId.split(' ')[0]}` : '● Offline'}
                 </span>
               </div>
               <p className="text-[11px] text-[#6b7280] font-medium">
@@ -217,8 +177,8 @@ export const AskMeetingsModal: React.FC = () => {
           </div>
         </div>
 
-        {/* SCOPE & PARAMETER CONTROLS */}
-        <div className="px-6 py-2 bg-[#fbfcfd] border-b border-[#e5e7eb] flex items-center justify-between gap-3 flex-wrap">
+        {/* SCOPE CONTROLS */}
+        <div className="px-6 py-2 bg-[#fbfcfd] border-b border-[#e5e7eb] flex items-center justify-between gap-3">
           {/* Meeting Scope Selector */}
           <div className="flex items-center gap-1.5">
             <Layers className="w-3.5 h-3.5 text-[#6366f1]" />
@@ -237,37 +197,6 @@ export const AskMeetingsModal: React.FC = () => {
               ))}
             </select>
           </div>
-
-          {/* Mode Filter Pills */}
-          <div className="flex items-center gap-1 overflow-x-auto text-[11px]">
-            <span className="text-[#94a3b8] font-bold text-[10px] uppercase flex items-center gap-1 mr-1">
-              <Filter className="w-2.5 h-2.5" /> Filter:
-            </span>
-            {[
-              { id: 'all', label: 'All', icon: Sparkles },
-              { id: 'action_items', label: 'Tasks', icon: CheckSquare },
-              { id: 'decisions', label: 'Decisions', icon: Award },
-              { id: 'attendees', label: 'Speakers', icon: Users },
-              { id: 'summary', label: 'Summary', icon: FileText }
-            ].map((m) => {
-              const Icon = m.icon;
-              const isSelected = activeMode === m.id;
-              return (
-                <button
-                  key={m.id}
-                  onClick={() => setActiveMode(m.id as any)}
-                  className={`px-2 py-0.5 rounded-full font-bold transition flex items-center gap-1 cursor-pointer ${
-                    isSelected
-                      ? 'bg-[#2563eb] text-white shadow-2xs'
-                      : 'bg-white text-[#64748b] border border-[#e2e8f0] hover:bg-[#f1f5f9]'
-                  }`}
-                >
-                  <Icon className="w-2.5 h-2.5" />
-                  <span>{m.label}</span>
-                </button>
-              );
-            })}
-          </div>
         </div>
 
         {/* CHAT CONVERSATION VIEW */}
@@ -284,7 +213,7 @@ export const AskMeetingsModal: React.FC = () => {
                 </p>
               </div>
               <div className="flex flex-wrap justify-center gap-2 pt-2 max-w-lg">
-                {getSuggestionsForMode().slice(0, 3).map((sq, i) => (
+                {sampleSuggestions.slice(0, 3).map((sq, i) => (
                   <button
                     key={i}
                     onClick={() => handleSendMessage(sq)}
@@ -323,53 +252,6 @@ export const AskMeetingsModal: React.FC = () => {
                       <div className="whitespace-pre-line leading-relaxed font-normal text-xs text-[#334155]">
                         {item.content}
                       </div>
-
-                      {/* Sources Cards */}
-                      {item.sources && item.sources.length > 0 && (
-                        <div className="mt-3 pt-3 border-t border-[#f1f5f9] space-y-2">
-                          <div className="text-[10px] font-black uppercase text-[#94a3b8] tracking-wider flex items-center gap-1.5">
-                            <Layers className="w-3 h-3 text-[#6366f1]" />
-                            <span>Referenced Meeting Notes ({item.sources.length}):</span>
-                          </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
-                            {item.sources.map((s, sIdx) => (
-                              <div
-                                key={sIdx}
-                                className="p-2.5 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] hover:border-[#bfdbfe] hover:bg-[#eff6ff]/50 transition flex flex-col justify-between gap-1.5"
-                              >
-                                <div className="flex items-center justify-between gap-1">
-                                  <span className="font-bold text-xs text-[#1e3a8a] truncate">
-                                    {s.meetingTitle}
-                                  </span>
-                                  {s.type && (
-                                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-white text-[#475569] border border-[#e2e8f0] uppercase">
-                                      {s.type}
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-[11px] text-[#64748b] line-clamp-2 italic">
-                                  &quot;{s.snippet}&quot;
-                                </p>
-                                <button
-                                  onClick={() => {
-                                    const found = meetings.find(m => m.id === s.meetingId);
-                                    if (found) {
-                                      closeModal('ask');
-                                      selectMeeting(found);
-                                      setCurrentScreen('notes');
-                                    }
-                                  }}
-                                  className="self-end inline-flex items-center gap-1 text-[10px] font-bold text-[#2563eb] hover:underline cursor-pointer pt-1"
-                                >
-                                  <span>Open Note</span>
-                                  <ArrowRight className="w-2.5 h-2.5" />
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
                       {/* Message Actions (Copy & Model Badge) */}
                       <div className="flex items-center justify-between pt-2 border-t border-[#f8fafc] text-[10px] text-[#94a3b8] flex-wrap gap-1">
                         <div className="flex items-center gap-2">
@@ -425,8 +307,24 @@ export const AskMeetingsModal: React.FC = () => {
           <div className="flex items-center gap-2">
             <span className="font-bold text-[#475569]">AI Model:</span>
             <span className="font-semibold text-[#1e293b]">{activeModel.providerName} &bull; {activeModel.modelId}</span>
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${activeModel.status === 'connected' ? 'bg-[#dcfce7] text-[#15803d]' : 'bg-[#f1f5f9] text-[#64748b]'}`}>
-              {activeModel.status === 'connected' ? '● Ready' : '● Not Configured'}
+            <span
+              className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                activeModel.isUsable && activeModel.status === 'connected'
+                  ? 'bg-[#dcfce7] text-[#15803d]'
+                  : activeModel.status === 'invalid'
+                  ? 'bg-[#fef2f2] text-[#dc2626]'
+                  : activeModel.status === 'error'
+                  ? 'bg-[#fef2f2] text-[#dc2626]'
+                  : 'bg-[#f1f5f9] text-[#64748b]'
+              }`}
+            >
+              {activeModel.isUsable && activeModel.status === 'connected'
+                ? '● Ready'
+                : activeModel.status === 'invalid'
+                ? '● Model Not Installed'
+                : activeModel.status === 'error'
+                ? '● Connection Error'
+                : '● Not Configured'}
             </span>
           </div>
           <button

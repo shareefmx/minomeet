@@ -27,6 +27,20 @@ export interface AIAgentDef {
   description: string;
 }
 
+export interface ResolvedAIModel {
+  agentId: string;
+  providerId: string;
+  providerName: string;
+  modelId: string;
+  apiKey?: string;
+  baseUrl?: string;
+  status: AIConnectionStatus;
+  statusMessage?: string;
+  isOverride: boolean;
+  isUsable: boolean;
+  error?: string;
+}
+
 export const AI_PROVIDERS_CONFIG: AIProviderConfig[] = [
   {
     id: 'openai',
@@ -105,16 +119,11 @@ export const AI_PROVIDERS_CONFIG: AIProviderConfig[] = [
     name: 'Ollama',
     category: 'local',
     description: 'Connect to private self-hosted models running locally on your machine or private LAN.',
-    defaultEndpoint: 'http://localhost:11434',
+    defaultEndpoint: 'http://127.0.0.1:11434',
     requiresKey: false,
     supportsCustomEndpoint: true,
     supportsFetchModels: true,
-    models: [
-      { id: 'llama3.3:70b', name: 'Llama 3.3 70B', tag: 'Local High Precision', contextWindow: '128k' },
-      { id: 'llama3.1:8b', name: 'Llama 3.1 8B', tag: 'Local Standard', contextWindow: '128k' },
-      { id: 'qwen2.5:14b', name: 'Qwen 2.5 14B', tag: 'Multilingual & Code', contextWindow: '128k' },
-      { id: 'mistral:7b', name: 'Mistral 7B', tag: 'Compact Local', contextWindow: '32k' }
-    ]
+    models: []
   },
   {
     id: 'custom',
@@ -125,9 +134,7 @@ export const AI_PROVIDERS_CONFIG: AIProviderConfig[] = [
     keyPlaceholder: 'Optional API Key (if required)',
     requiresKey: false,
     supportsCustomEndpoint: true,
-    models: [
-      { id: 'custom-model', name: 'Custom Model Name', tag: 'User Specified', contextWindow: 'Dynamic' }
-    ]
+    models: []
   },
   {
     id: 'builtin',
@@ -177,41 +184,33 @@ export const AI_AGENTS_CONFIG: AIAgentDef[] = [
 ];
 
 /**
- * Resolves the active global default AI provider, model, and connection status for the entire project.
+ * Helper to identify transcription, audio, embedding, or non-chat models that cannot be used for text LLM tasks.
  */
-export function getActiveAIModel(settings?: AppSettings | null): {
-  providerId: string;
-  providerName: string;
-  modelId: string;
-  status: AIConnectionStatus;
-  statusMessage?: string;
-  isOverride: boolean;
-} {
-  const globalProviderId = settings?.activeAIProvider || 'builtin';
-  const globalModelId = settings?.selectedModel || 'Nimbus 4B (High Quality)';
-  const globalProvider = AI_PROVIDERS_CONFIG.find(p => p.id === globalProviderId) || AI_PROVIDERS_CONFIG[7];
-  const globalCred = settings?.aiProviders?.[globalProviderId];
-  const globalStatus: AIConnectionStatus = globalCred?.status || (globalProviderId === 'builtin' ? 'connected' : 'not_configured');
-
-  return {
-    providerId: globalProviderId,
-    providerName: globalProvider.name,
-    modelId: globalModelId,
-    status: globalStatus,
-    statusMessage: globalCred?.statusMessage,
-    isOverride: false
-  };
-}
-
-export function getEffectiveModelForAgent(settings?: AppSettings | null, _agentId?: string): {
-  providerId: string;
-  providerName: string;
-  modelId: string;
-  status: AIConnectionStatus;
-  statusMessage?: string;
-  isOverride: boolean;
-} {
-  return getActiveAIModel(settings);
+export function isNonChatOrTranscriptionModel(modelId?: string): boolean {
+  if (!modelId) return false;
+  const lower = modelId.toLowerCase();
+  if (
+    lower.includes('whisper') ||
+    lower.includes('parakeet') ||
+    lower.includes('nemo') ||
+    lower.includes('tdt') ||
+    lower.includes('transcription') ||
+    lower.includes('tts')
+  ) {
+    return true;
+  }
+  if (
+    lower.includes('embedding') ||
+    lower.includes('embed') ||
+    lower.includes('moderation') ||
+    lower.includes('dall-e') ||
+    lower.includes('flux') ||
+    lower.includes('stable-diffusion') ||
+    lower.includes('midjourney')
+  ) {
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -229,15 +228,132 @@ export function getAvailableModelsForProvider(
   const dynamicOptions: AIModelOption[] = [];
 
   for (const mId of fetched) {
-    if (!existingIds.has(mId)) {
+    if (!existingIds.has(mId) && !isNonChatOrTranscriptionModel(mId)) {
       dynamicOptions.push({
         id: mId,
         name: mId,
-        tag: 'Live Fetched'
+        tag: 'Live Installed'
       });
       existingIds.add(mId);
     }
   }
 
   return [...baseModels, ...dynamicOptions];
+}
+
+/**
+ * Resolves the AI model for any agent dynamically based on priority:
+ * 1. Agent-specific override (if enabled)
+ * 2. Global default configuration
+ * 3. Strict error if not configured/usable
+ */
+export function resolveModel(settings: AppSettings | null | undefined, agentId: string): ResolvedAIModel {
+  // 1. Check if agent-specific override is enabled and configured
+  const override = settings?.agentOverrides?.[agentId];
+  if (override && override.useGlobal === false && override.providerId && override.modelId) {
+    const provDef = AI_PROVIDERS_CONFIG.find(p => p.id === override.providerId) || AI_PROVIDERS_CONFIG.find(p => p.id === 'builtin')!;
+    const cred = settings?.aiProviders?.[override.providerId];
+    
+    let resolvedModelId = override.modelId;
+    if (isNonChatOrTranscriptionModel(resolvedModelId)) {
+      resolvedModelId = provDef.models[0]?.id || 'default';
+    }
+
+    let isUsable = true;
+    let status: AIConnectionStatus = cred?.status || 'not_configured';
+    let error: string | undefined = undefined;
+
+    if (override.providerId === 'builtin') {
+      status = 'connected';
+      isUsable = true;
+    } else if (override.providerId === 'ollama') {
+      const fetched = cred?.fetchedModels || [];
+      if (status !== 'connected' && fetched.length === 0) {
+        status = 'not_configured';
+        isUsable = false;
+        error = `Ollama model '${resolvedModelId}' has not been verified. Click 'Test Connection' or 'Fetch Models'.`;
+      } else if (fetched.length > 0 && !fetched.includes(resolvedModelId)) {
+        status = 'invalid';
+        isUsable = false;
+        error = `Selected Ollama model '${resolvedModelId}' is not installed. Fetch models or choose another model.`;
+      }
+    } else if (provDef.requiresKey && (!cred?.apiKey || !cred.apiKey.trim())) {
+      status = 'not_configured';
+      isUsable = false;
+      error = `API Key required for ${provDef.name}. Please enter an API key in Settings.`;
+    }
+
+    return {
+      agentId,
+      providerId: override.providerId,
+      providerName: provDef.name,
+      modelId: resolvedModelId,
+      apiKey: cred?.apiKey,
+      baseUrl: cred?.baseUrl || provDef.defaultEndpoint,
+      status,
+      statusMessage: error || cred?.statusMessage,
+      isOverride: true,
+      isUsable,
+      error
+    };
+  }
+
+  // 2. Global Default Model Configuration
+  const globalProviderId = settings?.activeAIProvider || 'builtin';
+  let globalModelId = settings?.selectedModel || 'Nimbus 4B (High Quality)';
+  const globalProvDef = AI_PROVIDERS_CONFIG.find(p => p.id === globalProviderId) || AI_PROVIDERS_CONFIG.find(p => p.id === 'builtin')!;
+  const globalCred = settings?.aiProviders?.[globalProviderId];
+
+  if (isNonChatOrTranscriptionModel(globalModelId)) {
+    globalModelId = globalProvDef.models[0]?.id || 'Nimbus 4B (High Quality)';
+  }
+
+  let isUsable = true;
+  let status: AIConnectionStatus = globalCred?.status || (globalProviderId === 'builtin' ? 'connected' : 'not_configured');
+  let error: string | undefined = undefined;
+
+  if (globalProviderId === 'builtin') {
+    status = 'connected';
+    isUsable = true;
+  } else if (globalProviderId === 'ollama') {
+    const fetched = globalCred?.fetchedModels || [];
+    if (status !== 'connected' && fetched.length === 0) {
+      status = 'not_configured';
+      isUsable = false;
+      error = `Ollama model '${globalModelId}' has not been verified. Click 'Test Connection' or 'Fetch Models'.`;
+    } else if (fetched.length > 0 && !fetched.includes(globalModelId)) {
+      status = 'invalid';
+      isUsable = false;
+      error = `Selected Ollama model '${globalModelId}' is not installed. Fetch models or choose another model.`;
+    }
+  } else if (globalProvDef.requiresKey && (!globalCred?.apiKey || !globalCred.apiKey.trim())) {
+    status = 'not_configured';
+    isUsable = false;
+    error = `API Key required for ${globalProvDef.name}. Please enter an API key in Settings.`;
+  }
+
+  return {
+    agentId,
+    providerId: globalProviderId,
+    providerName: globalProvDef.name,
+    modelId: globalModelId,
+    apiKey: globalCred?.apiKey,
+    baseUrl: globalCred?.baseUrl || globalProvDef.defaultEndpoint,
+    status,
+    statusMessage: error || globalCred?.statusMessage,
+    isOverride: false,
+    isUsable,
+    error
+  };
+}
+
+/**
+ * Resolves the active global default AI provider, model, and connection status for the entire project.
+ */
+export function getActiveAIModel(settings?: AppSettings | null): ResolvedAIModel {
+  return resolveModel(settings, 'global');
+}
+
+export function getEffectiveModelForAgent(settings?: AppSettings | null, agentId?: string): ResolvedAIModel {
+  return resolveModel(settings, agentId || 'general');
 }
