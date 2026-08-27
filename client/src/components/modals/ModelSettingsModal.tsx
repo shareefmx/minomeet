@@ -7,12 +7,19 @@ export const ModelSettingsModal: React.FC = () => {
   const { modals, closeModal, settings, updateSettings, showToast, setCurrentScreen, setSettingsTab } = useMeeting();
   const [selected, setSelected] = useState<string>(settings?.selectedModel || 'Nimbus 4B (High Quality)');
 
+  React.useEffect(() => {
+    if (settings?.selectedModel) {
+      setSelected(settings.selectedModel);
+    }
+  }, [settings?.selectedModel, modals.model]);
+
   if (!modals.model) return null;
 
   const handleSave = async () => {
     let provId = settings?.activeAIProvider || 'builtin';
     for (const prov of AI_PROVIDERS_CONFIG) {
-      if (prov.models.some(m => m.id === selected)) {
+      const models = getAvailableModelsForProvider(settings, prov.id);
+      if (models.some(m => m.id === selected)) {
         provId = prov.id;
         break;
       }
