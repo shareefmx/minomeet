@@ -355,14 +355,18 @@ Respond with a JSON object strictly matching this schema:
 
     for (const meeting of targetMeetings) {
       const parts: string[] = [];
-      parts.push(`=== MEETING: "${meeting.title}" (Date: ${meeting.createdAt ? new Date(meeting.createdAt).toLocaleDateString() : 'Recent'}) ===`);
+      const formattedDate = meeting.createdAt ? new Date(meeting.createdAt).toLocaleDateString() : 'Recent';
+      parts.push(`=== MEETING NOTE: "${meeting.title}" (Date: ${formattedDate}, Duration: ${meeting.duration || 'N/A'}) ===`);
       
       if (meeting.summary) {
+        if (meeting.summary.template) {
+          parts.push(`Template / Category: ${meeting.summary.template}`);
+        }
         if (meeting.summary.attendees && meeting.summary.attendees.length > 0) {
-          parts.push(`Attendees: ${meeting.summary.attendees.join(', ')}`);
+          parts.push(`Participants & Attendees: ${meeting.summary.attendees.join(', ')}`);
         }
         if (meeting.summary.summary) {
-          parts.push(`Executive Summary: ${meeting.summary.summary}`);
+          parts.push(`Executive Summary:\n${meeting.summary.summary}`);
           if (mode === 'all' || mode === 'summary' || meeting.summary.summary.toLowerCase().includes(lowerQuery)) {
             sources.push({
               meetingId: meeting.id,
@@ -373,7 +377,7 @@ Respond with a JSON object strictly matching this schema:
           }
         }
         if (meeting.summary.keyDecisions && meeting.summary.keyDecisions.length > 0) {
-          parts.push(`Key Decisions Made:\n${meeting.summary.keyDecisions.map(d => `• ${d}`).join('\n')}`);
+          parts.push(`Key Decisions Made:\n${meeting.summary.keyDecisions.map((d, i) => `${i + 1}. ${d}`).join('\n')}`);
           if (mode === 'all' || mode === 'decisions' || meeting.summary.keyDecisions.some(d => d.toLowerCase().includes(lowerQuery))) {
             sources.push({
               meetingId: meeting.id,
@@ -384,7 +388,7 @@ Respond with a JSON object strictly matching this schema:
           }
         }
         if (meeting.summary.actionItems && meeting.summary.actionItems.length > 0) {
-          parts.push(`Action Items & Deliverables:\n${meeting.summary.actionItems.map(a => `• [${a.completed ? 'x' : ' '}] ${a.owner}: ${a.task} (Due: ${a.due || 'Not specified'}${a.notes ? ` - ${a.notes}` : ''})`).join('\n')}`);
+          parts.push(`Action Items & Deliverables:\n${meeting.summary.actionItems.map(a => `• [${a.completed ? 'x' : ' '}] ${a.owner}: "${a.task}" (Deadline: ${a.due || 'Not specified'}${a.notes ? `, Context: ${a.notes}` : ''})`).join('\n')}`);
           if (mode === 'all' || mode === 'action_items' || meeting.summary.actionItems.some(a => a.task.toLowerCase().includes(lowerQuery) || a.owner.toLowerCase().includes(lowerQuery))) {
             sources.push({
               meetingId: meeting.id,
@@ -399,13 +403,15 @@ Respond with a JSON object strictly matching this schema:
         }
       }
 
-      // Add matching transcript lines
-      const matchingLines = meeting.transcript.filter(line => 
-        line.text.toLowerCase().includes(lowerQuery) || (line.speaker && line.speaker.toLowerCase().includes(lowerQuery))
-      );
-      if (matchingLines.length > 0) {
-        parts.push(`Matching Dialogue:\n${matchingLines.slice(0, 4).map(l => `[${l.time || '00:00'}] ${l.speaker ? l.speaker + ': ' : ''}${l.text}`).join('\n')}`);
-        for (const l of matchingLines.slice(0, 2)) {
+      // If single meeting note is selected, upload the ENTIRE transcript to the AI model
+      if (targetMeetings.length === 1 && meeting.transcript && meeting.transcript.length > 0) {
+        parts.push(`Full Meeting Transcript (${meeting.transcript.length} lines):\n${meeting.transcript.map(l => `[${l.time || '00:00'}] ${l.speaker ? l.speaker + ': ' : ''}${l.text}`).join('\n')}`);
+        // Add matching or first lines to sources
+        const matchingLines = meeting.transcript.filter(line => 
+          line.text.toLowerCase().includes(lowerQuery) || (line.speaker && line.speaker.toLowerCase().includes(lowerQuery))
+        );
+        const sampleLines = matchingLines.length > 0 ? matchingLines : meeting.transcript.slice(0, 3);
+        for (const l of sampleLines.slice(0, 3)) {
           sources.push({
             meetingId: meeting.id,
             meetingTitle: meeting.title,
@@ -414,11 +420,28 @@ Respond with a JSON object strictly matching this schema:
             type: 'transcript'
           });
         }
-      } else if (meeting.transcript.length > 0 && targetMeetings.length <= 3) {
-        parts.push(`Sample Transcript:\n${meeting.transcript.slice(0, 5).map(l => `[${l.time || '00:00'}] ${l.speaker ? l.speaker + ': ' : ''}${l.text}`).join('\n')}`);
+      } else {
+        // Multi-meeting archive: upload summaries + relevant matching dialogue lines
+        const matchingLines = meeting.transcript.filter(line => 
+          line.text.toLowerCase().includes(lowerQuery) || (line.speaker && line.speaker.toLowerCase().includes(lowerQuery))
+        );
+        if (matchingLines.length > 0) {
+          parts.push(`Key Dialogue Snippets:\n${matchingLines.slice(0, 6).map(l => `[${l.time || '00:00'}] ${l.speaker ? l.speaker + ': ' : ''}${l.text}`).join('\n')}`);
+          for (const l of matchingLines.slice(0, 2)) {
+            sources.push({
+              meetingId: meeting.id,
+              meetingTitle: meeting.title,
+              snippet: `${l.speaker ? l.speaker + ': ' : ''}${l.text}`,
+              timestamp: l.time,
+              type: 'transcript'
+            });
+          }
+        } else if (meeting.transcript.length > 0 && targetMeetings.length <= 5) {
+          parts.push(`Dialogue Highlights:\n${meeting.transcript.slice(0, 6).map(l => `[${l.time || '00:00'}] ${l.speaker ? l.speaker + ': ' : ''}${l.text}`).join('\n')}`);
+        }
       }
 
-      meetingContextBlocks.push(parts.join('\n'));
+      meetingContextBlocks.push(parts.join('\n\n'));
     }
 
     // Deduplicate sources by meetingId and snippet
