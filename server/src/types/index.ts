@@ -104,6 +104,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp?: string;
+  modelUsed?: string;
   sources?: {
     meetingId: string;
     meetingTitle: string;

@@ -102,6 +102,7 @@ export const AskMeetingsModal: React.FC = () => {
         role: 'assistant',
         content: res.answer,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        modelUsed: res.modelUsed || `${activeModel.providerName} • ${activeModel.modelId}`,
         sources: res.sources,
         suggestedFollowUps: res.suggestedFollowUps
       };
@@ -369,9 +370,16 @@ export const AskMeetingsModal: React.FC = () => {
                         </div>
                       )}
 
-                      {/* Message Actions (Copy) */}
-                      <div className="flex items-center justify-between pt-2 border-t border-[#f8fafc] text-[10px] text-[#94a3b8]">
-                        <span>{item.timestamp || 'Just now'}</span>
+                      {/* Message Actions (Copy & Model Badge) */}
+                      <div className="flex items-center justify-between pt-2 border-t border-[#f8fafc] text-[10px] text-[#94a3b8] flex-wrap gap-1">
+                        <div className="flex items-center gap-2">
+                          <span>{item.timestamp || 'Just now'}</span>
+                          {item.modelUsed && (
+                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-[#f1f5f9] text-[#475569] border border-[#e2e8f0]">
+                              ⚡ {item.modelUsed}
+                            </span>
+                          )}
+                        </div>
                         <button
                           onClick={() => handleCopyMessage(item.content, idx)}
                           className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md hover:bg-[#f1f5f9] text-[#64748b] hover:text-[#1e293b] transition cursor-pointer"
