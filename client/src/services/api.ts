@@ -1,4 +1,4 @@
-import { Meeting, AppSettings, MOMSummary, TranscriptLine, TranscriptionModel, TranscriptionEngineStatus, StorageStats, MOMTemplate, AskQuestionResponse, LocalLLMStatus } from '../types/meeting.js';
+import { Meeting, AppSettings, MOMSummary, TranscriptLine, TranscriptionModel, TranscriptionEngineStatus, StorageStats, MOMTemplate, AskQuestionResponse } from '../types/meeting.js';
 
 const API_BASE = '/api';
 
@@ -223,42 +223,6 @@ export const api = {
       body: JSON.stringify(payload)
     });
     return await res.json();
-  },
-
-  // On-Device Local LLM (Qwen 3.5 4B)
-  async getLocalLLMStatus(): Promise<LocalLLMStatus> {
-    const res = await fetch(`${API_BASE}/ai/local-llm/status`);
-    const data = await res.json();
-    return data.status;
-  },
-
-  async downloadLocalLLM(): Promise<LocalLLMStatus> {
-    const res = await fetch(`${API_BASE}/ai/local-llm/download`, {
-      method: 'POST'
-    });
-    const data = await res.json();
-    if (!data.success) throw new Error(data.error || 'Failed to initiate download');
-    return data.status;
-  },
-
-  async verifyLocalLLM(): Promise<{
-    success: boolean;
-    latencyMs: number;
-    message: string;
-    sampleOutput: string;
-  }> {
-    const res = await fetch(`${API_BASE}/ai/local-llm/verify`, {
-      method: 'POST'
-    });
-    return await res.json();
-  },
-
-  async deleteLocalLLM(): Promise<boolean> {
-    const res = await fetch(`${API_BASE}/ai/local-llm`, {
-      method: 'DELETE'
-    });
-    const data = await res.json();
-    return data.success;
   },
 
   // Settings

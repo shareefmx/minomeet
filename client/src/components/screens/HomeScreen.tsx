@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useMeeting } from '../../context/MeetingContext.js';
 import { getActiveAIModel } from '../../utils/aiModelConfig.js';
-import { api } from '../../services/api.js';
-import { LocalLLMStatus } from '../../types/meeting.js';
 import {
   Mic,
   Upload,
@@ -17,7 +15,8 @@ import {
   MoreVertical,
   Edit3,
   Trash2,
-  Download
+  Key,
+  ChevronRight
 } from 'lucide-react';
 
 export const HomeScreen: React.FC = () => {
@@ -52,82 +51,41 @@ export const HomeScreen: React.FC = () => {
   // Active Default AI Model Resolution
   const activeAI = getActiveAIModel(settings);
 
-  // First-Time Local LLM Setup State
-  const [localLLMStatus, setLocalLLMStatus] = useState<LocalLLMStatus | null>(null);
-  const [isDownloadingLLM, setIsDownloadingLLM] = useState<boolean>(false);
-
-  useEffect(() => {
-    api.getLocalLLMStatus().then(status => {
-      setLocalLLMStatus(status);
-    }).catch(() => {});
-  }, []);
-
-  const handleDownloadLLM = async () => {
-    setIsDownloadingLLM(true);
-    try {
-      await api.downloadLocalLLM();
-      const interval = setInterval(async () => {
-        try {
-          const status = await api.getLocalLLMStatus();
-          setLocalLLMStatus(status);
-          if (status.status === 'downloaded') {
-            clearInterval(interval);
-            setIsDownloadingLLM(false);
-          }
-        } catch {}
-      }, 500);
-    } catch {
-      setIsDownloadingLLM(false);
-    }
-  };
-
   return (
     <div className="flex-1 overflow-y-auto p-8 bg-gradient-to-b from-white via-[#fcfdff] to-[#f8fafd]">
       <div className="max-w-5xl mx-auto space-y-8">
 
-        {/* First-Time Local AI Setup Banner */}
-        {localLLMStatus && localLLMStatus.status !== 'downloaded' && (
+        {/* AI API Setup Alert Banner if not configured */}
+        {!activeAI.isUsable && (
           <div className="bg-gradient-to-r from-[#eff6ff] via-[#f0f9ff] to-[#f8fafc] border border-[#bfdbfe] rounded-2xl p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-start gap-3.5">
               <div className="p-2.5 bg-[#2563eb] text-white rounded-xl shadow-xs flex-none mt-0.5">
-                <Cpu className="w-5 h-5" />
+                <Key className="w-5 h-5" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-extrabold text-[#1e3a8a]">First-Time Setup: Download Qwen 3.5 4B (2.6 GB)</h3>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#dcfce7] text-[#15803d] border border-[#86efac]">
-                    ● 100% Offline &amp; Private
+                  <h3 className="text-sm font-extrabold text-[#1e3a8a]">Set Up Your AI Model &amp; API Key</h3>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#fef3c7] text-[#92400e] border border-[#fde68a]">
+                    Action Required
                   </span>
                 </div>
                 <p className="text-xs text-[#475569] mt-0.5 leading-relaxed">
-                  Minomeet uses the on-device <b>Qwen 3.5 4B</b> neural model for local executive summaries, key decisions, and Q&amp;A. Download the model weights once to enable zero-cloud offline synthesis.
+                  Connect your preferred AI provider (<b>Google Gemini</b>, <b>OpenAI</b>, <b>Claude 3.7</b>, <b>Groq</b>, or <b>Ollama</b>) to enable autonomous MOM executive summaries and multi-meeting Q&amp;A.
                 </p>
               </div>
             </div>
 
             <div className="flex-none">
-              {localLLMStatus.status === 'downloading' || isDownloadingLLM ? (
-                <div className="w-44 space-y-1.5">
-                  <div className="flex items-center justify-between text-[11px] font-bold text-[#2563eb]">
-                    <span>Downloading…</span>
-                    <span>{localLLMStatus.downloadProgress || 0}%</span>
-                  </div>
-                  <div className="w-full bg-[#e2e8f0] h-2 rounded-full overflow-hidden">
-                    <div
-                      className="bg-[#2563eb] h-full transition-all duration-300 rounded-full"
-                      style={{ width: `${localLLMStatus.downloadProgress || 5}%` }}
-                    />
-                  </div>
-                </div>
-              ) : (
-                <button
-                  onClick={handleDownloadLLM}
-                  className="px-4 py-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer inline-flex items-center gap-2"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>Download &amp; Install Model</span>
-                </button>
-              )}
+              <button
+                onClick={() => {
+                  setCurrentScreen('settings');
+                  setSettingsTab('model');
+                }}
+                className="px-4 py-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer inline-flex items-center gap-1.5"
+              >
+                <span>Configure AI Model</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
           </div>
         )}

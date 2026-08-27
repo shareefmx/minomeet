@@ -14,6 +14,7 @@ import { FollowUpEmailModal } from './components/modals/FollowUpEmailModal.js';
 import { AboutModal } from './components/modals/AboutModal.js';
 import { DeleteConfirmModal } from './components/modals/DeleteConfirmModal.js';
 import { RenameMeetingModal } from './components/modals/RenameMeetingModal.js';
+import { OnboardingTourModal } from './components/modals/OnboardingTourModal.js';
 import { Sparkles, X } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -84,6 +85,7 @@ export const App: React.FC = () => {
       <AboutModal />
       <DeleteConfirmModal />
       <RenameMeetingModal />
+      <OnboardingTourModal />
 
       {/* Toast Notification Container */}
       <ToastHost />

@@ -97,47 +97,5 @@ router.post('/fetch-models', async (req: Request, res: Response) => {
   }
 });
 
-import { localLLMService } from '../services/localLLMService.js';
-
-// GET /api/ai/local-llm/status - check Qwen 3.5 on-device LLM download status and weights info
-router.get('/local-llm/status', (_req: Request, res: Response) => {
-  try {
-    const status = localLLMService.getStatus();
-    res.json({ success: true, status });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// POST /api/ai/local-llm/download - trigger background download of Qwen 3.5 4B model weights
-router.post('/local-llm/download', async (_req: Request, res: Response) => {
-  try {
-    const status = await localLLMService.startDownload();
-    res.json({ success: true, status });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// POST /api/ai/local-llm/verify - run live on-device verification diagnostic
-router.post('/local-llm/verify', async (_req: Request, res: Response) => {
-  try {
-    const result = await localLLMService.verifyModel();
-    res.json(result);
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// DELETE /api/ai/local-llm - offload Qwen 3.5 4B model weights
-router.delete('/local-llm', (_req: Request, res: Response) => {
-  try {
-    const deleted = localLLMService.deleteModel();
-    res.json({ success: true, deleted });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
 export default router;
 

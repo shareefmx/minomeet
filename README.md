@@ -89,13 +89,13 @@ npm run dev
 - **Frontend Application**: [`http://localhost:5173`](http://localhost:5173)
 - **Backend API**: [`http://localhost:5001`](http://localhost:5001)
 
-### Step 4: First-Time On-Device AI Model Setup (Qwen 3.5 4B)
+### Step 4: First-Time User 7-Step Tour & AI API Key Setup
 
 When you launch Minomeet for the first time:
-1. You will see the **"First-Time Setup: Download Qwen 3.5 4B"** banner on the Home Screen (or navigate to **Settings ➔ AI Model**).
-2. Click **"Download & Install Model"** to download the on-device **Qwen 3.5 4B (2.6 GB)** neural model.
-3. The weights are stored securely in `server/models/llm/` on your device.
-4. Once installed, Minomeet performs **100% private, offline meeting intelligence, MOM summaries, action items extraction, and multi-meeting Q&A with zero cloud network calls**.
+1. **Interactive 7-Step Product Tour**: An interactive walkthrough introduces each section of the app (Audio Capture, Speech-to-Text, Multi-Model AI, Executive MOM, Action Items Matrix, Meeting Q&A, and Universal Export).
+2. **Instant Navigation to AI Setup**: Upon completing or skipping the tour, you are seamlessly navigated to **Settings ➔ AI Model**.
+3. **Configure Your API Key**: Enter your API key for **Google Gemini**, **OpenAI**, **Anthropic Claude**, **Groq**, or configure **Ollama**.
+4. Click **"Test Connection"** and **"Save Global Configuration"** to start synthesizing meetings with zero friction!
 
 ---
 
@@ -109,16 +109,16 @@ Settings ──► AI Model ──► Provider ──► Model ──► Test Co
 
 ### Supported AI Providers
 
-1. **Built-in / Local AI (Qwen 3.5 4B)**: Flagship on-device neural model. Zero cloud calls, 100% private and offline.
-2. **Ollama (100% On-Device & Private)**:
+1. **Google Gemini**: `gemini-2.5-flash`, `gemini-2.5-pro`, `gemini-1.5-pro`, `gemini-1.5-flash`
+2. **OpenAI**: `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `o1`, `o3-mini`
+3. **Anthropic Claude**: `claude-3-7-sonnet`, `claude-3-5-sonnet`, `claude-3-5-haiku`, `claude-3-opus`
+4. **Groq (Ultra High-Speed LPUs)**: `llama-3.3-70b-versatile`, `llama-3.1-8b-instant`, `mixtral-8x7b-32768`
+5. **OpenRouter**: Unified API routing across 200+ models with automatic load balancing.
+6. **Ollama (Self-Hosted / Private LAN)**:
    - Endpoint: `http://127.0.0.1:11434`
    - Supports: `llama3.3:70b`, `qwen2.5:7b`, `mistral:7b`, `deepseek-r1:8b`, `phi4:14b`
    - Real-time "Fetch Models" and "Test Connection" validation.
-3. **OpenAI**: `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `o1`, `o3-mini`
-4. **Anthropic Claude**: `claude-3-7-sonnet-latest`, `claude-3-5-sonnet-latest`, `claude-3-5-haiku-latest`
-5. **Google Gemini**: `gemini-2.5-flash`, `gemini-2.0-flash`, `gemini-1.5-pro`
-6. **Groq (Ultra High-Speed)**: `llama-3.3-70b-versatile`, `deepseek-r1-distill-llama-70b`
-7. **OpenRouter**: Access any open-source or proprietary LLM with custom base URLs.
+7. **Custom OpenAI-Compatible Server**: Connect to any vLLM, LM Studio, Together AI, or LocalAI endpoint.
 
 ---
 

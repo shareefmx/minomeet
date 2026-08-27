@@ -391,8 +391,8 @@ export class AIService {
     console.log(`[AI] Endpoint: ${resolved.baseUrl || 'Cloud API'}`);
     console.log(`[AI] Sending request...`);
 
-    if (!resolved.isUsable && resolved.providerId !== 'builtin') {
-      throw new Error(resolved.error || `AI Agent '${agentId}' model '${effectiveModel}' (${resolved.providerName}) is not configured or not installed.`);
+    if (!resolved.isUsable) {
+      throw new Error(resolved.error || `AI Model (${resolved.providerName} - ${effectiveModel}) is not configured. Please open Settings ➔ AI Model to configure your API key.`);
     }
 
     const fullText = transcript.map(t => `${t.speaker ? t.speaker + ': ' : ''}${t.text}`).join('\n');
@@ -405,8 +405,8 @@ export class AIService {
     const dateFormatted = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     const templateDef = storageService.getTemplateById(template);
 
-    // If external cloud or local LLM is configured and ready, try calling real LLM
-    if (resolved.providerId !== 'builtin' && fullText.trim().length > 0) {
+    // Call configured AI provider
+    if (fullText.trim().length > 0) {
       try {
         const sysPrompt = `You are an expert executive meeting assistant. You synthesize meeting transcripts into structured Minutes of Meeting (MOM) in ${language}.
 Template style to adhere to: "${template}".
@@ -514,8 +514,8 @@ Respond with a JSON object strictly matching this schema:
     console.log(`[AI] Endpoint: ${resolved.baseUrl || 'Cloud API'}`);
     console.log(`[AI] Sending request...`);
 
-    if (!resolved.isUsable && resolved.providerId !== 'builtin') {
-      throw new Error(resolved.error || `AI Agent '${agentId}' model '${resolved.modelId}' (${resolved.providerName}) is not configured or not installed.`);
+    if (!resolved.isUsable) {
+      throw new Error(resolved.error || `AI Model (${resolved.providerName} - ${resolved.modelId}) is not configured. Please open Settings ➔ AI Model to configure your API key.`);
     }
 
     const allMeetings = storageService.getMeetings();
@@ -635,8 +635,8 @@ Respond with a JSON object strictly matching this schema:
     });
     const uniqueSources = Array.from(uniqueSourcesMap.values()).slice(0, 6);
 
-    // Call LLM if not builtin
-    if (resolved.providerId !== 'builtin') {
+    // Call configured AI Model
+    if (uniqueSources.length > 0 || query.trim().length > 0) {
       try {
         const historyText = history && history.length > 0
           ? `\n\nRecent Chat Conversation History:\n${history.slice(-4).map(h => `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.content}`).join('\n')}`
@@ -833,8 +833,8 @@ Answer the user's question directly, simply, and concisely in 1 to 3 short sente
     console.log(`[AI] Endpoint: ${resolved.baseUrl || 'Cloud API'}`);
     console.log(`[AI] Sending request...`);
 
-    if (!resolved.isUsable && resolved.providerId !== 'builtin') {
-      throw new Error(resolved.error || `AI Agent '${agentId}' model '${resolved.modelId}' (${resolved.providerName}) is not configured or not installed.`);
+    if (!resolved.isUsable) {
+      throw new Error(resolved.error || `AI Model (${resolved.providerName} - ${resolved.modelId}) is not configured. Please open Settings ➔ AI Model to configure your API key.`);
     }
 
     const meeting = storageService.getMeetingById(meetingId);
@@ -847,8 +847,8 @@ Answer the user's question directly, simply, and concisely in 1 to 3 short sente
     const actionItems = meeting.summary?.actionItems || [];
     const attendees = meeting.summary?.attendees?.join(', ') || 'Team';
 
-    // If external model like Gemini is active, call real LLM to draft email
-    if (resolved.providerId !== 'builtin') {
+    // Call configured AI model to draft email
+    if (summaryText) {
       try {
         const sysPrompt = `You are a corporate communication specialist. Draft a clear, impactful follow-up email after a meeting.
 Tone requested: ${tone}.
@@ -914,14 +914,6 @@ Respond strictly in JSON format with keys: "subject" and "body". Example:
     error?: string;
     status?: AIConnectionStatus;
   }> {
-    if (provider === 'builtin') {
-      return {
-        success: true,
-        models: ['Qwen 3.5 4B'],
-        status: 'connected'
-      };
-    }
-
     if (provider === 'ollama') {
       const endpoint = (baseUrl || 'http://127.0.0.1:11434').replace(/\/+$/, '');
       try {
@@ -1185,16 +1177,6 @@ Respond strictly in JSON format with keys: "subject" and "body". Example:
     message: string;
     fetchedModels?: string[];
   }> {
-    if (provider === 'builtin') {
-      const modelsResult = await this.fetchProviderModels('builtin');
-      return {
-        success: true,
-        status: 'connected',
-        message: `Built-in / Local AI engine active (100% Offline, ${model || 'Qwen 3.5 4B'} ready).`,
-        fetchedModels: modelsResult.models
-      };
-    }
-
     const fetched = await this.fetchProviderModels(provider, apiKey, baseUrl);
     if (!fetched.success) {
       return {

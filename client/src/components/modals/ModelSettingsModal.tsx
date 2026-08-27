@@ -5,18 +5,18 @@ import { AI_PROVIDERS_CONFIG, getAvailableModelsForProvider } from '../../utils/
 
 export const ModelSettingsModal: React.FC = () => {
   const { modals, closeModal, settings, updateSettings, showToast, setCurrentScreen, setSettingsTab } = useMeeting();
-  const [selected, setSelected] = useState<string>(settings?.selectedModel && !settings.selectedModel.startsWith('Nimbus') ? settings.selectedModel : 'Qwen 3.5 4B');
+  const [selected, setSelected] = useState<string>(settings?.selectedModel && !settings.selectedModel.startsWith('Nimbus') && !settings.selectedModel.startsWith('Qwen') ? settings.selectedModel : 'gemini-2.5-flash');
 
   React.useEffect(() => {
     if (settings?.selectedModel) {
-      setSelected(settings.selectedModel.startsWith('Nimbus') ? 'Qwen 3.5 4B' : settings.selectedModel);
+      setSelected(settings.selectedModel.startsWith('Nimbus') || settings.selectedModel.startsWith('Qwen') ? 'gemini-2.5-flash' : settings.selectedModel);
     }
   }, [settings?.selectedModel, modals.model]);
 
   if (!modals.model) return null;
 
   const handleSave = async () => {
-    let provId = settings?.activeAIProvider || 'builtin';
+    let provId = settings?.activeAIProvider || 'google';
     for (const prov of AI_PROVIDERS_CONFIG) {
       const models = getAvailableModelsForProvider(settings, prov.id);
       if (models.some(m => m.id === selected)) {

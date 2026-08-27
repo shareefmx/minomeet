@@ -135,16 +135,6 @@ export const AI_PROVIDERS_CONFIG: AIProviderConfig[] = [
     requiresKey: false,
     supportsCustomEndpoint: true,
     models: []
-  },
-  {
-    id: 'builtin',
-    name: 'Built-in / Local AI (Qwen 3.5)',
-    category: 'local',
-    description: '100% offline neural synthesis powered by Qwen 3.5 4B on-device. Zero cloud network calls or keys needed.',
-    requiresKey: false,
-    models: [
-      { id: 'Qwen 3.5 4B', name: 'Qwen 3.5 4B (On-Device Neural Model)', tag: 'Recommended Default', contextWindow: '32k' }
-    ]
   }
 ];
 
@@ -249,22 +239,19 @@ export function resolveModel(settings: AppSettings | null | undefined, agentId: 
   // 1. Check if agent-specific override is enabled and configured
   const override = settings?.agentOverrides?.[agentId];
   if (override && override.useGlobal === false && override.providerId && override.modelId) {
-    const provDef = AI_PROVIDERS_CONFIG.find(p => p.id === override.providerId) || AI_PROVIDERS_CONFIG.find(p => p.id === 'builtin')!;
+    const provDef = AI_PROVIDERS_CONFIG.find(p => p.id === override.providerId) || AI_PROVIDERS_CONFIG[0];
     const cred = settings?.aiProviders?.[override.providerId];
     
     let resolvedModelId = override.modelId;
     if (isNonChatOrTranscriptionModel(resolvedModelId)) {
-      resolvedModelId = provDef.models[0]?.id || 'default';
+      resolvedModelId = provDef.models[0]?.id || 'gemini-2.5-flash';
     }
 
     let isUsable = true;
     let status: AIConnectionStatus = cred?.status || 'not_configured';
     let error: string | undefined = undefined;
 
-    if (override.providerId === 'builtin') {
-      status = 'connected';
-      isUsable = true;
-    } else if (override.providerId === 'ollama') {
+    if (override.providerId === 'ollama') {
       const fetched = cred?.fetchedModels || [];
       if (status !== 'connected' && fetched.length === 0) {
         status = 'not_configured';
@@ -297,24 +284,21 @@ export function resolveModel(settings: AppSettings | null | undefined, agentId: 
   }
 
   // 2. Global Default Model Configuration
-  const globalProviderId = settings?.activeAIProvider || 'builtin';
-  let globalModelId = settings?.selectedModel || 'Qwen 3.5 4B';
-  const globalProvDef = AI_PROVIDERS_CONFIG.find(p => p.id === globalProviderId) || AI_PROVIDERS_CONFIG.find(p => p.id === 'builtin')!;
+  const globalProviderId = (settings?.activeAIProvider && settings.activeAIProvider !== 'builtin') ? settings.activeAIProvider : 'google';
+  const globalProvDef = AI_PROVIDERS_CONFIG.find(p => p.id === globalProviderId) || AI_PROVIDERS_CONFIG[2] || AI_PROVIDERS_CONFIG[0];
+  let globalModelId = settings?.selectedModel || globalProvDef.models[0]?.id || 'gemini-2.5-flash';
   const globalCred = settings?.aiProviders?.[globalProviderId];
 
   // Migrate legacy model names or non-chat models
-  if (!globalModelId || globalModelId.startsWith('Nimbus') || isNonChatOrTranscriptionModel(globalModelId)) {
-    globalModelId = globalProvDef.models[0]?.id || 'Qwen 3.5 4B';
+  if (!globalModelId || globalModelId.startsWith('Nimbus') || globalModelId.startsWith('Qwen') || isNonChatOrTranscriptionModel(globalModelId)) {
+    globalModelId = globalProvDef.models[0]?.id || 'gemini-2.5-flash';
   }
 
   let isUsable = true;
-  let status: AIConnectionStatus = globalCred?.status || (globalProviderId === 'builtin' ? 'connected' : 'not_configured');
+  let status: AIConnectionStatus = globalCred?.status || (globalCred?.apiKey ? 'connected' : 'not_configured');
   let error: string | undefined = undefined;
 
-  if (globalProviderId === 'builtin') {
-    status = 'connected';
-    isUsable = true;
-  } else if (globalProviderId === 'ollama') {
+  if (globalProviderId === 'ollama') {
     const fetched = globalCred?.fetchedModels || [];
     if (status !== 'connected' && fetched.length === 0) {
       status = 'not_configured';
@@ -328,7 +312,7 @@ export function resolveModel(settings: AppSettings | null | undefined, agentId: 
   } else if (globalProvDef.requiresKey && (!globalCred?.apiKey || !globalCred.apiKey.trim())) {
     status = 'not_configured';
     isUsable = false;
-    error = `API Key required for ${globalProvDef.name}. Please enter an API key in Settings.`;
+    error = `API Key required for ${globalProvDef.name}. Please enter your API key in Settings.`;
   }
 
   return {

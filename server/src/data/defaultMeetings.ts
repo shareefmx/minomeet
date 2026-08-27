@@ -19,17 +19,16 @@ export const defaultSettings: AppSettings = {
   autoSummary: true,
   defaultLanguage: 'English',
   defaultTemplate: 'Standard Meeting Notes & MOM',
-  selectedModel: 'Qwen 3.5 4B',
-  activeAIProvider: 'builtin',
+  selectedModel: 'gemini-2.5-flash',
+  activeAIProvider: 'google',
   aiProviders: {
+    google: { apiKey: '', selectedModel: 'gemini-2.5-flash', status: 'not_configured', statusMessage: 'Not configured' },
     openai: { apiKey: '', selectedModel: 'gpt-4o', status: 'not_configured', statusMessage: 'Not configured' },
     anthropic: { apiKey: '', selectedModel: 'claude-3-7-sonnet', status: 'not_configured', statusMessage: 'Not configured' },
-    google: { apiKey: '', selectedModel: 'gemini-2.5-flash', status: 'not_configured', statusMessage: 'Not configured' },
     groq: { apiKey: '', selectedModel: 'llama-3.3-70b-versatile', status: 'not_configured', statusMessage: 'Not configured' },
     openrouter: { apiKey: '', selectedModel: 'openai/gpt-4o', status: 'not_configured', statusMessage: 'Not configured' },
     ollama: { baseUrl: 'http://localhost:11434', selectedModel: 'llama3.3:70b', status: 'not_configured', statusMessage: 'Not configured' },
-    custom: { baseUrl: 'http://localhost:8000/v1', apiKey: '', selectedModel: 'custom-model', customModelName: 'custom-model', status: 'not_configured', statusMessage: 'Not configured' },
-    builtin: { selectedModel: 'Qwen 3.5 4B', status: 'connected', statusMessage: 'Connected & Ready' }
+    custom: { baseUrl: 'http://localhost:8000/v1', apiKey: '', selectedModel: 'custom-model', customModelName: 'custom-model', status: 'not_configured', statusMessage: 'Not configured' }
   },
   betaDiarization: true,
   betaAskMeetings: true,
