@@ -454,144 +454,218 @@ Respond with a JSON object strictly matching this schema:
     });
     const uniqueSources = Array.from(uniqueSourcesMap.values()).slice(0, 6);
 
-    // If external AI (Gemini, OpenAI, Claude, Groq, OpenRouter, Ollama) is active, call LLM
-    if (effective.providerId !== 'builtin' && (cred?.apiKey || effective.providerId === 'ollama' || effective.providerId === 'custom')) {
+    // Check if effective provider or any provider in settings/env has a usable LLM key
+    let activeProvider = effective.providerId;
+    let activeKey = cred?.apiKey;
+    let activeBaseUrl = cred?.baseUrl;
+    let activeModelName = effective.modelId;
+
+    if (!activeKey && settings?.aiProviders) {
+      for (const [pId, pCred] of Object.entries(settings.aiProviders)) {
+        if (pCred?.apiKey && pCred.apiKey.trim()) {
+          activeProvider = pId;
+          activeKey = pCred.apiKey;
+          activeBaseUrl = pCred.baseUrl;
+          activeModelName = pCred.selectedModel || effective.modelId;
+          break;
+        }
+      }
+    }
+
+    // Check environment variables as fallback
+    if (!activeKey) {
+      if (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY) {
+        activeProvider = 'google';
+        activeKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+        activeModelName = 'gemini-1.5-flash';
+      } else if (process.env.OPENAI_API_KEY) {
+        activeProvider = 'openai';
+        activeKey = process.env.OPENAI_API_KEY;
+        activeModelName = 'gpt-4o';
+      } else if (process.env.GROQ_API_KEY) {
+        activeProvider = 'groq';
+        activeKey = process.env.GROQ_API_KEY;
+        activeModelName = 'llama-3.3-70b-versatile';
+      }
+    }
+
+    // If an LLM model is available, call it to produce a simple, small, direct answer
+    if (activeProvider !== 'builtin' && (activeKey || activeProvider === 'ollama' || activeProvider === 'custom')) {
       try {
         const historyText = history && history.length > 0
-          ? `\n\nRecent Chat Conversation History:\n${history.slice(-6).map(h => `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.content}`).join('\n\n')}`
+          ? `\n\nRecent Chat Conversation History:\n${history.slice(-4).map(h => `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.content}`).join('\n')}`
           : '';
 
-        const sysPrompt = `You are Minomeet AI, a helpful, intelligent meeting assistant.
-You have access to the user's meeting notes, summaries, decisions, action items, and transcripts.
+        const sysPrompt = `You are a concise, helpful meeting assistant.
+Answer the user's question directly, simply, and concisely in 1 to 3 short sentences based strictly on the provided meeting notes.
+- Provide a simple, small, direct answer specifically addressing what was asked.
+- Reference the specific meeting name (e.g. "**Product Security Sync**") when stating facts.
+- Do not repeat the question or include generic introductory or concluding filler phrases.`;
 
-Instructions:
-1. Answer the user's question directly, conversationally, and concisely based on the provided meeting records.
-2. Do not use generic boilerplate intros or repetitive canned responses. Answer what is asked naturally.
-3. Use clear markdown (bolding, bullet points, checklists) where appropriate.
-4. Reference the specific meeting name when citing facts.`;
+        const userPrompt = `Meeting Notes Context:\n${meetingContextBlocks.slice(0, 8).join('\n\n---\n\n')}${historyText}\n\nQuestion: ${query}`;
 
-        const userPrompt = `Meeting Notes & Transcript Context:\n${meetingContextBlocks.slice(0, 12).join('\n\n---\n\n')}${historyText}\n\nUser Question: ${query}`;
-
-        const rawLLMOutput = await this.callLLM(effective.providerId, cred?.apiKey, cred?.baseUrl, effective.modelId, sysPrompt, userPrompt);
-
-        let cleanedAnswer = rawLLMOutput.trim();
-        const suggestedFollowUps: string[] = [];
-
-        const followUpMatch = rawLLMOutput.match(/###?\s*Suggested Follow-?ups?:?([\s\S]*)$/i);
-        if (followUpMatch) {
-          cleanedAnswer = rawLLMOutput.replace(followUpMatch[0], '').trim();
-          const lines = followUpMatch[1].split('\n').map(l => l.replace(/^[-*•\d.]\s*/, '').trim()).filter(l => l.length > 5);
-          suggestedFollowUps.push(...lines.slice(0, 3));
-        }
+        const rawLLMOutput = await this.callLLM(activeProvider, activeKey, activeBaseUrl, activeModelName, sysPrompt, userPrompt);
+        const cleanedAnswer = rawLLMOutput.trim();
 
         return {
           answer: cleanedAnswer,
-          sources: uniqueSources,
-          suggestedFollowUps: suggestedFollowUps.length > 0 ? suggestedFollowUps : undefined,
-          modelUsed: `${effective.providerName} • ${effective.modelId}`
+          sources: uniqueSources.slice(0, 3),
+          modelUsed: `${activeProvider} • ${activeModelName}`
         };
       } catch (err: any) {
-        console.warn(`Live AI Chatbot error: ${err.message}`);
+        console.warn(`Live AI Chatbot call failed: ${err.message}`);
       }
     }
 
-    // Natural Built-in AI Agent Synthesis (Direct, human-like answers without rigid templates)
-    const isAskingDecisions = /\b(decision|decisions|decide|decided|agreed|approved|consensus)\b/i.test(lowerQuery);
-    const isAskingTasks = /\b(action|task|tasks|deliverable|deliverables|due|deadline|assigned|todo|todos|assignee)\b/i.test(lowerQuery);
-    const isAskingSummary = /\b(summary|summarize|overview|recap|what happened|discuss|discussed)\b/i.test(lowerQuery);
+    // Smart Local / Offline Semantic Answer Engine (Direct, concise 1-2 sentence replies based on query)
+    const stopWords = new Set([
+      'what', 'is', 'the', 'in', 'on', 'at', 'for', 'to', 'of', 'a', 'an', 'and', 'or',
+      'who', 'where', 'when', 'why', 'how', 'can', 'you', 'tell', 'me', 'about', 'there',
+      'give', 'show', 'any', 'think', 'present', 'using', 'model', 'meeting', 'meetings',
+      'notes', 'note', 'have', 'same', 'reply', 'based', 'qus', 'anserw', 'simple', 'small'
+    ]);
 
-    let naturalAnswer = '';
+    const queryWords = lowerQuery
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter(w => w.length > 2 && !stopWords.has(w));
 
-    // Check if matching specific person
-    const allPeople = ['priya', 'marcus', 'chen', 'alex', 'sarah', 'john', 'david', 'emily', 'rachel'];
-    const mentionedPerson = allPeople.find(p => lowerQuery.includes(p));
+    // Check greeting
+    if (/^(hi|hello|hey|greetings|help|howdy)\b/i.test(lowerQuery)) {
+      return {
+        answer: 'Hello! Ask me any specific question about your meeting notes, decisions, or action items.',
+        sources: [],
+        modelUsed: `${effective.providerName} • ${effective.modelId}`
+      };
+    }
 
-    if (mentionedPerson) {
-      const personName = mentionedPerson.charAt(0).toUpperCase() + mentionedPerson.slice(1);
-      const personTasks: string[] = [];
-      const personQuotes: string[] = [];
-      let meetingTitle = '';
+    // Score all specific items in target meetings
+    interface CandidateAnswer {
+      text: string;
+      meetingTitle: string;
+      meetingId: string;
+      score: number;
+      type: 'decision' | 'action_item' | 'transcript' | 'summary';
+    }
 
-      for (const m of targetMeetings) {
-        if (m.summary?.actionItems) {
-          for (const a of m.summary.actionItems) {
-            if (a.owner.toLowerCase().includes(mentionedPerson) || a.task.toLowerCase().includes(mentionedPerson)) {
-              meetingTitle = m.title;
-              personTasks.push(`• **${a.task}** (Due: ${a.due || 'Upcoming'}${a.notes ? ` — ${a.notes}` : ''})`);
-            }
+    const candidates: CandidateAnswer[] = [];
+
+    for (const m of targetMeetings) {
+      if (m.summary) {
+        // Decisions
+        for (const d of m.summary.keyDecisions || []) {
+          const lower = d.toLowerCase();
+          let score = 0;
+          for (const word of queryWords) {
+            if (lower.includes(word)) score += 3;
+          }
+          if (/\b(decision|decided|agreed|approved)\b/i.test(lowerQuery)) score += 2;
+          if (score > 0) {
+            candidates.push({
+              text: d,
+              meetingTitle: m.title,
+              meetingId: m.id,
+              score,
+              type: 'decision'
+            });
           }
         }
-        for (const l of m.transcript) {
-          if (l.speaker && l.speaker.toLowerCase().includes(mentionedPerson)) {
-            personQuotes.push(`> "${l.text}"`);
+
+        // Action items
+        for (const a of m.summary.actionItems || []) {
+          const combined = `${a.owner} ${a.task} ${a.due || ''} ${a.notes || ''}`.toLowerCase();
+          let score = 0;
+          for (const word of queryWords) {
+            if (combined.includes(word)) score += 4;
+          }
+          if (/\b(task|tasks|action|due|deadline|assigned|deliverable)\b/i.test(lowerQuery)) score += 2;
+          if (score > 0) {
+            candidates.push({
+              text: `${a.owner}: ${a.task}${a.due ? ` (Due: ${a.due})` : ''}`,
+              meetingTitle: m.title,
+              meetingId: m.id,
+              score,
+              type: 'action_item'
+            });
+          }
+        }
+
+        // Discussion highlights / summaries (split into sentences)
+        const summarySentences = (m.summary.summary || '')
+          .split(/(?<=[.?!])\s+/)
+          .concat(m.summary.discussionHighlights || []);
+
+        for (const sentence of summarySentences) {
+          if (!sentence || sentence.length < 10) continue;
+          const lower = sentence.toLowerCase();
+          let score = 0;
+          for (const word of queryWords) {
+            if (lower.includes(word)) score += 2;
+          }
+          if (score > 0) {
+            candidates.push({
+              text: sentence,
+              meetingTitle: m.title,
+              meetingId: m.id,
+              score,
+              type: 'summary'
+            });
           }
         }
       }
 
-      if (personTasks.length > 0 || personQuotes.length > 0) {
-        naturalAnswer = `In **${meetingTitle || 'recent syncs'}**, **${personName}** has the following updates:\n\n`;
-        if (personTasks.length > 0) {
-          naturalAnswer += `**Assigned Tasks:**\n${personTasks.join('\n')}\n\n`;
+      // Transcripts
+      for (const line of m.transcript || []) {
+        const lower = `${line.speaker || ''}: ${line.text}`.toLowerCase();
+        let score = 0;
+        for (const word of queryWords) {
+          if (lower.includes(word)) score += 3;
         }
-        if (personQuotes.length > 0) {
-          naturalAnswer += `**Key Comments:**\n${personQuotes.slice(0, 2).join('\n')}`;
+        if (score > 0) {
+          candidates.push({
+            text: `${line.speaker ? line.speaker + ': ' : ''}"${line.text}"`,
+            meetingTitle: m.title,
+            meetingId: m.id,
+            score,
+            type: 'transcript'
+          });
         }
       }
     }
 
-    if (!naturalAnswer && isAskingDecisions) {
-      const allDecisions: string[] = [];
-      for (const m of targetMeetings) {
-        if (m.summary?.keyDecisions && m.summary.keyDecisions.length > 0) {
-          for (const d of m.summary.keyDecisions) {
-            allDecisions.push(`• **${m.title}**: ${d}`);
-          }
-        }
-      }
-      if (allDecisions.length > 0) {
-        naturalAnswer = `The following key decisions were agreed upon in your meetings:\n\n${allDecisions.slice(0, 5).join('\n')}`;
-      }
-    }
+    // Sort candidates by score descending
+    candidates.sort((a, b) => b.score - a.score);
 
-    if (!naturalAnswer && isAskingTasks) {
-      const allTasks: string[] = [];
-      for (const m of targetMeetings) {
-        if (m.summary?.actionItems && m.summary.actionItems.length > 0) {
-          for (const a of m.summary.actionItems) {
-            allTasks.push(`• **${a.owner}**: ${a.task} (Due: ${a.due || 'Sync'}) [${m.title}]`);
-          }
-        }
-      }
-      if (allTasks.length > 0) {
-        naturalAnswer = `Here are the action items and deliverables recorded:\n\n${allTasks.slice(0, 6).join('\n')}`;
-      }
-    }
+    let directAnswer = '';
+    const relevantSources: { meetingId: string; meetingTitle: string; snippet: string; type?: any }[] = [];
 
-    if (!naturalAnswer && isAskingSummary) {
-      const summaries: string[] = [];
-      for (const m of targetMeetings) {
-        if (m.summary?.summary) {
-          summaries.push(`• **${m.title}**: ${m.summary.summary}`);
-        }
-      }
-      if (summaries.length > 0) {
-        naturalAnswer = `Here is a summary of your meetings:\n\n${summaries.slice(0, 3).join('\n\n')}`;
-      }
-    }
+    if (candidates.length > 0) {
+      const topCandidates = candidates.slice(0, 2);
+      const top = topCandidates[0];
+      relevantSources.push({
+        meetingId: top.meetingId,
+        meetingTitle: top.meetingTitle,
+        snippet: top.text,
+        type: top.type
+      });
 
-    // Default conversational synthesis if no specific intent triggered
-    if (!naturalAnswer) {
-      if (uniqueSources.length > 0) {
-        const top = uniqueSources[0];
-        naturalAnswer = `In **${top.meetingTitle}**, here is what was noted regarding "${query}":\n\n${uniqueSources.map(s => `• ${s.snippet}`).join('\n')}`;
+      if (topCandidates.length === 1) {
+        directAnswer = `In **${top.meetingTitle}**, ${top.text}`;
       } else {
-        naturalAnswer = `I searched your saved meetings for "${query}" but didn't find any direct matches. Try asking about specific decisions, action items, or project updates from your meetings.`;
+        directAnswer = `In **${top.meetingTitle}**:\n• ${topCandidates.map(c => c.text).join('\n• ')}`;
+      }
+    } else {
+      if (targetMeetings.length === 1) {
+        const m = targetMeetings[0];
+        directAnswer = `In **${m.title}**, there are no specific mentions matching "${query}".`;
+      } else {
+        directAnswer = `No specific discussions or action items matching "${query}" were found in your saved meeting notes.`;
       }
     }
 
     return {
-      answer: naturalAnswer,
-      sources: uniqueSources,
+      answer: directAnswer,
+      sources: relevantSources,
       modelUsed: `${effective.providerName} • ${effective.modelId}`
     };
   }
