@@ -13,6 +13,17 @@ const SAMPLE_DIALOGUE: { speaker: string; text: string }[] = [
 
 export type AudioSourceType = 'mic' | 'system' | 'mixed';
 
+export interface CaptureOptions {
+  sourceType?: AudioSourceType;
+  deviceId?: string;
+  noiseSuppression?: boolean;
+  echoCancellation?: boolean;
+  autoGainControl?: boolean;
+  audioFormat?: string;
+  audioBitrate?: string;
+  sampleRate?: number;
+}
+
 export class SpeechCaptureService {
   private mediaRecorder: MediaRecorder | null = null;
   private audioStream: MediaStream | null = null;
@@ -60,19 +71,21 @@ export class SpeechCaptureService {
   }
 
   /**
-   * Starts live audio capture with default Mixed Mode (Microphone Voice + System/Meeting Audio)
+   * Starts live audio capture with configurable capture options
+   * (Microphone Voice + System/Meeting Audio, device selection, acoustic filters, bitrate)
    * and real-time sub-50ms WebSocket streaming to backend Parakeet/Whisper AI.
    */
   public async startCapture(
     onTranscriptLine: (line: TranscriptLine) => void,
     sourceType: AudioSourceType = 'mixed',
     onVolumeChange?: (volume: number) => void,
-    onInterimText?: (interim: string) => void
+    onInterimText?: (interim: string) => void,
+    options?: CaptureOptions
   ): Promise<{ success: boolean; hasSystemAudio: boolean }> {
     this.audioChunks = [];
     this.simIndex = 0;
     this.seenTexts.clear();
-    this.activeSourceType = sourceType;
+    this.activeSourceType = options?.sourceType || sourceType;
     this.hasSystemAudioTrack = false;
 
     let streamObtained = false;
@@ -120,21 +133,27 @@ export class SpeechCaptureService {
 
     // 2. AudioContext & Mixed Web Audio Pipeline
     try {
+      const sampleRate = options?.sampleRate || 16000;
       const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
-      this.audioContext = new AudioCtxClass({ sampleRate: 16000 });
+      this.audioContext = new AudioCtxClass({ sampleRate });
       if (this.audioContext.state === 'suspended') {
         await this.audioContext.resume();
       }
 
-      // Always obtain microphone if permitted
+      // Obtain microphone with configured constraints and device ID
       try {
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          const micConstraints: MediaTrackConstraints = {
+            echoCancellation: options?.echoCancellation !== false,
+            noiseSuppression: options?.noiseSuppression !== false,
+            autoGainControl: options?.autoGainControl !== false
+          };
+          if (options?.deviceId && options.deviceId !== 'default') {
+            micConstraints.deviceId = { exact: options.deviceId };
+          }
+
           this.micStream = await navigator.mediaDevices.getUserMedia({
-            audio: {
-              echoCancellation: true,
-              noiseSuppression: true,
-              autoGainControl: true
-            }
+            audio: micConstraints
           });
         }
       } catch (micErr) {
@@ -265,7 +284,8 @@ export class SpeechCaptureService {
             ? 'audio/webm;codecs=opus'
             : (MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4');
 
-          this.mediaRecorder = new MediaRecorder(this.audioStream, { mimeType });
+          const bitrate = options?.audioBitrate === '320k' ? 320000 : (options?.audioBitrate === '128k' ? 128000 : 256000);
+          this.mediaRecorder = new MediaRecorder(this.audioStream, { mimeType, audioBitsPerSecond: bitrate });
           this.mediaRecorder.ondataavailable = (e) => {
             if (e.data && e.data.size > 0) this.audioChunks.push(e.data);
           };
@@ -448,7 +468,7 @@ export class SpeechCaptureService {
     }, 1000);
   }
 
-  public stopCapture(): Blob | null {
+  public stopCapture(preferredFormat?: string): Blob | null {
     if (this.simInterval) {
       clearInterval(this.simInterval);
       this.simInterval = null;
@@ -509,7 +529,12 @@ export class SpeechCaptureService {
       this.audioContext = null;
     }
 
-    return this.audioChunks.length > 0 ? new Blob(this.audioChunks, { type: 'audio/webm' }) : null;
+    let mime = 'audio/webm';
+    const fmt = (preferredFormat || '').toUpperCase();
+    if (fmt === 'MP4') mime = 'audio/mp4';
+    else if (fmt === 'WAV') mime = 'audio/wav';
+
+    return this.audioChunks.length > 0 ? new Blob(this.audioChunks, { type: mime }) : null;
   }
 }
 

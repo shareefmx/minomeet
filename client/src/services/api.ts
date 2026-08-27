@@ -69,6 +69,7 @@ export const api = {
     title?: string;
     transcript: TranscriptLine[];
     duration?: string;
+    audioPath?: string;
     tags?: string[];
     autoSummarize?: boolean;
     template?: string;
@@ -83,6 +84,18 @@ export const api = {
     const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Failed to create meeting');
     return data.meeting;
+  },
+
+  async uploadAudio(file: File): Promise<{ success: boolean; filePath: string }> {
+    const formData = new FormData();
+    formData.append('audio', file);
+    const res = await fetch(`${API_BASE}/upload`, {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed to upload audio');
+    return data;
   },
 
   async updateMeeting(id: string, updates: Partial<Meeting>): Promise<Meeting> {

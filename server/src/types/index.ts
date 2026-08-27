@@ -49,6 +49,13 @@ export interface AppSettings {
   autoDeleteRecordingsDays: number;
   saveAudio: boolean;
   audioFormat: string;
+  audioBitrate?: '128k' | '256k' | '320k';
+  defaultAudioSource?: 'mic' | 'system' | 'mixed';
+  selectedMicDeviceId?: string;
+  noiseSuppression?: boolean;
+  echoCancellation?: boolean;
+  autoGainControl?: boolean;
+  sampleRate?: number;
   transcriptionEngine: string;
   liveCaptions: boolean;
   speakerLabels: boolean;

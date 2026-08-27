@@ -293,7 +293,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
   const startRecording = async (sourceType?: 'mic' | 'system' | 'mixed') => {
-    const chosenSource = sourceType || 'mixed';
+    const chosenSource = sourceType || settings?.defaultAudioSource || 'mixed';
     setAudioSource(chosenSource);
     setLiveTranscript([]);
     setInterimTranscript('');
@@ -314,7 +314,19 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
       chosenSource,
       undefined,
       (interim) => {
-        setInterimTranscript(interim);
+        if (settings?.liveCaptions !== false) {
+          setInterimTranscript(interim);
+        }
+      },
+      {
+        sourceType: chosenSource,
+        deviceId: settings?.selectedMicDeviceId,
+        noiseSuppression: settings?.noiseSuppression,
+        echoCancellation: settings?.echoCancellation,
+        autoGainControl: settings?.autoGainControl,
+        audioFormat: settings?.audioFormat,
+        audioBitrate: settings?.audioBitrate,
+        sampleRate: settings?.sampleRate
       }
     );
 
@@ -337,7 +349,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
       clearInterval(timerInterval);
       setTimerInterval(null);
     }
-    speechService.stopCapture();
+    const audioBlob = speechService.stopCapture(settings?.audioFormat || 'MP4');
     setIsRecording(false);
     setInterimTranscript('');
 
@@ -350,17 +362,36 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
     ];
 
     try {
+      let audioPath: string | undefined = undefined;
+      if (settings?.saveAudio && audioBlob && audioBlob.size > 0) {
+        try {
+          const ext = (settings?.audioFormat || 'mp4').toLowerCase();
+          const timestamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 15);
+          const filename = `recording_${timestamp}.${ext}`;
+          const file = new File([audioBlob], filename, { type: audioBlob.type });
+          const uploadRes = await api.uploadAudio(file);
+          audioPath = uploadRes.filePath;
+        } catch (uploadErr) {
+          console.warn('Could not persist audio recording to disk:', uploadErr);
+        }
+      }
+
+      const shouldAutoSummarize = settings?.autoSummary ?? true;
+
       const newMeeting = await api.createMeeting({
         title: `Meeting ${new Date().toISOString().slice(0, 10)}_${m}-${s}`,
         transcript: lines,
         duration,
-        autoSummarize: false
+        audioPath,
+        autoSummarize: shouldAutoSummarize,
+        template: settings?.defaultTemplate,
+        language: settings?.defaultLanguage
       });
 
       setMeetings(prev => [newMeeting, ...prev]);
       setActiveMeeting(newMeeting);
       setCurrentScreen('notes');
-      showToast('Recording saved successfully!', `${lines.length} transcript segments captured.`, 'success');
+      showToast('Recording saved successfully!', `${lines.length} transcript segments captured.${audioPath ? ' Audio file saved.' : ''}`, 'success');
       sendDesktopNotification('Meeting Saved Successfully', `Recorded ${duration} with ${lines.length} transcript lines.`);
       await refreshStorageStats();
     } catch (err: any) {
