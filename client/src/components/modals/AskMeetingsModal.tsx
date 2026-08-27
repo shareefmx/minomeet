@@ -52,7 +52,7 @@ export const AskMeetingsModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 bg-[#0f1117]/65 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl border border-[#e5e7eb] w-full max-w-2xl h-[620px] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-150">
+      <div className="bg-white rounded-2xl shadow-2xl border border-[#e5e7eb] w-full max-w-2xl h-[640px] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-150">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#e5e7eb] bg-gradient-to-r from-[#eef2ff] to-[#f8f9fc]">
           <div className="flex items-center gap-2 font-black text-base text-[#111827]">
@@ -144,7 +144,7 @@ export const AskMeetingsModal: React.FC = () => {
           )}
         </div>
 
-        {/* AI Agent Model Section */}
+        {/* AI Agent Model Section Footer */}
         <div className="px-6 py-2.5 bg-[#f8fafc] border-t border-[#e2e8f0] flex items-center justify-between flex-wrap gap-2 text-xs">
           <div className="flex items-center gap-2">
             <span className="font-bold text-[#475569]">AI Model:</span>

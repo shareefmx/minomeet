@@ -146,7 +146,9 @@ export const SettingsScreen: React.FC = () => {
     const urlToUse = pId === selectedProviderId ? baseUrlInput : (settings?.aiProviders?.[pId]?.baseUrl || '');
 
     if (provDef?.requiresKey && (!keyToUse || keyToUse.trim().length === 0)) {
-      showToast('API Key Required', `Please enter your ${provDef.name} API key first to fetch models.`, 'warning');
+      setConnectionStatus('invalid');
+      setConnectionStatusMessage(`API Key is required for ${provDef?.name}.`);
+      showToast('API Key Required', `Please enter your ${provDef?.name} API key first to fetch models.`, 'warning');
       return;
     }
 
@@ -164,22 +166,34 @@ export const SettingsScreen: React.FC = () => {
           [pId]: res.models || []
         }));
 
-        if (pId === selectedProviderId && !res.models.includes(selectedModelId)) {
-          setSelectedModelId(res.models[0]);
+        if (pId === selectedProviderId) {
+          setConnectionStatus('connected');
+          setConnectionStatusMessage(`Verified & Loaded ${res.models.length} model(s).`);
+          if (!res.models.includes(selectedModelId)) {
+            setSelectedModelId(res.models[0]);
+          }
         }
 
         showToast('Models Loaded', `Fetched ${res.models.length} available models from ${provDef?.name || pId}.`, 'success');
       } else {
-        showToast('Fetch Notice', res.error || `No models returned from ${provDef?.name || pId}.`, 'warning');
+        if (pId === selectedProviderId) {
+          setConnectionStatus('invalid');
+          setConnectionStatusMessage(res.error || `Invalid credentials for ${provDef?.name || pId}.`);
+        }
+        showToast('Authentication Error', res.error || `Invalid credentials for ${provDef?.name || pId}.`, 'error');
       }
     } catch (err: any) {
+      if (pId === selectedProviderId) {
+        setConnectionStatus('error');
+        setConnectionStatusMessage(err.message || 'Connection failed.');
+      }
       showToast('Fetch Failed', err.message || 'Failed to fetch models.', 'error');
     } finally {
       setIsFetchingModels(false);
     }
   };
 
-  // Test Connection Handler (also updates fetched models)
+  // Test Connection Handler (also updates fetched models and strict validation)
   const handleTestConnection = async () => {
     setIsTestingConnection(true);
     setConnectionStatus('testing');
@@ -206,23 +220,70 @@ export const SettingsScreen: React.FC = () => {
       if (res.success) {
         showToast('Connection Verified', res.message, 'success');
       } else {
-        showToast('Connection Check', res.message, 'warning');
+        showToast('Connection Failed', res.message, 'error');
       }
+      return res;
     } catch (err: any) {
       setConnectionStatus('error');
       setConnectionStatusMessage(err.message || 'Connection test failed.');
       showToast('Connection Failed', err.message || 'Failed to connect.', 'error');
+      return { success: false, status: 'error' as AIConnectionStatus, message: err.message };
     } finally {
       setIsTestingConnection(false);
     }
   };
 
-  // Save AI Model Configuration Handler
+  // Save AI Model Configuration Handler with Mandatory Verification
   const handleSaveAIConfiguration = async () => {
     const provDef = AI_PROVIDERS_CONFIG.find(p => p.id === selectedProviderId) || AI_PROVIDERS_CONFIG[7];
     if (provDef.requiresKey && (!apiKeyInput || apiKeyInput.trim().length === 0)) {
+      setConnectionStatus('invalid');
+      setConnectionStatusMessage(`API Key is required for ${provDef.name}.`);
       showToast('API Key Required', `Please enter a valid API key for ${provDef.name}.`, 'warning');
       return;
+    }
+
+    let finalStatus: AIConnectionStatus = connectionStatus;
+    let finalMessage = connectionStatusMessage;
+
+    // If not builtin and not already verified as connected, perform live test first
+    if (selectedProviderId !== 'builtin' && connectionStatus !== 'connected') {
+      setIsTestingConnection(true);
+      const testResult = await api.testAIConnection({
+        provider: selectedProviderId,
+        apiKey: apiKeyInput,
+        baseUrl: baseUrlInput,
+        model: selectedModelId
+      });
+      setIsTestingConnection(false);
+
+      finalStatus = testResult.status;
+      finalMessage = testResult.message;
+      setConnectionStatus(finalStatus);
+      setConnectionStatusMessage(finalMessage);
+
+      if (!testResult.success) {
+        showToast('Validation Failed', testResult.message, 'error');
+        // Still save credentials but with invalid status so it won't falsely show connected
+        const currentProviders = settings?.aiProviders || {};
+        await updateSettings({
+          activeAIProvider: selectedProviderId,
+          selectedModel: selectedModelId,
+          aiProviders: {
+            ...currentProviders,
+            [selectedProviderId]: {
+              apiKey: apiKeyInput.trim(),
+              baseUrl: (selectedProviderId === 'ollama' || selectedProviderId === 'custom') ? baseUrlInput.trim() : undefined,
+              selectedModel: selectedModelId,
+              status: finalStatus,
+              statusMessage: finalMessage,
+              lastTested: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            }
+          },
+          agentOverrides: agentOverridesState
+        });
+        return;
+      }
     }
 
     const currentProviders = settings?.aiProviders || {};
@@ -232,8 +293,8 @@ export const SettingsScreen: React.FC = () => {
       selectedModel: selectedModelId,
       customModelName: selectedProviderId === 'custom' ? customModelInput.trim() : undefined,
       fetchedModels: providerFetchedModels[selectedProviderId] || [],
-      status: connectionStatus,
-      statusMessage: connectionStatusMessage,
+      status: finalStatus,
+      statusMessage: finalMessage,
       lastTested: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
@@ -1287,7 +1348,11 @@ export const SettingsScreen: React.FC = () => {
                     <input
                       type="text"
                       value={baseUrlInput}
-                      onChange={(e) => setBaseUrlInput(e.target.value)}
+                      onChange={(e) => {
+                        setBaseUrlInput(e.target.value);
+                        setConnectionStatus('not_configured');
+                        setConnectionStatusMessage('');
+                      }}
                       placeholder={selectedProviderId === 'ollama' ? 'http://localhost:11434' : 'http://localhost:8000/v1'}
                       aria-label="Endpoint URL"
                       className="flex-1 h-10 px-3.5 rounded-xl border border-[#d6dbe2] bg-white font-mono text-xs text-[#111827] focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] shadow-2xs transition"
@@ -1316,7 +1381,11 @@ export const SettingsScreen: React.FC = () => {
                       <input
                         type={showApiKey ? 'text' : 'password'}
                         value={apiKeyInput}
-                        onChange={(e) => setApiKeyInput(e.target.value)}
+                        onChange={(e) => {
+                          setApiKeyInput(e.target.value);
+                          setConnectionStatus('not_configured');
+                          setConnectionStatusMessage('');
+                        }}
                         placeholder={AI_PROVIDERS_CONFIG.find(p => p.id === selectedProviderId)?.keyPlaceholder || 'Enter API Key…'}
                         aria-label="API Key"
                         className="w-full h-10 pl-3.5 pr-10 rounded-xl border border-[#d6dbe2] bg-white font-mono text-xs text-[#111827] focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] shadow-2xs transition"
