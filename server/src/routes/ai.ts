@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { aiService } from '../services/aiService.js';
+import { storageService } from '../services/storageService.js';
 import { SummarizeRequest, AskQuestionRequest, FollowUpEmailRequest } from '../types/index.js';
 
 const router = Router();
@@ -14,11 +15,13 @@ router.post('/summarize', async (req: Request, res: Response) => {
       return;
     }
 
+    const settings = storageService.getSettings();
+
     const summary = await aiService.generateMOM(
       transcript,
-      template || 'Standard Meeting Notes',
-      language || 'English',
-      model || 'Nimbus 4B (High Quality)',
+      template || settings.defaultTemplate || 'Standard Meeting Notes & MOM',
+      language || settings.defaultLanguage || 'English',
+      model || settings.selectedModel || 'Nimbus 4B (High Quality)',
       customPrompt,
       title
     );

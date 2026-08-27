@@ -79,12 +79,13 @@ router.post('/', async (req: Request, res: Response) => {
     const meetingTitle = title || `Meeting ${new Date().toISOString().slice(0, 10)}_${new Date().toTimeString().slice(0, 5).replace(':', '-')}`;
 
     let summary = undefined;
+    const settings = storageService.getSettings();
     if (autoSummarize && transcript && transcript.length > 0) {
       summary = await aiService.generateMOM(
         transcript,
-        template || 'Standard Meeting Notes',
-        language || 'English',
-        model || 'Nimbus 4B (High Quality)',
+        template || settings.defaultTemplate || 'Standard Meeting Notes & MOM',
+        language || settings.defaultLanguage || 'English',
+        model || settings.selectedModel || 'Nimbus 4B (High Quality)',
         undefined,
         meetingTitle
       );
@@ -165,12 +166,13 @@ router.post('/import', upload.single('audio'), async (req: Request, res: Respons
     const meetingId = 'meeting-' + uuidv4().slice(0, 8);
 
     let summary = undefined;
+    const importSettings = storageService.getSettings();
     if (autoSummarize) {
       summary = await aiService.generateMOM(
         transcript,
-        template || 'Standard Meeting Notes',
-        language || 'English',
-        'Nimbus 4B (High Quality)',
+        template || importSettings.defaultTemplate || 'Standard Meeting Notes & MOM',
+        language || importSettings.defaultLanguage || 'English',
+        model || importSettings.selectedModel || 'Nimbus 4B (High Quality)',
         undefined,
         title
       );
