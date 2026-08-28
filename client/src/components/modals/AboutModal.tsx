@@ -303,21 +303,6 @@ export const AboutModal: React.FC = () => {
           </div>
         </div>
 
-        {/* Replay Tour Action */}
-        <div className="px-6 pb-4">
-          <button
-            type="button"
-            onClick={() => {
-              closeModal('about');
-              window.dispatchEvent(new CustomEvent('minomeet_replay_tour'));
-            }}
-            className="w-full py-2 px-3 rounded-xl border border-[#bfdbfe] bg-[#eff6ff] hover:bg-[#dbeafe] text-[#1e40af] text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
-          >
-            <Sparkles className="w-4 h-4 text-[#2563eb]" />
-            <span>Website Onboarding Tour &amp; Product Guide (7 Steps)</span>
-          </button>
-        </div>
-
         {/* Modal Footer */}
         <div className="mt-auto px-6 py-3 bg-[#fafbfc] border-t border-[#e5e7eb] flex items-center justify-center text-xs text-[#6b7280]">
           <div className="flex items-center gap-1.5 text-[11.5px]">

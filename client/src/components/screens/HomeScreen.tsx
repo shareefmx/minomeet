@@ -57,33 +57,44 @@ export const HomeScreen: React.FC = () => {
 
         {/* AI API Setup Alert Banner if not configured */}
         {!activeAI.isUsable && (
-          <div className="bg-gradient-to-r from-[#eff6ff] via-[#f0f9ff] to-[#f8fafc] border border-[#bfdbfe] rounded-2xl p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-start gap-3.5">
-              <div className="p-2.5 bg-[#2563eb] text-white rounded-xl shadow-xs flex-none mt-0.5">
+          <div className="bg-gradient-to-r from-[#eff6ff] via-[#f5f3ff] to-[#fffbeb] border-2 border-[#93c5fd] rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-gradient-to-br from-[#2563eb] to-[#4f46e5] text-white rounded-xl shadow-xs flex-none mt-0.5 ring-4 ring-indigo-50">
                 <Key className="w-5 h-5" />
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-extrabold text-[#1e3a8a]">Set Up Your AI Model &amp; API Key</h3>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#fef3c7] text-[#92400e] border border-[#fde68a]">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-sm font-black text-[#1e3a8a]">
+                    AI Model Not Configured — First-Time Setup Required
+                  </h3>
+                  <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#fef3c7] text-[#92400e] border border-[#fde68a]">
                     Action Required
                   </span>
                 </div>
-                <p className="text-xs text-[#475569] mt-0.5 leading-relaxed">
-                  Connect your preferred AI provider (<b>Google Gemini</b>, <b>OpenAI</b>, <b>Claude 3.7</b>, <b>Groq</b>, or <b>Ollama</b>) to enable autonomous MOM executive summaries and multi-meeting Q&amp;A.
+                <p className="text-xs text-[#334155] leading-relaxed max-w-2xl">
+                  Minomeet requires an AI model API key to generate automated <b>Minutes of Meeting (MOM)</b>, executive summaries, extract key decisions, assign action items, and power semantic Q&amp;A.
                 </p>
+                <div className="flex items-center gap-2 flex-wrap pt-0.5 text-[11px] text-[#475569]">
+                  <span className="font-semibold text-[#1e293b]">Supported Providers:</span>
+                  <span className="px-2 py-0.5 rounded-md bg-white border border-[#cbd5e1] font-medium text-[#1e3a8a]">Google Gemini</span>
+                  <span className="px-2 py-0.5 rounded-md bg-white border border-[#cbd5e1] font-medium text-[#1e3a8a]">OpenAI GPT-4o</span>
+                  <span className="px-2 py-0.5 rounded-md bg-white border border-[#cbd5e1] font-medium text-[#1e3a8a]">Claude 3.7</span>
+                  <span className="px-2 py-0.5 rounded-md bg-white border border-[#cbd5e1] font-medium text-[#1e3a8a]">Groq</span>
+                  <span className="px-2 py-0.5 rounded-md bg-white border border-[#cbd5e1] font-medium text-[#1e3a8a]">Ollama (Local)</span>
+                </div>
               </div>
             </div>
 
-            <div className="flex-none">
+            <div className="flex-none pt-2 md:pt-0">
               <button
                 onClick={() => {
                   setCurrentScreen('settings');
                   setSettingsTab('model');
                 }}
-                className="px-4 py-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer inline-flex items-center gap-1.5"
+                className="px-5 py-2.5 bg-gradient-to-r from-[#2563eb] to-[#4f46e5] hover:from-[#1d4ed8] hover:to-[#4338ca] text-white text-xs font-black rounded-xl shadow-md transition cursor-pointer inline-flex items-center gap-2 active:scale-95 whitespace-nowrap"
               >
-                <span>Configure AI Model</span>
+                <Key className="w-3.5 h-3.5" />
+                <span>Configure AI Model &amp; API Key</span>
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
