@@ -1303,34 +1303,78 @@ export const SettingsScreen: React.FC = () => {
                     )}
                   </div>
                   {selectedProviderId === 'custom' ? (
-                    <div className="space-y-1">
-                      <input
-                        type="text"
-                        value={customModelInput}
-                        onChange={(e) => {
-                          setCustomModelInput(e.target.value);
-                          setSelectedModelId(e.target.value);
-                        }}
-                        placeholder="e.g., deepseek-chat, llama-3.3-70b, qwen2.5-7b"
-                        aria-label="Custom Model Name"
-                        className="w-full h-10 px-3.5 rounded-xl border border-[#d6dbe2] bg-white text-xs font-medium text-[#111827] focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] shadow-2xs transition"
-                      />
-                      {(providerFetchedModels['custom'] || []).length > 0 && (
-                        <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                          <span className="text-[10px] text-[#6b7280]">Fetched:</span>
-                          {(providerFetchedModels['custom'] || []).slice(0, 4).map(m => (
-                            <button
-                              key={m}
-                              type="button"
-                              onClick={() => {
-                                setCustomModelInput(m);
-                                setSelectedModelId(m);
+                    <div className="space-y-2">
+                      {(providerFetchedModels['custom'] || []).length > 0 ? (
+                        <div className="space-y-1.5">
+                          <select
+                            value={(providerFetchedModels['custom'] || []).includes(selectedModelId) ? selectedModelId : '__custom__'}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val !== '__custom__') {
+                                setSelectedModelId(val);
+                                setCustomModelInput(val);
+                              } else {
+                                setSelectedModelId(customModelInput || 'custom-model');
+                              }
+                            }}
+                            aria-label="Available Models on Server"
+                            className="w-full h-10 px-3.5 rounded-xl border border-[#d6dbe2] bg-white text-xs font-semibold text-[#111827] focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] cursor-pointer shadow-2xs transition"
+                          >
+                            <optgroup label={`Available Models on Your Server (${(providerFetchedModels['custom'] || []).length})`}>
+                              {(providerFetchedModels['custom'] || []).map((m) => (
+                                <option key={m} value={m}>
+                                  {m} &bull; [Detected on Server]
+                                </option>
+                              ))}
+                            </optgroup>
+                            <optgroup label="Manual Entry">
+                              <option value="__custom__">+ Enter Custom Model Name Manually…</option>
+                            </optgroup>
+                          </select>
+
+                          {(!((providerFetchedModels['custom'] || []).includes(selectedModelId)) || customModelInput !== selectedModelId) && (
+                            <input
+                              type="text"
+                              value={customModelInput}
+                              onChange={(e) => {
+                                setCustomModelInput(e.target.value);
+                                setSelectedModelId(e.target.value);
                               }}
-                              className="text-[10px] bg-[#eff6ff] text-[#2563eb] border border-[#bfdbfe] px-1.5 py-0.5 rounded-md hover:bg-[#dbeafe] cursor-pointer"
-                            >
-                              {m}
-                            </button>
-                          ))}
+                              placeholder="Type custom model name (e.g. deepseek-chat, llama-3.3-70b)"
+                              aria-label="Custom Model Name"
+                              className="w-full h-9 px-3.5 rounded-xl border border-[#cbd5e1] bg-[#fafbfc] text-xs font-medium text-[#111827] focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition"
+                            />
+                          )}
+                        </div>
+                      ) : (
+                        <div className="space-y-1.5">
+                          <input
+                            type="text"
+                            value={customModelInput}
+                            onChange={(e) => {
+                              setCustomModelInput(e.target.value);
+                              setSelectedModelId(e.target.value);
+                            }}
+                            placeholder="e.g., deepseek-chat, llama-3.3-70b, qwen2.5-7b"
+                            aria-label="Custom Model Name"
+                            className="w-full h-10 px-3.5 rounded-xl border border-[#d6dbe2] bg-white text-xs font-medium text-[#111827] focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] shadow-2xs transition"
+                          />
+                          <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                            <span className="text-[10px] text-[#6b7280]">Presets:</span>
+                            {['deepseek-chat', 'llama-3.3-70b', 'qwen2.5-7b', 'gpt-4o', 'mistral-large'].map(m => (
+                              <button
+                                key={m}
+                                type="button"
+                                onClick={() => {
+                                  setCustomModelInput(m);
+                                  setSelectedModelId(m);
+                                }}
+                                className="text-[10px] bg-[#eff6ff] text-[#2563eb] border border-[#bfdbfe] px-1.5 py-0.5 rounded-md hover:bg-[#dbeafe] cursor-pointer transition font-medium"
+                              >
+                                {m}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>

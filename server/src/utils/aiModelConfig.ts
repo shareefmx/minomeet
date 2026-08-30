@@ -233,7 +233,7 @@ export function getAvailableModelsForProvider(
       dynamicOptions.push({
         id: mId,
         name: mId,
-        tag: 'Live Installed'
+        tag: providerId === 'custom' ? 'Server Model' : 'Live Installed'
       });
       existingIds.add(mId);
     }
