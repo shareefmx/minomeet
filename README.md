@@ -2,7 +2,7 @@
 
   # ⚡ Minomeet AI
 
-  ### Autonomous On-Device & Cloud Meeting Intelligence & Minutes of Meeting (MOM) Assistant
+  ### Autonomous On-Device & Cloud Meeting Intelligence • Minutes of Meeting (MOM) Assistant
 
   <p align="center">
     <a href="https://github.com/shareefmx/minomeet/releases"><img src="https://img.shields.io/github/v/release/shareefmx/minomeet?color=4f46e5&label=version&style=for-the-badge" alt="Release" /></a>
@@ -19,7 +19,7 @@
   </p>
 
   <p align="center">
-    <a href="#-quickstart">Quickstart</a> •
+    <a href="#-quickstart--casual-usage">Quickstart & Everyday Usage</a> •
     <a href="#-key-capabilities">Key Capabilities</a> •
     <a href="#-architecture--workflow">Architecture</a> •
     <a href="#-ai-model-control-panel">AI Control Panel</a> •
@@ -44,116 +44,101 @@
 
 - 🛡️ **100% Privacy-First Architecture**: Audio streams, live transcripts, and embeddings stay strictly local on your machine.
 - ⚡ **Multi-Source Audio Ingestion**: Record microphone audio, browser tabs, Google Meet, Zoom, Slack Huddles, or import `.mp3`, `.wav`, `.m4a`, `.webm` files.
-- 🧠 **Dynamic AI Model Resolution**: Single source of truth for all AI tasks. Seamlessly switch between **Ollama (Local LLMs)**, **OpenAI (GPT-4o)**, **Anthropic (Claude 3.7 Sonnet)**, **Google Gemini 2.5**, **Groq**, and **OpenRouter**.
+- 🧠 **Dynamic Multi-Model AI**: Seamlessly connect **Ollama (Local LLMs)**, **OpenAI (GPT-4o)**, **Anthropic (Claude 3.7 Sonnet)**, **Google Gemini 2.5**, **Groq**, and **Custom OpenAI-Compatible Servers** (LM Studio, vLLM, DeepSeek, Together AI).
 - 📋 **Executive MOM Generation**: Automatically generates structured Executive Summaries, Key Decisions, Discussion Highlights, Next Steps, and interactive Action Item matrices.
 - 💬 **Ask Your Meetings AI**: Semantic natural-language Q&A assistant across your historical meeting archives.
 - ✉️ **One-Click Follow-Up Emails**: Generates tailored email drafts in Professional, Concise, or Action-Oriented formats.
-- 🔄 **Live GitHub Updates**: Direct built-in release verification connecting to [`shareefmx/minomeet`](https://github.com/shareefmx/minomeet).
+- 💻 **Global Terminal CLI (`minomeet`)**: Launch casually anytime directly from your terminal by typing `minomeet` and pressing `o` to open the app window.
 
 ---
 
-## 🚀 Installation & Setup Guide
+## 🚀 Quickstart & Everyday Usage
 
-Get Minomeet running locally on your machine in less than 2 minutes.
+### 📥 1. One-Time Setup
 
-### 📋 Prerequisites
+Get Minomeet configured on your machine in under 2 minutes:
 
-| Requirement | Recommended Version | Purpose |
-| :--- | :--- | :--- |
-| **Node.js** | `v18.0.0` or higher (`v20+` LTS recommended) | Frontend & Backend Runtime |
-| **npm / pnpm / yarn** | Latest | Package Management |
-| **Python** *(Optional)* | `3.10+` | Real-time on-device speech-to-text (Whisper/Parakeet) |
-| **AI Provider Key** | Google Gemini, OpenAI, Claude, Groq, or Ollama | Meeting summaries, action items & Q&A |
-
----
-
-### 📥 Step-by-Step Installation
-
-#### Step 1: Clone the Repository
 ```bash
+# Clone the repository
 git clone https://github.com/shareefmx/minomeet.git
 cd minomeet
-```
 
-#### Step 2: Install Dependencies
-```bash
-# Install workspace dependencies for root, client, and server
+# Install workspace dependencies
 npm install
 
-# (Optional) Install Python packages for on-device speech transcription
-pip install -r requirements.txt
+# Register global CLI command (Run once)
+npm link
 ```
-
-#### Step 3: (Optional) Configure Environment Variables
-Copy the example environment configuration:
-```bash
-cp .env.example .env
-```
-
-#### Step 4: Run the Development Server
-```bash
-npm run dev
-```
-
-Both the React client and Express backend will start concurrently:
-- 🌐 **Frontend Application**: [`http://localhost:5173`](http://localhost:5173)
-- 🔌 **Backend API Server**: [`http://localhost:5001`](http://localhost:5001)
 
 ---
 
-### 🧭 First-Time User 3-Step Tour & AI API Key Setup
+### ☕ 2. Everyday Casual Launch
 
-1. **Interactive 3-Step Website Onboarding Tour**:
-   When launching Minomeet for the first time, an interactive 3-step walkthrough guides you through the application:
-   - **Step 1 — Capture & Transcribe**: Dual-channel recording (Mic + System Audio) and live speech-to-text diarization.
-   - **Step 2 — Meeting Intelligence**: Executive Minutes of Meeting (MOM), key decisions, and action items matrix.
-   - **Step 3 — AI Model Setup**: Direct connection to your preferred AI API key for private, zero-telemetry synthesis.
+Once setup is complete, you can launch Minomeet casually at any time from **any directory** in your terminal:
 
-2. **Configure Your AI API Key**:
-   Upon completing or skipping the 3-step tour, Minomeet automatically opens **Settings ➔ AI Model**:
-   - Select your provider: **Google Gemini**, **OpenAI**, **Anthropic Claude**, **Groq**, **OpenRouter**, or **Ollama**.
-   - Paste your API key (or specify your custom endpoint).
-   - Click **"Test Connection"** to verify credentials in real time.
-   - Click **"Save Global Configuration"**.
-
----
-
-### 📦 Production Build
-
-To compile and build optimized production bundles:
 ```bash
-npm run build
+minomeet
 ```
-Compiled production outputs will be located in `client/dist` and `server/dist`.
+
+```
+   __  __ _                            _   
+  |  \/  (_)_ __   ___  _ __ ___   ___  ___| |_ 
+  | |\/| | | '_ \ / _ \| '_ ` _ \ / _ \/ _ \ __|
+  | |  | | | | | | (_) | | | | | |  __/  __/ |_ 
+  |_|  |_|_|_| |_|\___/|_| |_| |_|\___|\___|\__|
+
+  Autonomous On-Device & Cloud AI Meeting Intelligence (v1.2.0)
+  -----------------------------------------------------------------
+  ➜  Web Application:  http://localhost:5173
+  ➜  Backend API:      http://localhost:5001
+  ➜  Environment:      100% Privacy-First On-Device
+  -----------------------------------------------------------------
+  Interactive Shortcuts:
+  [o]  Open Minomeet in browser window
+  [c]  Clear terminal screen
+  [q]  Quit Minomeet (or press Ctrl+C)
+  -----------------------------------------------------------------
+```
+
+#### ⌨️ Terminal Interactive Shortcuts:
+- **Press `o`**: Instantly launches your default browser and opens Minomeet (`http://localhost:5173`).
+- **Press `c`**: Clears the console.
+- **Press `q`** (or `Ctrl+C`): Gracefully stops all Minomeet services.
+
+*(Alternatively, you can also start via `npm start` or `npm run dev`)*.
 
 ---
 
 ## 🎛️ AI Model Control Panel
 
-Minomeet enforces **Dynamic Model Resolution** as the single source of truth across all AI agents:
+Minomeet connects directly to frontier AI providers or local self-hosted inference servers:
 
 ```
-Settings ──► AI Model ──► Provider ──► Model ──► Test Connection ──► Save ──► AI Agent ──► Synthesize
+Settings ──► AI Model ──► Provider ──► Model ──► Test Connection ──► Save ──► AI Agent
 ```
 
-### Supported AI Providers
+### Supported AI Providers & Engines
 
-1. **Google Gemini**: `gemini-2.5-flash`, `gemini-2.5-pro`, `gemini-1.5-pro`, `gemini-1.5-flash`
-2. **OpenAI**: `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `o1`, `o3-mini`
-3. **Anthropic Claude**: `claude-3-7-sonnet`, `claude-3-5-sonnet`, `claude-3-5-haiku`, `claude-3-opus`
-4. **Groq (Ultra High-Speed LPUs)**: `llama-3.3-70b-versatile`, `llama-3.1-8b-instant`, `mixtral-8x7b-32768`
-5. **OpenRouter**: Unified API routing across 200+ models with automatic load balancing.
-6. **Ollama (Self-Hosted / Private LAN)**:
-   - Endpoint: `http://127.0.0.1:11434`
-   - Supports: `llama3.3:70b`, `qwen2.5:7b`, `mistral:7b`, `deepseek-r1:8b`, `phi4:14b`
-   - Real-time "Fetch Models" and "Test Connection" validation.
-7. **Custom OpenAI-Compatible Server**: Connect to any vLLM, LM Studio, Together AI, or LocalAI endpoint.
+| Provider | Supported Models | Mode |
+| :--- | :--- | :--- |
+| **Google Gemini** | `gemini-2.5-flash`, `gemini-2.5-pro`, `gemini-1.5-pro` | Cloud API |
+| **OpenAI** | `gpt-4o`, `gpt-4o-mini`, `o3-mini`, `gpt-4-turbo` | Cloud API |
+| **Anthropic Claude** | `claude-3-7-sonnet`, `claude-3-5-sonnet`, `claude-3-5-haiku` | Cloud API |
+| **Groq (LPUs)** | `llama-3.3-70b-versatile`, `llama-3.1-8b-instant`, `mixtral-8x7b` | Ultra-Fast Cloud |
+| **Ollama (Self-Hosted)** | `llama3.3:70b`, `qwen2.5:7b`, `deepseek-r1:8b`, `mistral:7b` | 100% Offline Local |
+| **Custom OpenAI Server** | LM Studio, vLLM, DeepSeek, Together AI, LiteLLM | Auto Model Discovery |
+
+> **💡 Custom OpenAI Server Auto-Discovery**: Enter your custom endpoint URL & API key, then click **"Fetch Models"** — Minomeet automatically retrieves all models running on your server and populates a dynamic selection dropdown.
+
+---
 
 ## 📂 Project Structure
 
 ```text
 minomeet/
-├── client/                     # React 18 + Vite Frontend
+├── bin/                        # Global CLI Executable ('minomeet')
+│   └── minomeet.js             # Terminal interactive runner with 'o' browser launcher
+├── client/                     # React 18 + Vite 6 Web Application
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── layout/         # Titlebar, Sidebar, ToastHost
@@ -162,7 +147,7 @@ minomeet/
 │   │   ├── context/            # MeetingContext (State management & Audio streaming)
 │   │   ├── services/           # API Client & Export Handlers
 │   │   ├── types/              # TypeScript Type Definitions
-│   │   └── utils/              # AI Model Config & Formatters
+│   │   └── utils/              # AI Model Config & Robust JSON Formatters
 │   ├── index.html
 │   ├── package.json
 │   └── vite.config.ts
@@ -172,54 +157,39 @@ minomeet/
 │   │   ├── services/           # AIService, AudioService, StorageService
 │   │   ├── types/              # Server Type Definitions
 │   │   ├── utils/              # Model Resolution & Robust AI JSON Parser
-│   │   └── index.ts            # Server Entrypoint
+│   │   └── index.ts            # Server Entrypoint (Port 5001)
 │   ├── package.json
 │   └── tsconfig.json
-├── package.json                # Root Workspace Configuration
+├── package.json                # Root Workspace Configuration & CLI 'bin'
 └── README.md                   # Project Documentation
 ```
 
 ---
 
-## ⌨️ Keyboard Shortcuts & Controls
+## ⌨️ Application Controls & Shortcuts
 
-| Shortcut / Action | Action |
+| Action / Shortcut | Function |
 | :--- | :--- |
-| `Click Record` | Start recording (Microphone, System audio, or Mixed) |
-| `Click Stop` | Stop stream and automatically synthesize Minutes of Meeting |
-| `Ask AI` | Launch the historical meeting semantic Q&A chatbot |
-| `Export MOM` | Export notes to Markdown, Plain Text, or Print to PDF |
-| `Email Draft` | Generate an instant email recap formatted with action deliverables |
+| **`minomeet`** | Global terminal command to start services |
+| **`Press 'o'`** | Open web app in default browser |
+| **`Start Live Recording`** | Capture dual-channel audio (Mic + Meeting participants) |
+| **`Import Audio`** | Upload `.mp3`, `.wav`, `.m4a`, or `.webm` for local transcription |
+| **`Ask Your Meetings`** | Launch semantic multi-meeting Q&A search assistant |
+| **`Export MOM`** | Export notes to Markdown, Plain Text, or formatted PDF |
+| **`Email Recap`** | Generate 1-click tailored email drafts with action items |
 
 ---
 
 ## 🔒 Privacy & Security
 
-- **Zero Cloud Recording**: Audio captures are recorded directly on your hardware.
-- **Local Transcripts**: All speech-to-text outputs are stored in local JSON archives.
-- **Local LLM Compatibility**: Use Ollama to ensure that zero meeting data ever leaves your computer.
-- **No Third-Party Telemetry**: Zero external tracking scripts or telemetry data collection.
+- **Zero Third-Party Telemetry**: Conversations, audio streams, and generated notes are processed and stored locally on your machine.
+- **Local Storage**: All recordings and meeting history are archived in local JSON databases.
+- **Local LLM Compatibility**: Full support for Ollama and local OpenAI-compatible endpoints so zero meeting data ever leaves your computer.
 
 ---
 
-## 🤝 Contributing
+## 📜 License
 
-Contributions, bug reports, and feature suggestions are welcome!
+Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for details.
 
-1. Fork the Project ([`https://github.com/shareefmx/minomeet`](https://github.com/shareefmx/minomeet))
-2. Create your Feature Branch (`git checkout -b feat/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'feat: Add AmazingFeature'`)
-4. Push to the Branch (`git push origin feat/AmazingFeature`)
-5. Open a Pull Request
-
----
-
-## 📄 License
-
-Distributed under the **MIT License**. See [`LICENSE`](file:///Users/muhammedshraeef/Documents/GitHub/minomeet/LICENSE) for more details.
-
----
-
-<div align="center">
-  <sub>Crafted with precision by <a href="https://github.com/shareefmx">@shareefmx</a></sub>
-</div>
+Developed with ❤️ by [@shareefmx](https://github.com/shareefmx).

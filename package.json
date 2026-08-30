@@ -1,13 +1,17 @@
 {
   "name": "minomeet",
   "version": "1.2.0",
-  "description": "Minomeet - AI-Powered Minutes of Meeting Assistant",
-  "private": true,
+  "description": "Minomeet - Autonomous On-Device & Cloud AI Meeting Intelligence",
+  "type": "module",
+  "bin": {
+    "minomeet": "./bin/minomeet.js"
+  },
   "workspaces": [
     "client",
     "server"
   ],
   "scripts": {
+    "start": "node ./bin/minomeet.js",
     "dev": "concurrently -n \"SERVER,CLIENT\" -c \"blue,magenta\" \"npm run dev -w server\" \"npm run dev -w client\"",
     "server": "npm run dev -w server",
     "client": "npm run dev -w client",
