@@ -177,40 +177,83 @@ export const NotesScreen: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Dynamic 1-100% steady animation when generating summary
+  // Dynamic smooth steady progressive animation when generating summary
   useEffect(() => {
+    let active = true;
+
     if (isGeneratingSummary) {
       setSummaryProgress(1);
       setSummaryPhase('Reading & parsing transcript segments…');
-      let pct = 1;
-      summaryIntervalRef.current = setInterval(() => {
-        if (pct < 98) {
-          pct += 1;
+      let current = 1;
+
+      const advanceProgress = () => {
+        if (!active) return;
+
+        // Stage-based progressive pacing based on document creation flow:
+        // 1-20%: Parsing & speech segmentation (~260ms / 1%)
+        // 20-50%: Context analysis & thematic clustering (~360ms / 1%)
+        // 50-75%: Key decisions & action items matrix extraction (~480ms / 1%)
+        // 75-92%: Formatting & drafting Minutes of Meeting document (~720ms / 1%)
+        // 92-96%: Polishing layout & markdown structure (~1500ms / 1%)
+        let delay = 260;
+        let step = 1;
+
+        if (current < 20) {
+          delay = 260;
+        } else if (current < 50) {
+          delay = 360;
+        } else if (current < 75) {
+          delay = 480;
+        } else if (current < 92) {
+          delay = 720;
+        } else if (current < 96) {
+          delay = 1500;
+        } else {
+          // Asymptotically hold at 96% with slow gentle micro-intervals
+          delay = 3500;
+          step = 0;
+        }
+
+        if (current + step <= 96) {
+          current += step;
         }
 
         // Synchronize phase description with percentage
-        if (pct < 25) {
+        if (current < 25) {
           setSummaryPhase('Reading & parsing transcript segments…');
-        } else if (pct < 50) {
+        } else if (current < 50) {
           setSummaryPhase('Analyzing discussion context & key topics…');
-        } else if (pct < 75) {
+        } else if (current < 75) {
           setSummaryPhase('Extracting Key Decisions & Action Items matrix…');
-        } else if (pct < 99) {
+        } else if (current < 95) {
           setSummaryPhase('Formatting & structuring Minutes of Meeting document…');
         } else {
           setSummaryPhase('Finalizing Minutes of Meeting document…');
         }
 
-        setSummaryProgress(pct);
-      }, 85);
+        setSummaryProgress(current);
+
+        if (active) {
+          summaryIntervalRef.current = setTimeout(advanceProgress, delay);
+        }
+      };
+
+      summaryIntervalRef.current = setTimeout(advanceProgress, 260);
+
+      return () => {
+        active = false;
+        if (summaryIntervalRef.current) clearTimeout(summaryIntervalRef.current);
+      };
     } else {
-      if (summaryIntervalRef.current) clearInterval(summaryIntervalRef.current);
-      setSummaryProgress(100);
+      // Smooth completion: ramp to 100% cleanly
+      if (summaryIntervalRef.current) clearTimeout(summaryIntervalRef.current);
+      setSummaryProgress(prev => (prev > 0 ? 100 : 0));
       setSummaryPhase('Minutes of Meeting Document Prepared!');
     }
 
     return () => {
-      if (summaryIntervalRef.current) clearInterval(summaryIntervalRef.current);
+      active = false;
+      if (summaryIntervalRef.current) clearTimeout(summaryIntervalRef.current);
     };
   }, [isGeneratingSummary]);
 
@@ -715,7 +758,7 @@ export const NotesScreen: React.FC = () => {
                   <div className="w-full space-y-1.5">
                     <div className="w-full h-2.5 bg-[#e2e8f0] rounded-full overflow-hidden p-0.5 relative">
                       <div
-                        className="h-full bg-gradient-to-r from-[#2563eb] via-[#4f46e5] to-[#7c3aed] rounded-full transition-all duration-150 ease-out relative overflow-hidden"
+                        className="h-full bg-gradient-to-r from-[#2563eb] via-[#4f46e5] to-[#7c3aed] rounded-full transition-all duration-300 ease-out relative overflow-hidden"
                         style={{ width: `${summaryProgress}%` }}
                       >
                         <div className="absolute inset-0 bg-white/30 animate-shimmer w-1/2" />
@@ -767,7 +810,7 @@ export const NotesScreen: React.FC = () => {
                   </div>
                   <div className="w-full h-2 bg-[#dbeafe] rounded-full overflow-hidden relative">
                     <div
-                      className="h-full bg-gradient-to-r from-[#2563eb] via-[#4f46e5] to-[#7c3aed] rounded-full transition-all duration-150 relative overflow-hidden"
+                      className="h-full bg-gradient-to-r from-[#2563eb] via-[#4f46e5] to-[#7c3aed] rounded-full transition-all duration-300 ease-out relative overflow-hidden"
                       style={{ width: `${summaryProgress}%` }}
                     >
                       <div className="absolute inset-0 bg-white/30 animate-shimmer w-1/2" />

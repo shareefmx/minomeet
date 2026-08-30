@@ -122,13 +122,49 @@ export const ImportAudioModal: React.FC = () => {
     setProgressPhase(getPhaseDescription(1));
 
     let currentPct = 1;
-    progressIntervalRef.current = setInterval(() => {
-      if (currentPct < 98) {
-        currentPct += 1;
+    let active = true;
+
+    const advanceProgress = () => {
+      if (!active) return;
+
+      // Realistic staged progression across audio processing pipeline:
+      // 1-20%: Audio channel ingestion & normalization (~260ms / 1%)
+      // 20-45%: Computing log-mel spectrogram (~360ms / 1%)
+      // 45-75%: Neural speech acoustic decoding (~500ms / 1%)
+      // 75-92%: Structured AI MOM summary synthesis (~750ms / 1%)
+      // 92-96%: Segment packaging & final pass (~1600ms / 1%)
+      let delay = 260;
+      let step = 1;
+
+      if (currentPct < 20) {
+        delay = 260;
+      } else if (currentPct < 45) {
+        delay = 360;
+      } else if (currentPct < 75) {
+        delay = 500;
+      } else if (currentPct < 92) {
+        delay = 750;
+      } else if (currentPct < 96) {
+        delay = 1600;
+      } else {
+        // Hold asymptotically at 96% with gentle slow micro-intervals
+        delay = 3500;
+        step = 0;
       }
+
+      if (currentPct + step <= 96) {
+        currentPct += step;
+      }
+
       setProgressPercent(currentPct);
       setProgressPhase(getPhaseDescription(currentPct));
-    }, 85);
+
+      if (active) {
+        progressIntervalRef.current = setTimeout(advanceProgress, delay);
+      }
+    };
+
+    progressIntervalRef.current = setTimeout(advanceProgress, 260);
 
     try {
       const meeting = await api.importAudio({
@@ -140,7 +176,8 @@ export const ImportAudioModal: React.FC = () => {
         duration: audioDuration !== '00:00' ? audioDuration : undefined
       });
 
-      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+      active = false;
+      if (progressIntervalRef.current) clearTimeout(progressIntervalRef.current);
 
       // Hit 100% completion cleanly
       setProgressPercent(100);
@@ -157,9 +194,10 @@ export const ImportAudioModal: React.FC = () => {
         setProgressPercent(0);
         selectMeeting(meeting);
         showToast('Audio transcribed successfully!', `Meeting duration: ${meeting.duration} • MOM ready.`, 'success');
-      }, 350);
+      }, 400);
     } catch (err: any) {
-      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+      active = false;
+      if (progressIntervalRef.current) clearTimeout(progressIntervalRef.current);
       setIsUploading(false);
       setProgressPercent(0);
       showToast('Import failed', err.message, 'error');
@@ -239,7 +277,7 @@ export const ImportAudioModal: React.FC = () => {
             <div className="space-y-2">
               <div className="w-full h-3 bg-[#e2e8f0] rounded-full overflow-hidden p-0.5 relative shadow-inner">
                 <div
-                  className="h-full bg-gradient-to-r from-[#2563eb] via-[#4f46e5] to-[#7c3aed] rounded-full transition-all duration-150 ease-out relative overflow-hidden"
+                  className="h-full bg-gradient-to-r from-[#2563eb] via-[#4f46e5] to-[#7c3aed] rounded-full transition-all duration-300 ease-out relative overflow-hidden"
                   style={{ width: `${progressPercent}%` }}
                 >
                   <div className="absolute inset-0 bg-white/30 animate-shimmer w-1/2" />
@@ -277,9 +315,9 @@ export const ImportAudioModal: React.FC = () => {
               </div>
 
               <div className={`p-2.5 rounded-xl border flex items-center gap-2 transition ${
-                progressPercent >= 98 ? 'bg-[#f0fdf4] border-[#bbf7d0] text-[#15803d]' : 'bg-[#f9fafb] border-[#e5e7eb] text-[#6b7280]'
+                progressPercent >= 88 ? 'bg-[#f0fdf4] border-[#bbf7d0] text-[#15803d]' : 'bg-[#f9fafb] border-[#e5e7eb] text-[#6b7280]'
               }`}>
-                {progressPercent >= 98 ? <Check className="w-3.5 h-3.5 flex-none" /> : <span className="w-3.5 h-3.5 rounded-full border border-gray-300 flex-none" />}
+                {progressPercent >= 88 ? <Check className="w-3.5 h-3.5 flex-none" /> : <span className="w-3.5 h-3.5 rounded-full border border-gray-300 flex-none" />}
                 <span className="truncate font-semibold">4. AI MOM Synthesis</span>
               </div>
             </div>
