@@ -54,21 +54,40 @@
 
 ## 🚀 Quickstart & Everyday Usage
 
+### 📋 Prerequisites
+
+| Requirement | Recommended Version | Purpose |
+| :--- | :--- | :--- |
+| **Node.js** | `v18.0.0+` (`v20+` LTS recommended) | Web app and backend server runtime |
+| **Python** | `3.10+` *(Recommended)* | On-device Whisper STT & neural speech decoding |
+| **FFmpeg** | `4.0+` *(Recommended)* | High-fidelity multi-format audio processing |
+| **AI Key / Server** | Gemini, OpenAI, Claude, Groq, or Ollama | MOM summaries, action matrices & Q&A |
+
+---
+
 ### 📥 1. One-Time Setup
 
 Get Minomeet configured on your machine in under 2 minutes:
 
 ```bash
-# Clone the repository
+# Step 1: Clone the repository
 git clone https://github.com/shareefmx/minomeet.git
 cd minomeet
 
-# Install workspace dependencies
+# Step 2: Install Node.js workspace dependencies
 npm install
 
-# Register global CLI command (Run once)
+# Step 3: Install Python requirements for on-device Whisper STT & neural transcription
+pip install -r requirements.txt
+
+# Step 4: Register global CLI command (Run once)
 npm link
 ```
+
+> **💡 Optional System Dependency (FFmpeg)**:  
+> - **macOS**: `brew install ffmpeg`  
+> - **Ubuntu / Debian**: `sudo apt install ffmpeg`  
+> - **Windows**: `winget install Gyan.FFmpeg` or `choco install ffmpeg`
 
 ---
 
