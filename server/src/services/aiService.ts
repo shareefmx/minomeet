@@ -338,29 +338,53 @@ export class AIService {
 
     // 7. Custom OpenAI-Compatible Server
     if (provider === 'custom') {
-      const endpoint = (baseUrl || 'http://localhost:8000/v1').replace(/\/+$/, '');
+      const rawBase = (baseUrl || 'http://localhost:8000/v1').trim().replace(/\/+$/, '');
+      // Strip trailing /chat/completions or /models if user accidentally pasted full path
+      const cleanBase = rawBase.replace(/\/(chat\/completions|models)$/i, '').replace(/\/+$/, '');
+      
+      const candidateChatUrls = cleanBase.endsWith('/v1') || cleanBase.includes('/api/')
+        ? [`${cleanBase}/chat/completions`, `${cleanBase.replace(/\/v1$/, '')}/chat/completions`]
+        : [`${cleanBase}/v1/chat/completions`, `${cleanBase}/chat/completions`];
+
       const cleanModel = (model || 'custom-model').split(' ')[0].trim();
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (key) headers['Authorization'] = `Bearer ${key}`;
 
-      const res = await fetch(`${endpoint}/chat/completions`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          model: cleanModel,
-          messages: [
-            ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
-            { role: 'user', content: userPrompt }
-          ]
-        })
-      });
+      let lastError: any = null;
+      for (const chatUrl of candidateChatUrls) {
+        try {
+          const res = await fetch(chatUrl, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              model: cleanModel,
+              messages: [
+                ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
+                { role: 'user', content: userPrompt }
+              ]
+            })
+          });
 
-      if (!res.ok) {
-        throw new Error(`Custom server returned HTTP ${res.status}`);
+          if (res.ok) {
+            const data = (await res.json()) as any;
+            const content = data.choices?.[0]?.message?.content || data.choices?.[0]?.text || data.response || data.content || '';
+            if (content) return content;
+          } else {
+            let errorMsg = '';
+            try {
+              const errJson = (await res.json()) as any;
+              errorMsg = errJson.error?.message || errJson.message || errJson.detail || JSON.stringify(errJson);
+            } catch {
+              errorMsg = await res.text().catch(() => '');
+            }
+            lastError = new Error(`Custom server (${chatUrl}) returned HTTP ${res.status}: ${errorMsg || res.statusText}`);
+          }
+        } catch (err: any) {
+          lastError = err;
+        }
       }
 
-      const data = (await res.json()) as any;
-      return data.choices?.[0]?.message?.content || '';
+      throw lastError || new Error(`Could not execute prompt on custom OpenAI-compatible server at ${cleanBase}`);
     }
 
     throw new Error(`Unsupported provider ${provider} for LLM execution.`);
@@ -933,25 +957,78 @@ Respond strictly in JSON format with keys: "subject" and "body". Example:
     }
 
     if (provider === 'custom') {
-      const endpoint = (baseUrl || 'http://localhost:8000/v1').replace(/\/+$/, '');
+      const rawBase = (baseUrl || 'http://localhost:8000/v1').trim().replace(/\/+$/, '');
+      const cleanBase = rawBase.replace(/\/(chat\/completions|models)$/i, '').replace(/\/+$/, '');
       const key = (apiKey || '').trim().replace(/^['"`]|['"`]$/g, '');
-      try {
-        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-        if (key) headers['Authorization'] = `Bearer ${key}`;
 
-        const res = await fetch(`${endpoint}/models`, { headers });
-        if (res.ok) {
-          const data = (await res.json()) as any;
-          const models: string[] = (data.data || []).map((m: any) => m.id || m.name);
-          return { success: true, models: models.length > 0 ? models : ['custom-model'], status: 'connected' };
+      const candidateModelsUrls = cleanBase.endsWith('/v1') || cleanBase.includes('/api/')
+        ? [`${cleanBase}/models`, `${cleanBase.replace(/\/v1$/, '')}/models`]
+        : [`${cleanBase}/v1/models`, `${cleanBase}/models`];
+
+      const candidateChatUrls = cleanBase.endsWith('/v1') || cleanBase.includes('/api/')
+        ? [`${cleanBase}/chat/completions`, `${cleanBase.replace(/\/v1$/, '')}/chat/completions`]
+        : [`${cleanBase}/v1/chat/completions`, `${cleanBase}/chat/completions`];
+
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (key) headers['Authorization'] = `Bearer ${key}`;
+
+      // 1. Try candidate GET /models endpoints
+      for (const modelsUrl of candidateModelsUrls) {
+        try {
+          const res = await fetch(modelsUrl, { headers });
+          if (res.ok) {
+            const data = (await res.json()) as any;
+            const models: string[] = (data.data || data.models || []).map((m: any) => m.id || m.name || m);
+            if (models.length > 0) {
+              return { success: true, models, status: 'connected' };
+            }
+          }
+          if (res.status === 401 || res.status === 403) {
+            return { success: false, models: [], error: `Authentication failed (HTTP ${res.status}): Invalid API key for custom server.`, status: 'invalid' };
+          }
+        } catch {
+          // Continue to next check
         }
-        if (res.status === 401 || res.status === 403) {
-          return { success: false, models: [], error: `Authentication failed (HTTP ${res.status}): Invalid API key for custom server.`, status: 'invalid' };
-        }
-        return { success: false, models: [], error: `Custom server returned HTTP ${res.status}. Check endpoint URL and key.`, status: 'error' };
-      } catch (err: any) {
-        return { success: false, models: [], error: `Could not connect to custom server at ${endpoint}.`, status: 'error' };
       }
+
+      // 2. Fallback: Test connectivity via lightweight ping to /chat/completions
+      for (const chatUrl of candidateChatUrls) {
+        try {
+          const res = await fetch(chatUrl, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              model: 'custom-model',
+              messages: [{ role: 'user', content: 'ping' }],
+              max_tokens: 1
+            })
+          });
+
+          if (res.ok) {
+            return { success: true, models: ['custom-model'], status: 'connected' };
+          }
+          if (res.status === 401 || res.status === 403) {
+            return { success: false, models: [], error: `Authentication failed (HTTP ${res.status}): Invalid API key for custom server.`, status: 'invalid' };
+          }
+          // Some servers return 400 or 404 specifically because 'custom-model' is not their model name, which confirms the server is reachable and active!
+          if (res.status === 400 || res.status === 404 || res.status === 422) {
+            let errorMsg = '';
+            try {
+              const errJson = (await res.json()) as any;
+              errorMsg = errJson.error?.message || errJson.message || errJson.detail || '';
+            } catch {
+              // ignore
+            }
+            if (errorMsg.toLowerCase().includes('model') || res.status === 400 || res.status === 422) {
+              return { success: true, models: ['custom-model'], status: 'connected' };
+            }
+          }
+        } catch {
+          // Continue
+        }
+      }
+
+      return { success: false, models: [], error: `Could not connect to custom OpenAI-compatible server at ${cleanBase}. Please verify the URL and ensure the server is running.`, status: 'error' };
     }
 
     const key = (apiKey || '').trim().replace(/^['"`]|['"`]$/g, '');

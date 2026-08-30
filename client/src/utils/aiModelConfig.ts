@@ -215,6 +215,19 @@ export function getAvailableModelsForProvider(
   const existingIds = new Set(baseModels.map(m => m.id));
   const dynamicOptions: AIModelOption[] = [];
 
+  // If custom provider, ensure user-configured custom model is available in the options
+  if (providerId === 'custom') {
+    const customName = settings?.aiProviders?.custom?.customModelName || settings?.aiProviders?.custom?.selectedModel || 'custom-model';
+    if (!existingIds.has(customName)) {
+      dynamicOptions.push({
+        id: customName,
+        name: `${customName} (Configured Model)`,
+        tag: 'Custom Model'
+      });
+      existingIds.add(customName);
+    }
+  }
+
   for (const mId of fetched) {
     if (!existingIds.has(mId) && !isNonChatOrTranscriptionModel(mId)) {
       dynamicOptions.push({
@@ -262,6 +275,17 @@ export function resolveModel(settings: AppSettings | null | undefined, agentId: 
         isUsable = false;
         error = `Selected Ollama model '${resolvedModelId}' is not installed. Fetch models or choose another model.`;
       }
+    } else if (override.providerId === 'custom') {
+      resolvedModelId = cred?.customModelName || cred?.selectedModel || override.modelId || 'custom-model';
+      const customUrl = cred?.baseUrl || provDef.defaultEndpoint;
+      if (customUrl && customUrl.trim().length > 0) {
+        status = cred?.status || 'connected';
+        isUsable = status !== 'invalid';
+      } else {
+        status = 'not_configured';
+        isUsable = false;
+        error = 'API Endpoint URL required for Custom OpenAI-Compatible Server.';
+      }
     } else if (provDef.requiresKey && (!cred?.apiKey || !cred.apiKey.trim())) {
       status = 'not_configured';
       isUsable = false;
@@ -308,6 +332,17 @@ export function resolveModel(settings: AppSettings | null | undefined, agentId: 
       status = 'invalid';
       isUsable = false;
       error = `Selected Ollama model '${globalModelId}' is not installed. Fetch models or choose another model.`;
+    }
+  } else if (globalProviderId === 'custom') {
+    globalModelId = globalCred?.customModelName || globalCred?.selectedModel || (settings?.selectedModel && settings.selectedModel !== 'gemini-2.5-flash' ? settings.selectedModel : undefined) || 'custom-model';
+    const customUrl = globalCred?.baseUrl || globalProvDef.defaultEndpoint;
+    if (customUrl && customUrl.trim().length > 0) {
+      status = globalCred?.status || 'connected';
+      isUsable = status !== 'invalid';
+    } else {
+      status = 'not_configured';
+      isUsable = false;
+      error = 'API Endpoint URL required for Custom OpenAI-Compatible Server.';
     }
   } else if (globalProvDef.requiresKey && (!globalCred?.apiKey || !globalCred.apiKey.trim())) {
     status = 'not_configured';

@@ -139,17 +139,20 @@ export const SettingsScreen: React.FC = () => {
   // When selected provider changes in the UI dropdown
   const handleProviderChange = (newProviderId: string) => {
     setSelectedProviderId(newProviderId);
-    const provDef = AI_PROVIDERS_CONFIG.find(p => p.id === newProviderId) || AI_PROVIDERS_CONFIG[7];
+    const provDef = AI_PROVIDERS_CONFIG.find(p => p.id === newProviderId) || AI_PROVIDERS_CONFIG[0];
     const savedCred = settings?.aiProviders?.[newProviderId];
 
-    const defaultModel = savedCred?.selectedModel || provDef.models[0]?.id || 'default';
+    const customModelName = savedCred?.customModelName || savedCred?.selectedModel || 'custom-model';
+    const defaultModel = newProviderId === 'custom'
+      ? customModelName
+      : (savedCred?.selectedModel || provDef.models[0]?.id || 'gemini-2.5-flash');
     setSelectedModelId(defaultModel);
 
     setApiKeyInput(savedCred?.apiKey || '');
     setBaseUrlInput(savedCred?.baseUrl || (newProviderId === 'ollama' ? 'http://127.0.0.1:11434' : (provDef.defaultEndpoint || 'http://localhost:8000/v1')));
-    setCustomModelInput(savedCred?.customModelName || 'custom-model');
+    setCustomModelInput(customModelName);
 
-    const status: AIConnectionStatus = savedCred?.status || (newProviderId === 'builtin' ? 'connected' : (savedCred?.apiKey ? 'connected' : 'not_configured'));
+    const status: AIConnectionStatus = savedCred?.status || (newProviderId === 'builtin' ? 'connected' : (newProviderId === 'custom' ? (savedCred?.baseUrl ? 'connected' : 'not_configured') : (savedCred?.apiKey ? 'connected' : 'not_configured')));
     setConnectionStatus(status);
     setConnectionStatusMessage(savedCred?.statusMessage || (newProviderId === 'builtin' ? 'Connected & Ready' : ''));
   };
@@ -187,6 +190,9 @@ export const SettingsScreen: React.FC = () => {
           setConnectionStatusMessage(`Verified & Loaded ${res.models.length} model(s).`);
           if (!res.models.includes(selectedModelId)) {
             setSelectedModelId(res.models[0]);
+            if (pId === 'custom') {
+              setCustomModelInput(res.models[0]);
+            }
           }
         }
 
@@ -215,12 +221,16 @@ export const SettingsScreen: React.FC = () => {
     setConnectionStatus('testing');
     setConnectionStatusMessage('Validating credentials and model reachability…');
 
+    const effectiveModel = selectedProviderId === 'custom'
+      ? (customModelInput.trim() || 'custom-model')
+      : selectedModelId;
+
     try {
       const res = await api.testAIConnection({
         provider: selectedProviderId,
-        apiKey: apiKeyInput,
-        baseUrl: baseUrlInput,
-        model: selectedModelId
+        apiKey: apiKeyInput.trim(),
+        baseUrl: baseUrlInput.trim(),
+        model: effectiveModel
       });
 
       setConnectionStatus(res.status);
@@ -251,13 +261,17 @@ export const SettingsScreen: React.FC = () => {
 
   // Save AI Model Configuration Handler with Mandatory Verification
   const handleSaveAIConfiguration = async () => {
-    const provDef = AI_PROVIDERS_CONFIG.find(p => p.id === selectedProviderId) || AI_PROVIDERS_CONFIG[7];
+    const provDef = AI_PROVIDERS_CONFIG.find(p => p.id === selectedProviderId) || AI_PROVIDERS_CONFIG[0];
     if (provDef.requiresKey && (!apiKeyInput || apiKeyInput.trim().length === 0)) {
       setConnectionStatus('invalid');
       setConnectionStatusMessage(`API Key is required for ${provDef.name}.`);
       showToast('API Key Required', `Please enter a valid API key for ${provDef.name}.`, 'warning');
       return;
     }
+
+    const effectiveModelId = selectedProviderId === 'custom'
+      ? (customModelInput.trim() || 'custom-model')
+      : selectedModelId;
 
     let finalStatus: AIConnectionStatus = connectionStatus;
     let finalMessage = connectionStatusMessage;
@@ -267,9 +281,9 @@ export const SettingsScreen: React.FC = () => {
       setIsTestingConnection(true);
       const testResult = await api.testAIConnection({
         provider: selectedProviderId,
-        apiKey: apiKeyInput,
-        baseUrl: baseUrlInput,
-        model: selectedModelId
+        apiKey: apiKeyInput.trim(),
+        baseUrl: baseUrlInput.trim(),
+        model: effectiveModelId
       });
       setIsTestingConnection(false);
 
@@ -284,13 +298,14 @@ export const SettingsScreen: React.FC = () => {
         const currentProviders = settings?.aiProviders || {};
         await updateSettings({
           activeAIProvider: selectedProviderId,
-          selectedModel: selectedModelId,
+          selectedModel: effectiveModelId,
           aiProviders: {
             ...currentProviders,
             [selectedProviderId]: {
               apiKey: apiKeyInput.trim(),
               baseUrl: (selectedProviderId === 'ollama' || selectedProviderId === 'custom') ? baseUrlInput.trim() : undefined,
-              selectedModel: selectedModelId,
+              selectedModel: effectiveModelId,
+              customModelName: selectedProviderId === 'custom' ? effectiveModelId : undefined,
               status: finalStatus,
               statusMessage: finalMessage,
               lastTested: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -305,8 +320,8 @@ export const SettingsScreen: React.FC = () => {
     const updatedCredential: ProviderCredential = {
       apiKey: provDef.requiresKey ? apiKeyInput.trim() : (selectedProviderId === 'custom' ? apiKeyInput.trim() : undefined),
       baseUrl: (selectedProviderId === 'ollama' || selectedProviderId === 'custom') ? baseUrlInput.trim() : undefined,
-      selectedModel: selectedModelId,
-      customModelName: selectedProviderId === 'custom' ? customModelInput.trim() : undefined,
+      selectedModel: effectiveModelId,
+      customModelName: selectedProviderId === 'custom' ? effectiveModelId : undefined,
       fetchedModels: providerFetchedModels[selectedProviderId] || [],
       status: finalStatus,
       statusMessage: finalMessage,
@@ -315,7 +330,7 @@ export const SettingsScreen: React.FC = () => {
 
     await updateSettings({
       activeAIProvider: selectedProviderId,
-      selectedModel: selectedModelId,
+      selectedModel: effectiveModelId,
       aiProviders: {
         ...currentProviders,
         [selectedProviderId]: updatedCredential
@@ -323,7 +338,7 @@ export const SettingsScreen: React.FC = () => {
       agentOverrides: agentOverrides
     });
 
-    showToast('Configuration Saved', `Active AI model set to ${selectedModelId} (${provDef.name}).`, 'success');
+    showToast('Configuration Saved', `Active AI model set to ${effectiveModelId} (${provDef.name}).`, 'success');
   };
 
   // Audio Input Devices & Mic Test State
@@ -1288,17 +1303,37 @@ export const SettingsScreen: React.FC = () => {
                     )}
                   </div>
                   {selectedProviderId === 'custom' ? (
-                    <input
-                      type="text"
-                      value={customModelInput}
-                      onChange={(e) => {
-                        setCustomModelInput(e.target.value);
-                        setSelectedModelId(e.target.value);
-                      }}
-                      placeholder="e.g., deepseek-r1, llama-3.3-70b"
-                      aria-label="Custom Model Name"
-                      className="w-full h-10 px-3.5 rounded-xl border border-[#d6dbe2] bg-white text-xs font-medium text-[#111827] focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] shadow-2xs transition"
-                    />
+                    <div className="space-y-1">
+                      <input
+                        type="text"
+                        value={customModelInput}
+                        onChange={(e) => {
+                          setCustomModelInput(e.target.value);
+                          setSelectedModelId(e.target.value);
+                        }}
+                        placeholder="e.g., deepseek-chat, llama-3.3-70b, qwen2.5-7b"
+                        aria-label="Custom Model Name"
+                        className="w-full h-10 px-3.5 rounded-xl border border-[#d6dbe2] bg-white text-xs font-medium text-[#111827] focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] shadow-2xs transition"
+                      />
+                      {(providerFetchedModels['custom'] || []).length > 0 && (
+                        <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                          <span className="text-[10px] text-[#6b7280]">Fetched:</span>
+                          {(providerFetchedModels['custom'] || []).slice(0, 4).map(m => (
+                            <button
+                              key={m}
+                              type="button"
+                              onClick={() => {
+                                setCustomModelInput(m);
+                                setSelectedModelId(m);
+                              }}
+                              className="text-[10px] bg-[#eff6ff] text-[#2563eb] border border-[#bfdbfe] px-1.5 py-0.5 rounded-md hover:bg-[#dbeafe] cursor-pointer"
+                            >
+                              {m}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     <select
                       value={selectedModelId}
@@ -1323,9 +1358,16 @@ export const SettingsScreen: React.FC = () => {
               {/* Endpoint URL (for Ollama or Custom Server) with Fetch Models */}
               {(selectedProviderId === 'ollama' || selectedProviderId === 'custom') && (
                 <div>
-                  <label className="block text-xs font-bold text-[#374151] mb-1.5">
-                    {selectedProviderId === 'ollama' ? 'Ollama Endpoint URL' : 'API Endpoint URL'}
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-bold text-[#374151]">
+                      {selectedProviderId === 'ollama' ? 'Ollama Endpoint URL' : 'API Endpoint URL'}
+                    </label>
+                    {selectedProviderId === 'custom' && (
+                      <span className="text-[10px] text-[#6b7280]">
+                        e.g., http://localhost:1234/v1, https://api.deepseek.com/v1
+                      </span>
+                    )}
+                  </div>
                   <div className="flex items-center gap-2">
                     <input
                       type="text"
@@ -1349,6 +1391,11 @@ export const SettingsScreen: React.FC = () => {
                       <span>{isFetchingModels ? 'Fetching…' : 'Fetch Models'}</span>
                     </button>
                   </div>
+                  {selectedProviderId === 'custom' && (
+                    <p className="text-[11px] text-[#6b7280] mt-1.5">
+                      Supports any OpenAI-compatible endpoint (LM Studio, vLLM, DeepSeek, Together AI, LiteLLM, or LocalAI). Auto-resolves <code className="bg-[#f1f5f9] px-1 rounded text-[#1e293b]">/chat/completions</code> and <code className="bg-[#f1f5f9] px-1 rounded text-[#1e293b]">/models</code>.
+                    </p>
+                  )}
                 </div>
               )}
 
