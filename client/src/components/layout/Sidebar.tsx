@@ -107,8 +107,8 @@ export const Sidebar: React.FC = () => {
       {/* Meeting Notes List */}
       <div className="flex-1 overflow-y-auto space-y-1 pr-1 -mr-1">
         {filteredMeetings.length === 0 ? (
-          <div className="text-center py-6 text-xs text-[#9aa2af]">
-            No meetings matching search.
+          <div className="text-center py-6 px-2 text-xs text-[#9aa2af]">
+            {searchQuery ? 'No meetings matching search.' : 'No recorded meetings yet.'}
           </div>
         ) : (
           filteredMeetings.map((meeting) => {

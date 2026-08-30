@@ -246,96 +246,126 @@ export const HomeScreen: React.FC = () => {
               <Calendar className="w-4 h-4 text-[#4f46e5]" />
               <span>Recent Meeting Minutes</span>
             </h2>
-            <span className="text-xs text-[#6b7280]">Showing {meetings.slice(0, 4).length} of {meetings.length}</span>
+            {meetings.length > 0 && (
+              <span className="text-xs text-[#6b7280]">Showing {meetings.slice(0, 4).length} of {meetings.length}</span>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {meetings.slice(0, 4).map((meeting) => {
-              const isMenuOpen = openCardMenuId === meeting.id;
-
-              return (
-                <div
-                  key={meeting.id}
-                  onClick={() => selectMeeting(meeting)}
-                  className="relative bg-white border border-[#e5e7eb] hover:border-[#bfdbfe] rounded-xl p-5 shadow-sm hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
+          {meetings.length === 0 ? (
+            <div className="border-2 border-dashed border-[#e2e8f0] rounded-2xl p-8 text-center bg-[#fafbfc] flex flex-col items-center justify-center">
+              <div className="w-12 h-12 rounded-2xl bg-[#eff6ff] border border-[#dbeafe] flex items-center justify-center text-[#2563eb] mb-3">
+                <Calendar className="w-6 h-6" />
+              </div>
+              <h3 className="text-sm font-bold text-[#111827] mb-1">No Recorded Meetings Yet</h3>
+              <p className="text-xs text-[#6b7280] max-w-md mx-auto mb-4 leading-relaxed">
+                Start a live recording to capture your microphone and video conference audio, or import an existing audio file to generate executive meeting minutes.
+              </p>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => startRecording()}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer"
                 >
-                  <div>
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <h3 className="text-sm font-bold text-[#111827] group-hover:text-[#2563eb] transition line-clamp-1 pr-6">
-                        {meeting.title}
-                      </h3>
+                  <Mic className="w-3.5 h-3.5" />
+                  <span>Start Live Recording</span>
+                </button>
+                <button
+                  onClick={() => openModal('import')}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-[#d6dbe2] hover:bg-[#f8fafc] text-[#374151] text-xs font-bold rounded-xl shadow-2xs transition cursor-pointer"
+                >
+                  <Upload className="w-3.5 h-3.5 text-[#4f46e5]" />
+                  <span>Import Audio File</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {meetings.slice(0, 4).map((meeting) => {
+                const isMenuOpen = openCardMenuId === meeting.id;
 
-                      {/* Top Right Duration & 3-Dot Menu */}
-                      <div className="flex items-center gap-1.5 flex-none relative">
-                        <span className="text-xs text-[#9aa2af] flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> {meeting.duration}
-                        </span>
+                return (
+                  <div
+                    key={meeting.id}
+                    onClick={() => selectMeeting(meeting)}
+                    className="relative bg-white border border-[#e5e7eb] hover:border-[#bfdbfe] rounded-xl p-5 shadow-sm hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
+                  >
+                    <div>
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <h3 className="text-sm font-bold text-[#111827] group-hover:text-[#2563eb] transition line-clamp-1 pr-6">
+                          {meeting.title}
+                        </h3>
 
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setOpenCardMenuId(isMenuOpen ? null : meeting.id);
-                          }}
-                          className="p-1 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition opacity-0 group-hover:opacity-100 cursor-pointer"
-                          title="Options"
-                        >
-                          <MoreVertical className="w-3.5 h-3.5" />
-                        </button>
+                        {/* Top Right Duration & 3-Dot Menu */}
+                        <div className="flex items-center gap-1.5 flex-none relative">
+                          <span className="text-xs text-[#9aa2af] flex items-center gap-1">
+                            <Clock className="w-3 h-3" /> {meeting.duration}
+                          </span>
 
-                        {/* Card Dropdown Menu */}
-                        {isMenuOpen && (
-                          <div
-                            onClick={(e) => e.stopPropagation()}
-                            className="absolute right-0 top-full mt-1 w-36 bg-white border border-[#e5e7eb] rounded-xl shadow-xl py-1 z-50 text-xs animate-in fade-in zoom-in-95 duration-100"
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenCardMenuId(isMenuOpen ? null : meeting.id);
+                            }}
+                            className="p-1 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition opacity-0 group-hover:opacity-100 cursor-pointer"
+                            title="Options"
                           >
-                            <button
-                              onClick={() => {
-                                setOpenCardMenuId(null);
-                                openRenameModal(meeting);
-                              }}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-left text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition font-medium cursor-pointer"
+                            <MoreVertical className="w-3.5 h-3.5" />
+                          </button>
+
+                          {/* Card Dropdown Menu */}
+                          {isMenuOpen && (
+                            <div
+                              onClick={(e) => e.stopPropagation()}
+                              className="absolute right-0 top-full mt-1 w-36 bg-white border border-[#e5e7eb] rounded-xl shadow-xl py-1 z-50 text-xs animate-in fade-in zoom-in-95 duration-100"
                             >
-                              <Edit3 className="w-3.5 h-3.5" />
-                              <span>Rename</span>
-                            </button>
-                            <div className="h-px bg-gray-100 my-0.5" />
-                            <button
-                              onClick={() => {
-                                setOpenCardMenuId(null);
-                                openDeleteModal(meeting);
-                              }}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-left text-red-600 hover:bg-red-50 transition font-medium cursor-pointer"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                              <span>Delete</span>
-                            </button>
-                          </div>
-                        )}
+                              <button
+                                onClick={() => {
+                                  setOpenCardMenuId(null);
+                                  openRenameModal(meeting);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-left text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition font-medium cursor-pointer"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                                <span>Rename</span>
+                              </button>
+                              <div className="h-px bg-gray-100 my-0.5" />
+                              <button
+                                onClick={() => {
+                                  setOpenCardMenuId(null);
+                                  openDeleteModal(meeting);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-left text-red-600 hover:bg-red-50 transition font-medium cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                <span>Delete</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-[#4b5563] line-clamp-2 leading-relaxed mb-4">
+                        {meeting.summary?.summary || 'No summary generated yet. Click to view transcript and synthesize meeting minutes.'}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3 border-t border-[#f3f4f6] text-xs">
+                      <div className="flex items-center gap-2">
+                        {meeting.tags?.map((t, idx) => (
+                          <span key={idx} className="px-2 py-0.5 rounded-md bg-[#f3f4f6] text-[#4b5563] font-medium text-[11px]">
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-1 text-[#2563eb] font-semibold group-hover:translate-x-0.5 transition">
+                        <span>Open MOM</span>
+                        <ArrowRight className="w-3 h-3" />
                       </div>
                     </div>
-
-                    <p className="text-xs text-[#4b5563] line-clamp-2 leading-relaxed mb-4">
-                      {meeting.summary?.summary || 'No summary generated yet. Click to view transcript and synthesize meeting minutes.'}
-                    </p>
                   </div>
-
-                  <div className="flex items-center justify-between pt-3 border-t border-[#f3f4f6] text-xs">
-                    <div className="flex items-center gap-2">
-                      {meeting.tags?.map((t, idx) => (
-                        <span key={idx} className="px-2 py-0.5 rounded-md bg-[#f3f4f6] text-[#4b5563] font-medium text-[11px]">
-                          {t}
-                        </span>
-                      ))}
-                    </div>
-                    <div className="flex items-center gap-1 text-[#2563eb] font-semibold group-hover:translate-x-0.5 transition">
-                      <span>Open MOM</span>
-                      <ArrowRight className="w-3 h-3" />
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
       </div>
