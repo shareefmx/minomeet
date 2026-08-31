@@ -19,12 +19,12 @@
   </p>
 
   <p align="center">
-    <a href="#-quickstart--casual-usage">Quickstart & Everyday Usage</a> •
-    <a href="#-key-capabilities">Key Capabilities</a> •
-    <a href="#-architecture--workflow">Architecture</a> •
-    <a href="#-ai-model-control-panel">AI Control Panel</a> •
-    <a href="#-exporting--email">Export & Email</a> •
-    <a href="https://github.com/shareefmx/minomeet">GitHub Repo</a>
+    <a href="#-video-demo">📺 Video Demo</a> •
+    <a href="#-quickstart--everyday-usage">🚀 Quickstart</a> •
+    <a href="#-key-capabilities">✨ Key Capabilities</a> •
+    <a href="#-ai-model-control-panel">🎛️ AI Control Panel</a> •
+    <a href="#-how-you-can-support">❤️ Support</a> •
+    <a href="https://github.com/shareefmx/minomeet/issues">🐛 Issues</a>
   </p>
 
   ---
@@ -32,6 +32,21 @@
 </div>
 
 <br />
+
+## 📺 Video Demo & Product Walkthrough
+
+Check out the full product walkthrough and see Minomeet AI in action:
+
+<div align="center">
+  <a href="https://youtu.be/2RuGooHVJUE?si=c4jjRI49N232XsHz" target="_blank">
+    <img src="https://img.youtube.com/vi/2RuGooHVJUE/maxresdefault.jpg" alt="Minomeet AI Video Demo" width="750" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);" />
+  </a>
+  <p align="center">
+    👉 <b>Watch on YouTube:</b> <a href="https://youtu.be/2RuGooHVJUE?si=c4jjRI49N232XsHz"><b>https://youtu.be/2RuGooHVJUE</b></a>
+  </p>
+</div>
+
+---
 
 ## 🌟 Highlights
 
@@ -54,6 +69,9 @@
 
 ## 🚀 Quickstart & Everyday Usage
 
+The repository is completely open-source and ready to run locally in under 2 minutes:
+👉 **GitHub Repository**: [https://github.com/shareefmx/minomeet](https://github.com/shareefmx/minomeet)
+
 ### 📋 Prerequisites
 
 | Requirement | Recommended Version | Purpose |
@@ -66,8 +84,6 @@
 ---
 
 ### 📥 1. One-Time Setup
-
-Get Minomeet configured on your machine in under 2 minutes:
 
 ```bash
 # Step 1: Clone the repository
@@ -204,6 +220,24 @@ minomeet/
 - **Zero Third-Party Telemetry**: Conversations, audio streams, and generated notes are processed and stored locally on your machine.
 - **Local Storage**: All recordings and meeting history are archived in local JSON databases.
 - **Local LLM Compatibility**: Full support for Ollama and local OpenAI-compatible endpoints so zero meeting data ever leaves your computer.
+
+---
+
+## 💬 Community, Feedback & Issues
+
+If you run into any bugs, have feature requests, or want to suggest improvements:
+👉 **Open an Issue on GitHub**: [https://github.com/shareefmx/minomeet/issues](https://github.com/shareefmx/minomeet/issues)
+
+---
+
+## ❤️ How You Can Support
+
+If you find Minomeet useful for your workflow and meetings, here are a few great ways to support the project:
+
+1. **🚀 Give it a try**: Run it for your next meeting or conference call and let me know your thoughts, feature requests, or feedback!
+2. **⭐ Star the repository**: Dropping a ⭐ on [**`shareefmx/minomeet`**](https://github.com/shareefmx/minomeet) helps boost visibility and reach more open-source builders.
+3. **👀 Follow on GitHub**: Follow [@shareefmx](https://github.com/shareefmx) to stay updated on new releases, tools, and local AI projects.
+4. **💖 Sponsor on GitHub**: If you'd like to support ongoing development and local AI research, consider sponsoring the project directly via [**GitHub Sponsors**](https://github.com/sponsors/shareefmx).
 
 ---
 
