@@ -245,4 +245,4 @@ If you find Minomeet useful for your workflow and meetings, here are a few great
 
 Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for details.
 
-Developed with ❤️ by [@shareefmx](https://github.com/shareefmx).
+Developed by [@shareefmx](https://github.com/shareefmx).
