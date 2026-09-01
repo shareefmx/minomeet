@@ -52,6 +52,17 @@ app.use('/uploads', express.static(UPLOADS_DIR, {
   maxAge: '1d'
 }));
 
+// Resolve client production build directory if available
+const CLIENT_DIST_DIR = path.resolve(__dirname, '../../client/dist');
+const CLIENT_DIST_ALT = path.resolve(__dirname, '../client/dist');
+const resolvedClientDist = fs.existsSync(CLIENT_DIST_DIR) 
+  ? CLIENT_DIST_DIR 
+  : (fs.existsSync(CLIENT_DIST_ALT) ? CLIENT_DIST_ALT : null);
+
+if (resolvedClientDist) {
+  app.use(express.static(resolvedClientDist));
+}
+
 // Routes
 app.use('/api/meetings', meetingsRouter);
 app.use('/api/ai', aiRouter);
@@ -59,8 +70,11 @@ app.use('/api/settings', settingsRouter);
 app.use('/api/transcription', transcriptionRouter);
 app.use('/api/templates', templatesRouter);
 
-// Root endpoint
-app.get('/', (req, res) => {
+// Root endpoint / SPA fallback
+app.get('/', (req, res, next) => {
+  if (resolvedClientDist && fs.existsSync(path.join(resolvedClientDist, 'index.html'))) {
+    return res.sendFile(path.join(resolvedClientDist, 'index.html'));
+  }
   if (req.accepts('html')) {
     res.setHeader('Content-Type', 'text/html');
     res.send(`<!DOCTYPE html>
@@ -285,8 +299,14 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
-// 404 fallback
+// 404 / SPA Route fallback
 app.use((req, res) => {
+  if (req.method === 'GET' && resolvedClientDist && !req.path.startsWith('/api') && !req.path.startsWith('/uploads')) {
+    const indexPath = path.join(resolvedClientDist, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      return res.sendFile(indexPath);
+    }
+  }
   res.status(404).json({
     success: false,
     error: `Route not found: ${req.method} ${req.originalUrl}`

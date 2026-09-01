@@ -94,8 +94,9 @@ export class SpeechCaptureService {
     try {
       const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const wsHost = window.location.hostname || 'localhost';
-      const wsPort = '5001';
-      this.ws = new WebSocket(`${wsProtocol}//${wsHost}:${wsPort}/api/transcription/live-stream`);
+      const isDev = window.location.port === '5173';
+      const wsPort = isDev ? ':5001' : (window.location.port ? `:${window.location.port}` : '');
+      this.ws = new WebSocket(`${wsProtocol}//${wsHost}${wsPort}/api/transcription/live-stream`);
       this.ws.binaryType = 'arraybuffer';
 
       this.ws.onmessage = (event) => {

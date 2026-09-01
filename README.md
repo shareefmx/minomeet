@@ -11,6 +11,7 @@
     <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.8-3178c6.svg?style=for-the-badge&logo=typescript" alt="TypeScript" /></a>
     <a href="https://vitejs.dev/"><img src="https://img.shields.io/badge/Vite-6.0-646cff.svg?style=for-the-badge&logo=vite" alt="Vite" /></a>
     <a href="https://ollama.com/"><img src="https://img.shields.io/badge/Ollama-Local_AI-black.svg?style=for-the-badge&logo=ollama" alt="Ollama" /></a>
+    <a href="https://www.docker.com/"><img src="https://img.shields.io/badge/Docker-Ready-2496ed.svg?style=for-the-badge&logo=docker&logoColor=white" alt="Docker Ready" /></a>
     <a href="https://github.com/shareefmx/minomeet/stargazers"><img src="https://img.shields.io/github/stars/shareefmx/minomeet?style=for-the-badge&color=eab308" alt="Stars" /></a>
   </p>
 
@@ -21,6 +22,7 @@
   <p align="center">
     <a href="#-video-demo">📺 Video Demo</a> •
     <a href="#-quickstart--everyday-usage">🚀 Quickstart</a> •
+    <a href="#-docker-deployment">🐳 Docker</a> •
     <a href="#-key-capabilities">✨ Key Capabilities</a> •
     <a href="#-ai-model-control-panel">🎛️ AI Control Panel</a> •
     <a href="#-how-you-can-support">❤️ Support</a> •
@@ -141,6 +143,52 @@ minomeet
 - **Press `q`** (or `Ctrl+C`): Gracefully stops all Minomeet services.
 
 *(Alternatively, you can also start via `npm start` or `npm run dev`)*.
+
+---
+
+## 🐳 Docker Deployment
+
+Run Minomeet anywhere with zero manual dependencies using Docker and Docker Compose:
+
+### ⚡ 1-Command Startup with Docker Compose
+```bash
+# Clone the repository
+git clone https://github.com/shareefmx/minomeet.git
+cd minomeet
+
+# Start Minomeet container in the background
+docker compose up -d
+```
+
+Open your browser and visit:  
+👉 **`http://localhost:5001`**
+
+```bash
+# View live container logs
+docker compose logs -f
+
+# Stop the container
+docker compose down
+```
+
+---
+
+### 📦 Standalone Docker Commands
+
+```bash
+# 1. Build the production Docker image
+docker build -t minomeet .
+
+# 2. Run container with persistent data volumes
+docker run -d \
+  --name minomeet \
+  -p 5001:5001 \
+  -v minomeet_data:/app/server/data \
+  -v minomeet_uploads:/app/server/uploads \
+  minomeet
+```
+
+> **🛡️ Persistent Meeting Data**: Meeting notes, audio archives, and settings are preserved across container updates and restarts inside the `minomeet_data` and `minomeet_uploads` Docker volumes.
 
 ---
 

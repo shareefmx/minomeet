@@ -1,0 +1,29 @@
+services:
+  minomeet:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: minomeet:latest
+    container_name: minomeet
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      - PORT=5001
+      - NODE_ENV=production
+    volumes:
+      - minomeet_data:/app/server/data
+      - minomeet_uploads:/app/server/uploads
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  minomeet_data:
+    name: minomeet_data
+  minomeet_uploads:
+    name: minomeet_uploads
+
