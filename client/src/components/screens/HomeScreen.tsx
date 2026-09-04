@@ -128,7 +128,7 @@ export const HomeScreen: React.FC = () => {
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm border border-white/20 transition cursor-pointer backdrop-blur-sm"
               >
                 <Upload className="w-4 h-4" />
-                <span>Import Audio</span>
+                <span>Import Recording</span>
               </button>
               <button
                 onClick={() => openModal('ask')}
@@ -273,7 +273,7 @@ export const HomeScreen: React.FC = () => {
                   className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-[#d6dbe2] hover:bg-[#f8fafc] text-[#374151] text-xs font-bold rounded-xl shadow-2xs transition cursor-pointer"
                 >
                   <Upload className="w-3.5 h-3.5 text-[#4f46e5]" />
-                  <span>Import Audio File</span>
+                  <span>Import Recording (Audio/Video)</span>
                 </button>
               </div>
             </div>

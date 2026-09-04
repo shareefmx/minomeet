@@ -19,8 +19,62 @@ export interface TranscribeResult {
 
 export class AudioService {
   /**
-   * Transcribes an uploaded audio file into timestamped dialogue segments
-   * using the selected local Whisper or Parakeet model, preserving actual audio duration.
+   * Checks whether a file path has a video extension.
+   */
+  public isVideoFile(filePath: string): boolean {
+    const ext = path.extname(filePath).toLowerCase();
+    return ['.mp4', '.mov', '.mkv', '.avi', '.flv', '.wmv', '.m4v', '.3gp', '.ts', '.mpeg', '.mpg'].includes(ext);
+  }
+
+  /**
+   * Extracts audio stream from a video file using FFmpeg and saves as a 16kHz mono MP3.
+   * Returns the path to the extracted audio file.
+   */
+  public async extractAudioFromVideo(videoPath: string): Promise<string> {
+    const audioOutputPath = `${videoPath}.extracted.mp3`;
+    
+    // If already extracted and valid, return it
+    if (fs.existsSync(audioOutputPath) && fs.statSync(audioOutputPath).size > 1000) {
+      return audioOutputPath;
+    }
+
+    return new Promise<string>((resolve) => {
+      // ffmpeg -y -i input.mp4 -vn -acodec libmp3lame -ar 16000 -ac 1 -b:a 128k output.mp3
+      const args = [
+        '-y',
+        '-i', videoPath,
+        '-vn',
+        '-acodec', 'libmp3lame',
+        '-ar', '16000',
+        '-ac', '1',
+        '-b:a', '128k',
+        audioOutputPath
+      ];
+
+      execFile('ffmpeg', args, { maxBuffer: 10 * 1024 * 1024 }, (err, _stdout, stderr) => {
+        if (err || !fs.existsSync(audioOutputPath) || fs.statSync(audioOutputPath).size < 100) {
+          console.warn('[AudioService] FFmpeg extraction notice, attempting secondary stream copy:', stderr || err?.message);
+          
+          const fallbackPath = `${videoPath}.extracted.aac`;
+          const fallbackArgs = ['-y', '-i', videoPath, '-vn', '-c:a', 'copy', fallbackPath];
+          execFile('ffmpeg', fallbackArgs, { maxBuffer: 10 * 1024 * 1024 }, (err2) => {
+            if (!err2 && fs.existsSync(fallbackPath) && fs.statSync(fallbackPath).size > 100) {
+              return resolve(fallbackPath);
+            }
+            // If ffmpeg fails, pass original video directly (whisper python script can decode many media containers)
+            resolve(videoPath);
+          });
+          return;
+        }
+
+        resolve(audioOutputPath);
+      });
+    });
+  }
+
+  /**
+   * Transcribes an uploaded audio or video file into timestamped dialogue segments
+   * using the selected local Whisper or Parakeet model, preserving actual duration.
    */
   public async transcribeAudioFile(
     filePath?: string,
@@ -33,10 +87,23 @@ export class AudioService {
     const chosenModel = modelId || transcriptionModelService.getActiveModel().id;
     const pyScript = path.join(SCRIPTS_DIR, 'transcribe.py');
 
-    if (filePath && fs.existsSync(filePath)) {
+    let effectiveAudioPath = filePath;
+
+    // If input is a video file, seamlessly extract audio track in background
+    if (filePath && fs.existsSync(filePath) && this.isVideoFile(filePath)) {
+      try {
+        console.log(`[AudioService] Ingested video file (${path.extname(filePath)}). Extracting audio track with FFmpeg...`);
+        effectiveAudioPath = await this.extractAudioFromVideo(filePath);
+        console.log(`[AudioService] Extracted audio track ready at: ${effectiveAudioPath}`);
+      } catch (extractErr) {
+        console.warn('[AudioService] Video audio extraction fallback to direct file:', extractErr);
+      }
+    }
+
+    if (effectiveAudioPath && fs.existsSync(effectiveAudioPath)) {
       try {
         const result = await new Promise<TranscribeResult>((resolve) => {
-          const args = [pyScript, '--audio', filePath, '--model', chosenModel, '--download_root', MODELS_DIR];
+          const args = [pyScript, '--audio', effectiveAudioPath, '--model', chosenModel, '--download_root', MODELS_DIR];
           if (language) {
             args.push('--language', language);
           }

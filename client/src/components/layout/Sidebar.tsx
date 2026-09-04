@@ -206,13 +206,13 @@ export const Sidebar: React.FC = () => {
           <span>{isRecording ? 'Recording in progress…' : 'Start Recording'}</span>
         </button>
 
-        {/* Import Audio Button */}
+        {/* Import Recording Button */}
         <button
           onClick={() => openModal('import')}
           className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl font-bold text-[13.5px] bg-[#dbeafe] text-[#1e3a8a] hover:bg-[#bfdbfe] transition cursor-pointer border border-[#bfdbfe]"
         >
           <Upload className="w-4 h-4" />
-          <span>Import Audio</span>
+          <span>Import Recording</span>
         </button>
 
         {/* Secondary Buttons */}

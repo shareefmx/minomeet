@@ -5,6 +5,7 @@ import {
   Upload,
   X,
   FileAudio,
+  FileVideo,
   Check,
   Loader2,
   Cpu,
@@ -36,7 +37,7 @@ export const ImportAudioModal: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<string>(settings?.defaultTemplate || 'Standard Meeting Notes');
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [progressPercent, setProgressPercent] = useState<number>(0);
-  const [progressPhase, setProgressPhase] = useState<string>('Preparing audio pipeline...');
+  const [progressPhase, setProgressPhase] = useState<string>('Preparing media pipeline...');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const progressIntervalRef = useRef<any>(null);
 
@@ -56,18 +57,23 @@ export const ImportAudioModal: React.FC = () => {
 
   if (!modals.import) return null;
 
-  const inspectAudioFile = (file: File) => {
+  const isVideoFile = (file: File) => {
+    return file.type.startsWith('video/') || ['.mp4', '.mov', '.mkv', '.avi', '.flv', '.wmv', '.m4v', '.3gp', '.ts', '.mpeg', '.mpg'].some(ext => file.name.toLowerCase().endsWith(ext));
+  };
+
+  const inspectMediaFile = (file: File) => {
     setSelectedFile(file);
     setAudioDuration('00:00');
 
     try {
       const url = URL.createObjectURL(file);
-      const audio = new Audio();
-      audio.preload = 'metadata';
-      audio.src = url;
+      const isVid = isVideoFile(file);
+      const mediaElem = isVid ? document.createElement('video') : new Audio();
+      mediaElem.preload = 'metadata';
+      mediaElem.src = url;
 
-      audio.onloadedmetadata = () => {
-        const dur = audio.duration;
+      mediaElem.onloadedmetadata = () => {
+        const dur = mediaElem.duration;
         if (dur && !isNaN(dur) && isFinite(dur)) {
           const totalSec = Math.round(dur);
           const h = Math.floor(totalSec / 3600);
@@ -81,29 +87,29 @@ export const ImportAudioModal: React.FC = () => {
         URL.revokeObjectURL(url);
       };
 
-      audio.onerror = () => {
+      mediaElem.onerror = () => {
         URL.revokeObjectURL(url);
       };
     } catch (e) {
-      console.warn('Could not read audio file metadata in browser:', e);
+      console.warn('Could not read media file metadata in browser:', e);
     }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      inspectAudioFile(e.target.files[0]);
+      inspectMediaFile(e.target.files[0]);
     }
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      inspectAudioFile(e.dataTransfer.files[0]);
+      inspectMediaFile(e.dataTransfer.files[0]);
     }
   };
 
   const getPhaseDescription = (pct: number) => {
-    if (pct < 20) return 'Ingesting audio stream & normalizing audio channels…';
+    if (pct < 20) return 'Ingesting media stream & processing audio channels…';
     if (pct < 45) return 'Computing 128-band log-Mel Spectrogram…';
     if (pct < 75) return 'Running Whisper neural transformer speech decoding…';
     if (pct < 95) return 'Synthesizing structured AI Minutes of Meeting (MOM)…';
@@ -297,7 +303,7 @@ export const ImportAudioModal: React.FC = () => {
                 progressPercent >= 20 ? 'bg-[#f0fdf4] border-[#bbf7d0] text-[#15803d]' : 'bg-[#f9fafb] border-[#e5e7eb] text-[#6b7280]'
               }`}>
                 {progressPercent >= 20 ? <Check className="w-3.5 h-3.5 flex-none" /> : <span className="w-3.5 h-3.5 rounded-full border border-gray-300 flex-none" />}
-                <span className="truncate font-semibold">1. Audio Normalization</span>
+                <span className="truncate font-semibold">1. Media &amp; Audio Ingestion</span>
               </div>
 
               <div className={`p-2.5 rounded-xl border flex items-center gap-2 transition ${
@@ -329,13 +335,13 @@ export const ImportAudioModal: React.FC = () => {
             </div>
           </div>
         ) : (
-          /* ================= STAGE 2: AUDIO CONFIGURATION & FILE SELECTOR ================= */
+          /* ================= STAGE 2: AUDIO / VIDEO CONFIGURATION & FILE SELECTOR ================= */
           <>
             {/* Header */}
             <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-[#e5e7eb]">
               <div className="flex items-center gap-2 font-extrabold text-base text-[#111827]">
                 <Upload className="w-4 h-4 text-[#2563eb]" />
-                <span>Import Audio &amp; Transcribe</span>
+                <span>Import Recording (Audio &amp; Video)</span>
               </div>
               <button
                 onClick={() => closeModal('import')}
@@ -348,7 +354,7 @@ export const ImportAudioModal: React.FC = () => {
             {/* Body */}
             <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
               <p className="text-xs text-[#6b7280]">
-                Import a meeting audio recording to generate an on-device transcript using local Whisper or Parakeet models.
+                Import an audio or video recording from Zoom, Google Meet, Teams, or local files to generate a structured MOM transcript.
               </p>
 
               {/* Dropzone */}
@@ -362,11 +368,19 @@ export const ImportAudioModal: React.FC = () => {
                   type="file"
                   ref={fileInputRef}
                   onChange={handleFileChange}
-                  accept="audio/*,video/*,.mp3,.wav,.m4a,.mp4,.ogg,.flac,.webm"
+                  accept="audio/*,video/*,.mp3,.wav,.m4a,.mp4,.mov,.mkv,.avi,.webm,.flv,.m4v,.ogg,.flac,.aac"
                   className="hidden"
                 />
-                <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-[#4f46e5] flex items-center justify-center mb-2">
-                  <FileAudio className="w-5 h-5" />
+                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center mb-2 ${
+                  selectedFile && isVideoFile(selectedFile)
+                    ? 'bg-purple-50 text-[#7c3aed]'
+                    : 'bg-indigo-50 text-[#4f46e5]'
+                }`}>
+                  {selectedFile && isVideoFile(selectedFile) ? (
+                    <FileVideo className="w-5 h-5" />
+                  ) : (
+                    <FileAudio className="w-5 h-5" />
+                  )}
                 </div>
 
                 {selectedFile ? (
@@ -377,11 +391,14 @@ export const ImportAudioModal: React.FC = () => {
                     </div>
                     <div className="text-xs text-[#6b7280] flex items-center justify-center gap-2 flex-wrap">
                       <span className="font-mono">{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</span>
+                      <span className="inline-flex items-center gap-1 font-semibold text-xs px-2 py-0.5 rounded-md bg-gray-100 text-gray-700">
+                        {isVideoFile(selectedFile) ? '🎬 Video Recording' : '🎙️ Audio Recording'}
+                      </span>
                       {audioDuration && audioDuration !== '00:00' && (
                         <>
                           <span>&bull;</span>
                           <span className="inline-flex items-center gap-1 font-bold text-[#1e3a8a] bg-[#dbeafe] px-2 py-0.5 rounded-md border border-[#bfdbfe]">
-                            Audio Length: {audioDuration}
+                            Length: {audioDuration}
                           </span>
                         </>
                       )}
@@ -393,10 +410,10 @@ export const ImportAudioModal: React.FC = () => {
                       type="button"
                       className="px-4 py-2 rounded-xl bg-[#111827] text-white text-xs font-bold shadow-sm hover:bg-[#1f2937] transition cursor-pointer"
                     >
-                      Select Audio File
+                      Select Audio or Video File
                     </button>
                     <div className="text-[11px] text-[#9aa2af] pt-1">
-                      MP3, WAV, M4A, MP4, FLAC, WebM, OGG
+                      MP3, MP4, WAV, M4A, MOV, MKV, WebM, FLAC, AVI
                     </div>
                   </div>
                 )}

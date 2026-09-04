@@ -19,7 +19,9 @@ if (!fs.existsSync(UPLOADS_DIR)) {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
 
-const ALLOWED_AUDIO_EXTENSIONS = new Set(['.mp3', '.wav', '.m4a', '.webm', '.ogg', '.flac', '.aac', '.m4p', '.wma']);
+const ALLOWED_AUDIO_EXTENSIONS = new Set(['.mp3', '.wav', '.m4a', '.webm', '.ogg', '.flac', '.aac', '.m4p', '.wma', '.opus']);
+const ALLOWED_VIDEO_EXTENSIONS = new Set(['.mp4', '.mov', '.mkv', '.avi', '.flv', '.wmv', '.m4v', '.3gp', '.ts', '.mpeg', '.mpg']);
+const ALL_MEDIA_EXTENSIONS = new Set([...ALLOWED_AUDIO_EXTENSIONS, ...ALLOWED_VIDEO_EXTENSIONS]);
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
@@ -27,7 +29,7 @@ const storage = multer.diskStorage({
   },
   filename: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
-    const safeExt = ALLOWED_AUDIO_EXTENSIONS.has(ext) ? ext : '.mp3';
+    const safeExt = ALL_MEDIA_EXTENSIONS.has(ext) ? ext : '.mp3';
     const safeFilename = `${Date.now()}-${uuidv4().slice(0, 12)}${safeExt}`;
     cb(null, safeFilename);
   }
@@ -35,13 +37,17 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 150 * 1024 * 1024 }, // 150MB
+  limits: { fileSize: 500 * 1024 * 1024 }, // 500MB
   fileFilter: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
-    if (ALLOWED_AUDIO_EXTENSIONS.has(ext) || file.mimetype.startsWith('audio/') || file.mimetype === 'video/webm') {
+    if (
+      ALL_MEDIA_EXTENSIONS.has(ext) ||
+      file.mimetype.startsWith('audio/') ||
+      file.mimetype.startsWith('video/')
+    ) {
       cb(null, true);
     } else {
-      cb(new Error(`Invalid file type: only audio files (${Array.from(ALLOWED_AUDIO_EXTENSIONS).join(', ')}) are allowed.`));
+      cb(new Error(`Invalid file type: Please upload supported audio (${Array.from(ALLOWED_AUDIO_EXTENSIONS).join(', ')}) or video (${Array.from(ALLOWED_VIDEO_EXTENSIONS).join(', ')}) files.`));
     }
   }
 });
@@ -161,7 +167,9 @@ router.post('/import', upload.single('audio'), async (req: Request, res: Respons
     const template = req.body.template as string | undefined;
     const clientDuration = req.body.duration as string | undefined;
 
-    // Transcribe audio using local Whisper / Parakeet model and obtain actual audio length
+    const isVideo = file ? (ALLOWED_VIDEO_EXTENSIONS.has(path.extname(file.originalname).toLowerCase()) || file.mimetype.startsWith('video/')) : false;
+
+    // Transcribe audio using local Whisper / Parakeet model (extracts audio track from video if needed)
     const transcribeResult = await audioService.transcribeAudioFile(
       file ? file.path : undefined,
       originalName,
@@ -201,7 +209,7 @@ router.post('/import', upload.single('audio'), async (req: Request, res: Respons
       transcript,
       summary,
       audioPath: file ? file.path : undefined,
-      tags: ['Imported', 'Audio']
+      tags: isVideo ? ['Imported', 'Video'] : ['Imported', 'Audio']
     };
 
     const saved = storageService.createMeeting(meeting);
