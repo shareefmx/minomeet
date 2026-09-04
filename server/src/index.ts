@@ -294,7 +294,7 @@ app.get('/api/health', (_req, res) => {
   res.json({
     status: 'online',
     app: 'Minomeet AI Backend',
-    version: '1.2.0',
+    version: '1.2.2',
     timestamp: new Date().toISOString()
   });
 });

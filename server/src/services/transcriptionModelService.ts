@@ -168,10 +168,18 @@ class TranscriptionModelService {
 
       // Ensure model files exist for downloaded models or create placeholder
       for (const m of this.models) {
+        // Normalize localPath dynamically relative to current environment MODELS_DIR
+        const filename = m.localPath ? path.basename(m.localPath) : `${m.id}.pt`;
+        const filePath = path.join(MODELS_DIR, filename);
+        m.localPath = filePath;
+
         if (m.status === 'downloaded') {
-          const filePath = m.localPath || path.join(MODELS_DIR, `${m.id}.pt`);
           if (!fs.existsSync(filePath)) {
-            fs.writeFileSync(filePath, `MODEL_WEIGHTS:${m.id}:${Date.now()}`);
+            try {
+              fs.writeFileSync(filePath, `MODEL_WEIGHTS:${m.id}:${Date.now()}`);
+            } catch (e) {
+              console.warn(`[TranscriptionModelService] Notice creating placeholder for ${m.id}:`, e);
+            }
           }
         }
       }

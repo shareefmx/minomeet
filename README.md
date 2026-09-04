@@ -266,51 +266,22 @@ minomeet/
 ## 📜 Release Notes & Version History
 
 <details>
-<summary><b>Click to expand full changelog & version history (v0.1.0 – v1.2.2)</b></summary>
+<summary><b>Click to expand full version release history & changelog table (v0.1.0 – v1.2.2)</b></summary>
 <br />
 
-### 🚀 Stable Production Releases
-
-#### 🌟 `v1.2.2` — Video & Audio Recording Ingestion with Auto-Extraction *(Current Stable)*
-* **Major Feature**: Full support for both **Video (`.mp4`, `.mov`, `.mkv`, `.avi`, `.webm`, `.flv`, `.m4v`)** and **Audio (`.mp3`, `.wav`, `.m4a`, `.ogg`, `.flac`, `.aac`)** file imports.
-* **FFmpeg Pipeline**: Automatic background audio stream extraction to normalized 16kHz mono audio tracks without requiring manual pre-conversion.
-* **Expanded Capacity**: Upload limit increased to **500MB** to handle complete recorded meetings from Zoom, Google Meet, and MS Teams.
-* **Unified UI**: Dynamic file type detection, video/audio badges, and real-time step pipeline animation.
-
-#### ⚡ `v1.2.1` — Single-Port Routing & SPA Optimization
-* **Deployment Fix**: Unified Express production static file serving (`dist/`) directly on port `5001`.
-* **Dynamic WebSocket**: Auto-detects runtime protocol (`ws://` vs `wss://`) and ports for zero-config Docker containerization.
-
-#### 🐳 `v1.2.0` — Global Terminal CLI & Docker Containerization
-* **Global CLI (`minomeet`)**: Run `minomeet` anywhere in your terminal; press `o` to open the web browser, `c` to clear, `q` to quit.
-* **Docker Deployment**: Official `Dockerfile` and `docker-compose.yml` with persistent storage volumes (`minomeet_data` and `minomeet_uploads`).
-
-#### 🔒 `v1.1.2` — Local LLM & Offline Inference (Zero-Cloud Privacy)
-* **Ollama Integration**: Full support for running local SLMs (DeepSeek-R1, Llama 3.3, Qwen 2.5) with zero data leaving the host machine.
-* **Self-Healing JSON Engine**: Strict regex schema repair ensuring structured MOM generation never hallucinates or crashes.
-
-#### 🧠 `v1.1.0` — Multi-Model AI Hub & Interactive Onboarding
-* **Dynamic AI Hub**: Added support for Anthropic Claude 3.7 Sonnet, OpenAI GPT-4o, Google Gemini 2.5, Groq LPUs, and Custom vLLM/LM Studio servers.
-* **Interactive Onboarding Tour**: 5-step guided modal walkthrough helping new users configure audio streams and AI keys.
-
-#### 🎉 `v1.0.0` — Official SaaS & Production Architecture Launch
-* **Complete Full-Stack Architecture**: React 18 + Node.js Express + TypeScript monorepo with low-latency WebSockets.
-* **Zero-Bot Audio Capture**: Ingests mic + system audio directly via Web Audio API without requiring meeting bots.
-* **Executive MOM Synthesis**: Generates high-level summaries, Key Decision matrices, and assigned Action Items in 2–5 minutes.
-* **"Ask Your Meetings" AI**: Natural language semantic Q&A chatbot across historical meeting transcripts.
-* **1-Click Follow-Up Emails**: Generates formatted recap emails in Professional, Concise, or Action-Oriented templates.
-
----
-
-### 🧪 Early Development & Prototype Milestones
-
-#### 🔬 `v0.5.0` — Alpha Prototype & Neural Whisper Integration
-* **Local STT**: Initial integration with local OpenAI Whisper neural models and Web Audio API streaming.
-* **Basic Templates**: Added standard meeting note templates and initial dialogue timeline viewer.
-
-#### 🐣 `v0.1.0` — Inception & Core Concept Validation
-* **Proof-of-Concept**: Exploration of browser audio capture, dual-stream mixing, and Web Speech API prototyping.
-* **Foundational Architecture**: Initial repository setup, schema modeling, and concept feasibility tests.
+| Version | Release Stage | Type | Highlights & Key Capabilities |
+| :--- | :--- | :--- | :--- |
+| **`v1.2.2`** | 🌟 **Current Stable** | `Minor` | **Video & Audio Recording Ingestion**: Support for `.mp4`, `.mov`, `.mkv`, `.avi`, `.webm` with automatic FFmpeg background audio stream extraction, 500MB upload capacity, dynamic media badges & pipeline animation. |
+| **`v1.2.1`** | ⚡ Stable Patch | `Patch` | **Single-Port Production Routing**: Unified Express SPA static file serving on port `5001`, auto-detecting WebSocket protocol (`ws://` vs `wss://`) and ports for zero-config Docker containerization. |
+| **`v1.2.0`** | 🐳 Major Milestone | `Minor` | **Global Terminal CLI & Docker Deployment**: Interactive binary runner `minomeet` with `o` key launch, production `Dockerfile`, and `docker-compose.yml` with persistent storage volumes (`minomeet_data`, `minomeet_uploads`). |
+| **`v1.1.2`** | 🔒 Privacy Release | `Patch` | **Local LLM & Offline Inference**: DeepSeek-R1, Llama 3.3, and Qwen 2.5 support via native Ollama; self-healing JSON schema parser ensuring zero hallucination in generated MOM items. |
+| **`v1.1.1`** | 🛡️ Security Patch | `Patch` | **Subprocess & Input Hardening**: Replaced shell invocations with `execFile` array arguments, strict MIME/audio extension validation, and HTTP security response headers. |
+| **`v1.1.0`** | 🧠 AI Expansion | `Minor` | **Multi-Model Provider Hub & Onboarding Tour**: Added Claude 3.7 Sonnet, GPT-4o, Gemini 2.5, Groq LPUs, custom vLLM auto-discovery, and 5-step interactive onboarding walkthrough. |
+| **`v1.0.0`** | 🎉 **SaaS Launch** | `Major` | **Official Production Architecture Launch**: Full-stack React 18 + Node.js Express + TypeScript monorepo, zero-bot audio capture, real-time Whisper STT, Executive MOM, Decision Matrix, Action Items, 1-Click Email Drafter. |
+| **`v0.8.0`** | 📋 Beta Release | `Beta` | **Export Suite & Semantic Memory**: Multi-format exports (Markdown, Plain Text, Printable PDF), fast keyword search, tag filtering, and JSON database persistence. |
+| **`v0.5.0`** | 🔬 Alpha Prototype | `Alpha` | **Dual-Channel Audio Pipeline**: Web Audio API dual-channel loopback mixing (mic + tab audio), low-latency WebSocket streaming, and interactive dialogue timeline. |
+| **`v0.2.0`** | ⚡ Pre-Alpha | `Pre-Alpha` | **Speech-to-Text & Prompt Prototyping**: Local Whisper model benchmarking, speaker diarization tests, multi-shot structured summary prompting. |
+| **`v0.1.0`** | 🐣 Inception | `Inception` | **Core Concept Validation**: Project kickoff, browser audio capture experimentation, and feasibility testing for zero-bot meeting intelligence. |
 
 </details>
 

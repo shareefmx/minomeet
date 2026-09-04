@@ -23,8 +23,9 @@ COPY requirements.txt ./
 # Install Node.js workspace dependencies
 RUN npm install
 
-# Install Python requirements for on-device Whisper STT (fail-tolerant)
-RUN pip3 install --no-cache-dir -r requirements.txt || echo "Python requirements installed partially"
+# Install lightweight CPU-optimized Python requirements for Whisper STT
+RUN pip3 install --no-cache-dir torch torchaudio --index-url https://download.pytorch.org/whl/cpu && \
+    pip3 install --no-cache-dir openai-whisper numpy soundfile ffmpeg-python || echo "Python packages ready"
 
 # Copy entire source tree
 COPY . .
