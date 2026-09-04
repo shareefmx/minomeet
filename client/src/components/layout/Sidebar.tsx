@@ -241,7 +241,7 @@ export const Sidebar: React.FC = () => {
 
       {/* Version Tag */}
       <div className="text-center text-[10.5px] text-[#9aa2af] mt-2 tracking-tight">
-        v1.2.0 &bull; Minomeet On-Device AI
+        v1.2.2 &bull; Minomeet On-Device AI
       </div>
     </aside>
   );

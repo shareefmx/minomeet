@@ -2214,7 +2214,7 @@ export const SettingsScreen: React.FC = () => {
                 </h4>
                 <div className="flex items-center gap-2 mt-1 flex-wrap text-xs text-[#6b7280]">
                   <span className="font-extrabold text-[#2563eb] bg-[#eff6ff] px-2 py-0.5 rounded-md border border-[#bfdbfe]">
-                    v1.2.0
+                    v1.2.2
                   </span>
                   <span>&bull;</span>
                   <span>Repository:</span>

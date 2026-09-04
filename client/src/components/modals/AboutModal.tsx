@@ -64,8 +64,8 @@ export const AboutModal: React.FC = () => {
       }
     } catch (err: any) {
       setUpdateInfo({
-        currentVersion: 'v1.2.0',
-        latestVersion: 'v1.2.0',
+        currentVersion: 'v1.2.2',
+        latestVersion: 'v1.2.2',
         hasUpdate: false,
         releaseUrl: 'https://github.com/shareefmx/minomeet/releases',
         repoUrl: 'https://github.com/shareefmx/minomeet',
@@ -102,7 +102,7 @@ export const AboutModal: React.FC = () => {
           <h2 className="text-2xl font-black text-[#111827] tracking-tight">Minomeet AI</h2>
           <div className="flex items-center justify-center gap-2 mt-1 flex-wrap">
             <span className="text-xs font-extrabold text-[#2563eb] bg-[#eff6ff] px-2.5 py-0.5 rounded-lg border border-[#bfdbfe]">
-              v1.2.0 Release
+              v1.2.2 Release
             </span>
             <span className="text-xs font-semibold text-[#6b7280]">
               Autonomous On-Device &amp; Cloud AI
@@ -131,7 +131,7 @@ export const AboutModal: React.FC = () => {
                       : hasChecked
                       ? updateInfo?.hasUpdate
                         ? `New version ${updateInfo?.latestVersion} is available!`
-                        : `Current version v1.2.0 is up to date.`
+                        : `Current version v1.2.2 is up to date.`
                       : 'Repository: shareefmx/minomeet'}
                   </div>
                 </div>
@@ -179,7 +179,7 @@ export const AboutModal: React.FC = () => {
                   <div className="flex items-center justify-between gap-2 text-xs text-[#15803d]">
                     <div className="flex items-center gap-1.5 font-medium text-[11.5px]">
                       <CheckCircle2 className="w-4 h-4 text-green-600 flex-none" />
-                      <span>You are running the latest stable build (v1.2.0).</span>
+                      <span>You are running the latest stable build (v1.2.2).</span>
                     </div>
                     {updateInfo.latestCommit && (
                       <span className="text-[10.5px] font-mono text-[#6b7280] bg-white px-2 py-0.5 rounded border border-[#e5e7eb]">

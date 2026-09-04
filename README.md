@@ -256,10 +256,63 @@ minomeet/
 | **`minomeet`** | Global terminal command to start services |
 | **`Press 'o'`** | Open web app in default browser |
 | **`Start Live Recording`** | Capture dual-channel audio (Mic + Meeting participants) |
-| **`Import Audio`** | Upload `.mp3`, `.wav`, `.m4a`, or `.webm` for local transcription |
+| **`Import Recording`** | Upload `.mp3`, `.wav`, `.m4a`, `.mp4`, `.mov`, `.mkv`, `.webm` for local transcription |
 | **`Ask Your Meetings`** | Launch semantic multi-meeting Q&A search assistant |
 | **`Export MOM`** | Export notes to Markdown, Plain Text, or formatted PDF |
 | **`Email Recap`** | Generate 1-click tailored email drafts with action items |
+
+---
+
+## 📜 Release Notes & Version History
+
+<details>
+<summary><b>Click to expand full changelog & version history (v0.1.0 – v1.2.2)</b></summary>
+<br />
+
+### 🚀 Stable Production Releases
+
+#### 🌟 `v1.2.2` — Video & Audio Recording Ingestion with Auto-Extraction *(Current Stable)*
+* **Major Feature**: Full support for both **Video (`.mp4`, `.mov`, `.mkv`, `.avi`, `.webm`, `.flv`, `.m4v`)** and **Audio (`.mp3`, `.wav`, `.m4a`, `.ogg`, `.flac`, `.aac`)** file imports.
+* **FFmpeg Pipeline**: Automatic background audio stream extraction to normalized 16kHz mono audio tracks without requiring manual pre-conversion.
+* **Expanded Capacity**: Upload limit increased to **500MB** to handle complete recorded meetings from Zoom, Google Meet, and MS Teams.
+* **Unified UI**: Dynamic file type detection, video/audio badges, and real-time step pipeline animation.
+
+#### ⚡ `v1.2.1` — Single-Port Routing & SPA Optimization
+* **Deployment Fix**: Unified Express production static file serving (`dist/`) directly on port `5001`.
+* **Dynamic WebSocket**: Auto-detects runtime protocol (`ws://` vs `wss://`) and ports for zero-config Docker containerization.
+
+#### 🐳 `v1.2.0` — Global Terminal CLI & Docker Containerization
+* **Global CLI (`minomeet`)**: Run `minomeet` anywhere in your terminal; press `o` to open the web browser, `c` to clear, `q` to quit.
+* **Docker Deployment**: Official `Dockerfile` and `docker-compose.yml` with persistent storage volumes (`minomeet_data` and `minomeet_uploads`).
+
+#### 🔒 `v1.1.2` — Local LLM & Offline Inference (Zero-Cloud Privacy)
+* **Ollama Integration**: Full support for running local SLMs (DeepSeek-R1, Llama 3.3, Qwen 2.5) with zero data leaving the host machine.
+* **Self-Healing JSON Engine**: Strict regex schema repair ensuring structured MOM generation never hallucinates or crashes.
+
+#### 🧠 `v1.1.0` — Multi-Model AI Hub & Interactive Onboarding
+* **Dynamic AI Hub**: Added support for Anthropic Claude 3.7 Sonnet, OpenAI GPT-4o, Google Gemini 2.5, Groq LPUs, and Custom vLLM/LM Studio servers.
+* **Interactive Onboarding Tour**: 5-step guided modal walkthrough helping new users configure audio streams and AI keys.
+
+#### 🎉 `v1.0.0` — Official SaaS & Production Architecture Launch
+* **Complete Full-Stack Architecture**: React 18 + Node.js Express + TypeScript monorepo with low-latency WebSockets.
+* **Zero-Bot Audio Capture**: Ingests mic + system audio directly via Web Audio API without requiring meeting bots.
+* **Executive MOM Synthesis**: Generates high-level summaries, Key Decision matrices, and assigned Action Items in 2–5 minutes.
+* **"Ask Your Meetings" AI**: Natural language semantic Q&A chatbot across historical meeting transcripts.
+* **1-Click Follow-Up Emails**: Generates formatted recap emails in Professional, Concise, or Action-Oriented templates.
+
+---
+
+### 🧪 Early Development & Prototype Milestones
+
+#### 🔬 `v0.5.0` — Alpha Prototype & Neural Whisper Integration
+* **Local STT**: Initial integration with local OpenAI Whisper neural models and Web Audio API streaming.
+* **Basic Templates**: Added standard meeting note templates and initial dialogue timeline viewer.
+
+#### 🐣 `v0.1.0` — Inception & Core Concept Validation
+* **Proof-of-Concept**: Exploration of browser audio capture, dual-stream mixing, and Web Speech API prototyping.
+* **Foundational Architecture**: Initial repository setup, schema modeling, and concept feasibility tests.
+
+</details>
 
 ---
 

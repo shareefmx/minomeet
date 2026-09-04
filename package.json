@@ -1,6 +1,6 @@
 {
   "name": "minomeet",
-  "version": "1.2.0",
+  "version": "1.2.2",
   "description": "Minomeet - Autonomous On-Device & Cloud AI Meeting Intelligence",
   "type": "module",
   "bin": {

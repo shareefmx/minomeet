@@ -366,9 +366,9 @@ export const api = {
       if (ghRes.ok) {
         const data = await ghRes.json();
         return {
-          currentVersion: 'v1.2.0',
-          latestVersion: data.tag_name || 'v1.2.0',
-          hasUpdate: (data.tag_name || 'v1.2.0').replace(/^v/, '') > '1.2.0',
+          currentVersion: 'v1.2.2',
+          latestVersion: data.tag_name || 'v1.2.2',
+          hasUpdate: (data.tag_name || 'v1.2.2').replace(/^v/, '') > '1.2.2',
           releaseName: data.name,
           releaseNotes: data.body,
           releaseUrl: data.html_url || 'https://github.com/shareefmx/minomeet/releases',
@@ -379,8 +379,8 @@ export const api = {
     } catch {}
 
     return {
-      currentVersion: 'v1.2.0',
-      latestVersion: 'v1.2.0',
+      currentVersion: 'v1.2.2',
+      latestVersion: 'v1.2.2',
       hasUpdate: false,
       releaseUrl: 'https://github.com/shareefmx/minomeet/releases',
       repoUrl: 'https://github.com/shareefmx/minomeet'
