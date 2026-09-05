@@ -43,7 +43,7 @@ function renderBanner() {
   console.log('  | |  | | | | | | (_) | | | | | |  __/  __/ |_ ');
   console.log('  |_|  |_|_|_| |_|\\___/|_| |_| |_|\\___|\\___|\\__|');
   console.log('\x1b[0m');
-  console.log('\x1b[1;36m  Autonomous On-Device & Cloud AI Meeting Intelligence (v1.2.0)\x1b[0m');
+  console.log('\x1b[1;36m  Autonomous On-Device & Cloud AI Meeting Intelligence (v1.2.2)\x1b[0m');
   console.log('\x1b[90m  -----------------------------------------------------------------\x1b[0m');
   console.log(`  \x1b[32m➜\x1b[0m  \x1b[1mWeb Application:\x1b[0m  \x1b[36m${CLIENT_URL}\x1b[0m`);
   console.log(`  \x1b[32m➜\x1b[0m  \x1b[1mBackend API:\x1b[0m      \x1b[36m${SERVER_URL}\x1b[0m`);

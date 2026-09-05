@@ -213,7 +213,7 @@ router.get('/export-data', (_req: Request, res: Response) => {
 
 // GET /api/settings/check-update - checks GitHub repository for latest releases / updates
 router.get('/check-update', async (_req: Request, res: Response) => {
-  const currentVersion = 'v1.2.0';
+  const currentVersion = 'v1.2.2';
   const repoOwner = 'shareefmx';
   const repoName = 'minomeet';
   const repoUrl = `https://github.com/${repoOwner}/${repoName}`;
