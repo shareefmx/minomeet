@@ -146,6 +146,89 @@ export const exportService = {
     setTimeout(() => {
       printWindow.print();
     }, 250);
+  },
+
+  /**
+   * Exports meeting as a downloadable PDF using browser's Save as PDF.
+   */
+  exportToPDF(meeting: Meeting) {
+    const summary = meeting.summary;
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>${meeting.title} — Minomeet PDF</title>
+        <style>
+          @page { margin: 20mm 15mm; size: A4; }
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 0; color: #111827; line-height: 1.7; font-size: 13px; }
+          h1 { font-size: 22px; margin-bottom: 2px; color: #000; font-weight: 800; }
+          .meta { font-size: 12px; color: #6b7280; margin-bottom: 20px; border-bottom: 2px solid #e5e5e5; padding-bottom: 10px; }
+          h2 { font-size: 15px; margin: 18px 0 6px; color: #000; border-bottom: 1px solid #f3f4f6; padding-bottom: 4px; font-weight: 700; }
+          p { font-size: 13px; margin: 4px 0; }
+          ul { margin: 6px 0; padding-left: 18px; }
+          li { margin-bottom: 3px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; }
+          th, td { border: 1px solid #e5e5e5; padding: 7px 9px; text-align: left; }
+          th { background: #fafafa; font-weight: 700; }
+          .transcript-line { margin-bottom: 6px; font-size: 12px; color: #374151; }
+          .transcript-line .time { color: #9ca3af; font-size: 11px; margin-right: 6px; }
+          .transcript-line .speaker { font-weight: 700; color: #111; }
+          .footer { margin-top: 30px; font-size: 10px; color: #9ca3af; text-align: center; border-top: 1px solid #e5e5e5; padding-top: 8px; }
+          .badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
+          .badge-done { background: #f0fdf4; color: #15803d; }
+          .badge-pending { background: #fefce8; color: #a16207; }
+        </style>
+      </head>
+      <body>
+        <h1>${meeting.title}</h1>
+        <div class="meta">
+          <b>Date:</b> ${summary?.date || new Date(meeting.createdAt).toLocaleDateString()} &bull;
+          <b>Duration:</b> ${meeting.duration} &bull;
+          <b>Model:</b> ${summary?.modelUsed || 'Minomeet On-Device AI'}
+          ${summary?.attendees && summary.attendees.length > 0 ? `&bull; <b>Attendees:</b> ${summary.attendees.join(', ')}` : ''}
+        </div>
+
+        ${summary?.summary ? `<h2>Executive Summary</h2><p>${summary.summary}</p>` : ''}
+
+        ${summary?.keyDecisions && summary.keyDecisions.length > 0 ? `
+          <h2>Key Decisions</h2>
+          <ul>${summary.keyDecisions.map(d => `<li>${d}</li>`).join('')}</ul>
+        ` : ''}
+
+        ${summary?.actionItems && summary.actionItems.length > 0 ? `
+          <h2>Action Items</h2>
+          <table>
+            <thead><tr><th>Owner</th><th>Task</th><th>Due</th><th>Notes</th><th>Status</th></tr></thead>
+            <tbody>${summary.actionItems.map(a => `<tr><td>${a.owner}</td><td>${a.task}</td><td>${a.due}</td><td>${a.notes}</td><td><span class="badge ${a.completed ? 'badge-done' : 'badge-pending'}">${a.completed ? '✓ Done' : '⏳ Pending'}</span></td></tr>`).join('')}</tbody>
+          </table>
+        ` : ''}
+
+        ${summary?.discussionHighlights && summary.discussionHighlights.length > 0 ? `
+          <h2>Discussion Highlights</h2>
+          <ul>${summary.discussionHighlights.map(h => `<li>${h}</li>`).join('')}</ul>
+        ` : ''}
+
+        ${summary?.nextSteps && summary.nextSteps.length > 0 ? `
+          <h2>Next Steps</h2>
+          <ul>${summary.nextSteps.map(s => `<li>${s}</li>`).join('')}</ul>
+        ` : ''}
+
+        ${meeting.transcript && meeting.transcript.length > 0 ? `
+          <h2>Full Transcript</h2>
+          <div>${meeting.transcript.map(t => `<div class="transcript-line"><span class="time">[${t.time}]</span>${t.speaker ? `<span class="speaker">${t.speaker}:</span> ` : ''}${t.text}</div>`).join('')}</div>
+        ` : ''}
+
+        <div class="footer">Generated with Minomeet AI &bull; ${new Date().toLocaleDateString()}</div>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => { printWindow.print(); }, 300);
   }
 };
-
