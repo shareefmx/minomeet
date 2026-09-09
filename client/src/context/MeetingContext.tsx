@@ -24,6 +24,7 @@ interface MeetingContextType {
   activeTranscriptionModel: TranscriptionModel | null;
   engineStatus: TranscriptionEngineStatus | null;
   templates: MOMTemplate[];
+  hasDraftRecovery: boolean;
   modals: {
     import: boolean;
     model: boolean;
@@ -46,6 +47,7 @@ interface MeetingContextType {
   updateActiveMeeting: (updates: Partial<Meeting>) => Promise<void>;
   updateActiveSummary: (updates: Partial<MOMSummary>) => Promise<void>;
   deleteMeeting: (id: string) => Promise<void>;
+  togglePinMeeting: (id: string) => Promise<void>;
   openDeleteModal: (meeting: Meeting) => void;
   closeDeleteModal: () => void;
   openStorageFolder: (target?: string) => Promise<void>;
@@ -72,6 +74,11 @@ interface MeetingContextType {
   updateTemplate: (id: string, updates: Partial<MOMTemplate>) => Promise<MOMTemplate | null>;
   deleteTemplate: (id: string) => Promise<boolean>;
   setDefaultTemplate: (id: string) => Promise<void>;
+  recoverDraft: () => void;
+  dismissDraft: () => void;
+  theme: 'system' | 'light' | 'dark';
+  setTheme: (theme: 'system' | 'light' | 'dark') => void;
+  toggleTheme: () => void;
 }
 
 const MeetingContext = createContext<MeetingContextType | undefined>(undefined);
@@ -100,6 +107,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const [meetingToDelete, setMeetingToDelete] = useState<Meeting | null>(null);
   const [meetingToRename, setMeetingToRename] = useState<Meeting | null>(null);
+  const [hasDraftRecovery, setHasDraftRecovery] = useState<boolean>(false);
 
   const [modals, setModals] = useState({
     import: false,
@@ -119,12 +127,132 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
     refreshTemplates();
   }, []);
 
-  // Enforce Clean Light Theme permanently across entire application
+  const [theme, setThemeState] = useState<'system' | 'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('minomeet_theme') as 'system' | 'light' | 'dark' | null;
+    return saved || 'light';
+  });
+
+  // Apply theme dynamically to documentElement (light, dark, or system preference)
   useEffect(() => {
     const root = document.documentElement;
-    root.classList.remove('dark');
-    root.setAttribute('data-theme', 'light');
+    const applyTheme = (t: 'system' | 'light' | 'dark') => {
+      let isDark = false;
+      if (t === 'dark') isDark = true;
+      else if (t === 'light') isDark = false;
+      else if (t === 'system') {
+        isDark = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      }
+      if (isDark) {
+        root.classList.add('dark');
+        root.setAttribute('data-theme', 'dark');
+      } else {
+        root.classList.remove('dark');
+        root.setAttribute('data-theme', 'light');
+      }
+    };
+    applyTheme(theme);
+
+    if (theme === 'system' && typeof window !== 'undefined' && window.matchMedia) {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handler = (e: MediaQueryListEvent) => {
+        if (e.matches) {
+          root.classList.add('dark');
+          root.setAttribute('data-theme', 'dark');
+        } else {
+          root.classList.remove('dark');
+          root.setAttribute('data-theme', 'light');
+        }
+      };
+      mediaQuery.addEventListener('change', handler);
+      return () => mediaQuery.removeEventListener('change', handler);
+    }
+  }, [theme]);
+
+  // Sync with loaded settings
+  useEffect(() => {
+    if (settings?.theme && settings.theme !== theme) {
+      setThemeState(settings.theme);
+      localStorage.setItem('minomeet_theme', settings.theme);
+    }
+  }, [settings?.theme]);
+
+  const setTheme = (newTheme: 'system' | 'light' | 'dark') => {
+    setThemeState(newTheme);
+    localStorage.setItem('minomeet_theme', newTheme);
+    updateSettings({ theme: newTheme });
+  };
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+  };
+
+  // Auto-save draft transcript to localStorage every 30s during recording
+  useEffect(() => {
+    if (!isRecording || liveTranscript.length === 0) return;
+    const saveInterval = setInterval(() => {
+      try {
+        localStorage.setItem('minomeet_draft', JSON.stringify({
+          transcript: liveTranscript,
+          timer: recordingTimer,
+          savedAt: new Date().toISOString()
+        }));
+      } catch (e) {
+        console.warn('Draft auto-save failed:', e);
+      }
+    }, 30000);
+    return () => clearInterval(saveInterval);
+  }, [isRecording, liveTranscript, recordingTimer]);
+
+  // Check for draft recovery on mount
+  useEffect(() => {
+    try {
+      const draft = localStorage.getItem('minomeet_draft');
+      if (draft) {
+        const parsed = JSON.parse(draft);
+        if (parsed.transcript && parsed.transcript.length > 0) {
+          setHasDraftRecovery(true);
+        }
+      }
+    } catch (e) {
+      localStorage.removeItem('minomeet_draft');
+    }
   }, []);
+
+  const recoverDraft = () => {
+    try {
+      const draft = localStorage.getItem('minomeet_draft');
+      if (draft) {
+        const parsed = JSON.parse(draft);
+        if (parsed.transcript && parsed.transcript.length > 0) {
+          const m = String(Math.floor((parsed.timer || 0) / 60)).padStart(2, '0');
+          const s = String((parsed.timer || 0) % 60).padStart(2, '0');
+          api.createMeeting({
+            title: `Recovered Draft ${new Date(parsed.savedAt || Date.now()).toISOString().slice(0, 10)}`,
+            transcript: parsed.transcript,
+            duration: `${m}:${s}`,
+            autoSummarize: false
+          }).then(newMeeting => {
+            setMeetings(prev => [newMeeting, ...prev]);
+            setActiveMeeting(newMeeting);
+            setCurrentScreen('notes');
+            showToast('Draft recovered!', `${parsed.transcript.length} transcript segments restored.`, 'success');
+            localStorage.removeItem('minomeet_draft');
+            setHasDraftRecovery(false);
+          });
+        }
+      }
+    } catch (e) {
+      showToast('Recovery failed', 'Could not recover draft.', 'error');
+      localStorage.removeItem('minomeet_draft');
+      setHasDraftRecovery(false);
+    }
+  };
+
+  const dismissDraft = () => {
+    localStorage.removeItem('minomeet_draft');
+    setHasDraftRecovery(false);
+  };
 
   const refreshMeetings = async () => {
     try {
@@ -391,6 +519,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
       showToast('Recording saved successfully!', `${lines.length} transcript segments captured.${audioPath ? ' Audio file saved.' : ''}`, 'success');
       sendDesktopNotification('Meeting Saved Successfully', `Recorded ${duration} with ${lines.length} transcript lines.`);
       await refreshStorageStats();
+      localStorage.removeItem('minomeet_draft');
 
       // Trigger AI Minutes of Meeting generation with live progress animation
       if (shouldAutoSummarize && lines.length > 0) {
@@ -543,6 +672,21 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
+  const togglePinMeeting = async (id: string) => {
+    const target = meetings.find(m => m.id === id);
+    if (!target) return;
+    try {
+      const updated = await api.updateMeeting(id, { isPinned: !target.isPinned });
+      setMeetings(prev => prev.map(m => m.id === id ? updated : m));
+      if (activeMeeting?.id === id) {
+        setActiveMeeting(updated);
+      }
+      showToast(updated.isPinned ? 'Meeting pinned' : 'Meeting unpinned', target.title, 'success');
+    } catch (err: any) {
+      showToast('Pin failed', err.message, 'error');
+    }
+  };
+
   const sendDesktopNotification = (title: string, body: string) => {
     if (!settings?.notifications) return;
     if (typeof window !== 'undefined' && 'Notification' in window) {
@@ -680,6 +824,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
         activeTranscriptionModel,
         engineStatus,
         templates,
+        hasDraftRecovery,
         modals,
         setCurrentScreen,
         setSettingsTab,
@@ -693,6 +838,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
         updateActiveMeeting,
         updateActiveSummary,
         deleteMeeting,
+        togglePinMeeting,
         openDeleteModal,
         closeDeleteModal,
         confirmDeleteMeeting,
@@ -718,7 +864,12 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
         createTemplate,
         updateTemplate,
         deleteTemplate,
-        setDefaultTemplate
+        setDefaultTemplate,
+        recoverDraft,
+        dismissDraft,
+        theme,
+        setTheme,
+        toggleTheme
       }}
     >
       {children}
