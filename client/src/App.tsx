@@ -14,10 +14,10 @@ import { FollowUpEmailModal } from './components/modals/FollowUpEmailModal.js';
 import { AboutModal } from './components/modals/AboutModal.js';
 import { DeleteConfirmModal } from './components/modals/DeleteConfirmModal.js';
 import { RenameMeetingModal } from './components/modals/RenameMeetingModal.js';
-import { Sparkles, X } from 'lucide-react';
+import { Sparkles, X, AlertCircle, RotateCw } from 'lucide-react';
 
 export const App: React.FC = () => {
-  const { currentScreen } = useMeeting();
+  const { currentScreen, hasDraftRecovery, recoverDraft, dismissDraft } = useMeeting();
   const [showBanner, setShowBanner] = useState<boolean>(true);
 
   // 6-second auto-dismissing banner on window open
@@ -56,6 +56,33 @@ export const App: React.FC = () => {
 
           {/* Animated 6-Second Timeline Progress Bar matching banner palette */}
           <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#818cf8] via-[#a5b4fc] to-[#60a5fa] animate-banner-timeline" />
+        </div>
+      )}
+
+      {/* Draft Recovery Banner */}
+      {hasDraftRecovery && (
+        <div className="bg-[#fef3c7] border-b border-[#fde68a] px-6 py-2.5 text-xs flex items-center justify-between z-30 flex-none">
+          <div className="flex items-center gap-2.5 font-medium text-[#92400e]">
+            <AlertCircle className="w-4 h-4 text-[#d97706]" />
+            <span className="font-bold">Unsaved recording draft found</span>
+            <span className="opacity-80">— Your last recording session wasn't saved properly.</span>
+          </div>
+          <div className="flex items-center gap-2 flex-none">
+            <button
+              onClick={recoverDraft}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#d97706] text-white text-xs font-bold hover:bg-[#b45309] transition cursor-pointer"
+            >
+              <RotateCw className="w-3 h-3" />
+              <span>Recover</span>
+            </button>
+            <button
+              onClick={dismissDraft}
+              className="text-[#92400e] hover:text-[#78350f] p-1 rounded-lg hover:bg-[#fde68a] transition cursor-pointer"
+              title="Dismiss draft"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       )}
 
