@@ -11,7 +11,9 @@ import {
   MessageSquare,
   MoreVertical,
   Edit3,
-  Trash2
+  Trash2,
+  Pin,
+  PinOff
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -29,6 +31,7 @@ export const Sidebar: React.FC = () => {
     openModal,
     openDeleteModal,
     openRenameModal,
+    togglePinMeeting,
     setSettingsTab
   } = useMeeting();
 
@@ -49,6 +52,10 @@ export const Sidebar: React.FC = () => {
       m.summary?.summary.toLowerCase().includes(q) ||
       m.transcript.some(t => t.text.toLowerCase().includes(q))
     );
+  }).sort((a, b) => {
+    if (a.isPinned && !b.isPinned) return -1;
+    if (!a.isPinned && b.isPinned) return 1;
+    return 0;
   });
 
   return (
@@ -128,7 +135,10 @@ export const Sidebar: React.FC = () => {
                 <div className="flex items-start gap-2.5 min-w-0 flex-1">
                   <FileText className={`w-3.5 h-3.5 mt-0.5 flex-none transition ${isActive ? 'text-[#2563eb]' : 'text-[#9aa2af] group-hover:text-[#4b5563]'}`} />
                   <div className="flex-1 min-w-0">
-                    <div className="truncate pr-1">{meeting.title}</div>
+                    <div className="truncate pr-1 flex items-center gap-1">
+                      {meeting.isPinned && <Pin className="w-3 h-3 text-[#f59e0b] flex-none" />}
+                      <span>{meeting.title}</span>
+                    </div>
                     <div className="text-[11px] text-[#9aa2af] font-normal flex items-center gap-1.5 mt-0.5">
                       <span>{meeting.duration}</span>
                       {meeting.summary ? (
@@ -161,6 +171,16 @@ export const Sidebar: React.FC = () => {
                       onClick={(e) => e.stopPropagation()}
                       className="absolute right-0 top-full mt-1 w-36 bg-white border border-[#e5e7eb] rounded-xl shadow-xl py-1 z-50 text-xs animate-in fade-in zoom-in-95 duration-100"
                     >
+                      <button
+                        onClick={() => {
+                          setOpenMenuId(null);
+                          togglePinMeeting(meeting.id);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-left text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition font-medium cursor-pointer"
+                      >
+                        {meeting.isPinned ? <PinOff className="w-3.5 h-3.5" /> : <Pin className="w-3.5 h-3.5" />}
+                        <span>{meeting.isPinned ? 'Unpin' : 'Pin'}</span>
+                      </button>
                       <button
                         onClick={() => {
                           setOpenMenuId(null);
