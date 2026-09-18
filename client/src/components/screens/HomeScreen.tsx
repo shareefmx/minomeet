@@ -16,7 +16,9 @@ import {
   Edit3,
   Trash2,
   Key,
-  ChevronRight
+  ChevronRight,
+  Pin,
+  PinOff
 } from 'lucide-react';
 
 export const HomeScreen: React.FC = () => {
@@ -27,6 +29,7 @@ export const HomeScreen: React.FC = () => {
     openModal,
     openDeleteModal,
     openRenameModal,
+    togglePinMeeting,
     selectMeeting,
     setCurrentScreen,
     setSettingsTab
@@ -279,7 +282,11 @@ export const HomeScreen: React.FC = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {meetings.slice(0, 4).map((meeting) => {
+              {[...meetings].sort((a, b) => {
+                if (a.isPinned && !b.isPinned) return -1;
+                if (!a.isPinned && b.isPinned) return 1;
+                return 0;
+              }).slice(0, 4).map((meeting) => {
                 const isMenuOpen = openCardMenuId === meeting.id;
 
                 return (
@@ -290,9 +297,14 @@ export const HomeScreen: React.FC = () => {
                   >
                     <div>
                       <div className="flex items-start justify-between gap-2 mb-2">
-                        <h3 className="text-sm font-bold text-[#111827] group-hover:text-[#2563eb] transition line-clamp-1 pr-6">
-                          {meeting.title}
-                        </h3>
+                        <div className="flex items-center gap-1.5 flex-1 min-w-0 pr-2">
+                          {meeting.isPinned && (
+                            <Pin className="w-3.5 h-3.5 text-[#f59e0b] flex-none" />
+                          )}
+                          <h3 className="text-sm font-bold text-[#111827] group-hover:text-[#2563eb] transition line-clamp-1">
+                            {meeting.title}
+                          </h3>
+                        </div>
 
                         {/* Top Right Duration & 3-Dot Menu */}
                         <div className="flex items-center gap-1.5 flex-none relative">
@@ -317,6 +329,16 @@ export const HomeScreen: React.FC = () => {
                               onClick={(e) => e.stopPropagation()}
                               className="absolute right-0 top-full mt-1 w-36 bg-white border border-[#e5e7eb] rounded-xl shadow-xl py-1 z-50 text-xs animate-in fade-in zoom-in-95 duration-100"
                             >
+                              <button
+                                onClick={() => {
+                                  setOpenCardMenuId(null);
+                                  togglePinMeeting(meeting.id);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-left text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition font-medium cursor-pointer"
+                              >
+                                {meeting.isPinned ? <PinOff className="w-3.5 h-3.5" /> : <Pin className="w-3.5 h-3.5" />}
+                                <span>{meeting.isPinned ? 'Unpin' : 'Pin'}</span>
+                              </button>
                               <button
                                 onClick={() => {
                                   setOpenCardMenuId(null);
