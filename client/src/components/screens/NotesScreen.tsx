@@ -24,7 +24,9 @@ import {
   MoreVertical,
   Loader2,
   Bot,
-  X
+  X,
+  Tag,
+  Hash
 } from 'lucide-react';
 import { ActionItem } from '../../types/meeting.js';
 import { getEffectiveModelForAgent } from '../../utils/aiModelConfig.js';
@@ -148,6 +150,27 @@ export const NotesScreen: React.FC = () => {
   const [summaryPhase, setSummaryPhase] = useState<string>('Reading meeting transcript…');
   const summaryIntervalRef = useRef<any>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
+
+  const [newTagInput, setNewTagInput] = useState('');
+  const [isAddingTag, setIsAddingTag] = useState(false);
+
+  const handleAddTag = (tagToAdd?: string) => {
+    const tag = (tagToAdd || newTagInput).trim();
+    if (!tag || !activeMeeting) return;
+    const currentTags = activeMeeting.tags || [];
+    if (!currentTags.includes(tag)) {
+      const updatedTags = [...currentTags, tag];
+      updateActiveMeeting({ tags: updatedTags });
+    }
+    setNewTagInput('');
+    setIsAddingTag(false);
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    if (!activeMeeting) return;
+    const updatedTags = (activeMeeting.tags || []).filter(t => t !== tagToRemove);
+    updateActiveMeeting({ tags: updatedTags });
+  };
 
   // Sync state when activeMeeting or settings change
   useEffect(() => {
@@ -646,6 +669,17 @@ export const NotesScreen: React.FC = () => {
                     </div>
                     <div
                       onClick={() => {
+                        exportService.exportToPDF(activeMeeting);
+                        setExportMenuOpen(false);
+                        showToast('PDF export opened', 'Use Save as PDF in print dialog', 'info');
+                      }}
+                      className="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-[#f8fafc] text-[#374151] font-medium"
+                    >
+                      <Download className="w-3.5 h-3.5 text-[#e2564c]" />
+                      <span>Export Full PDF</span>
+                    </div>
+                    <div
+                      onClick={() => {
                         handleCopyMOM();
                         setExportMenuOpen(false);
                       }}
@@ -890,6 +924,87 @@ export const NotesScreen: React.FC = () => {
                         <Plus className="w-3 h-3" />
                         <span>Add Person</span>
                       </button>
+                    </div>
+
+                    {/* Tags Section */}
+                    <div className="flex items-center gap-2 flex-wrap text-xs text-[#4b5563] pt-0.5">
+                      <div className="flex items-center gap-1.5 font-bold text-[#111827]">
+                        <Tag className="w-3.5 h-3.5 text-[#6b7280]" />
+                        <span>Tags:</span>
+                      </div>
+
+                      {(activeMeeting.tags || []).map((tag, idx) => (
+                        <span
+                          key={idx}
+                          className="inline-flex items-center gap-1 pl-2.5 pr-1 py-0.5 rounded-full text-xs font-semibold bg-[#eff6ff] text-[#2563eb] border border-[#bfdbfe] transition"
+                        >
+                          <Hash className="w-3 h-3 text-[#3b82f6]" />
+                          <span>{tag}</span>
+                          <button
+                            onClick={() => handleRemoveTag(tag)}
+                            className="text-[#3b82f6] hover:text-red-500 rounded-full p-0.5 transition cursor-pointer"
+                            title={`Remove #${tag}`}
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))}
+
+                      {isAddingTag ? (
+                        <div className="inline-flex items-center gap-1">
+                          <input
+                            type="text"
+                            placeholder="Tag name…"
+                            value={newTagInput}
+                            onChange={(e) => setNewTagInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleAddTag();
+                              if (e.key === 'Escape') setIsAddingTag(false);
+                            }}
+                            autoFocus
+                            className="h-6 px-2 text-xs border border-[#2563eb] rounded-lg focus:outline-none bg-white text-[#111827]"
+                          />
+                          <button
+                            onClick={() => handleAddTag()}
+                            className="px-2 py-0.5 rounded-md bg-[#2563eb] text-white text-[11px] font-bold hover:bg-[#1d4ed8] transition cursor-pointer"
+                          >
+                            Add
+                          </button>
+                          <button
+                            onClick={() => setIsAddingTag(false)}
+                            className="text-gray-400 hover:text-gray-600 p-0.5 cursor-pointer"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setIsAddingTag(true)}
+                          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold text-[#6b7280] hover:text-[#2563eb] border border-dashed border-[#d1d5db] hover:border-[#2563eb] transition cursor-pointer bg-white"
+                        >
+                          <Plus className="w-3 h-3" />
+                          <span>Add Tag</span>
+                        </button>
+                      )}
+
+                      {/* Quick suggestions if few tags */}
+                      {(!activeMeeting.tags || activeMeeting.tags.length < 3) && (
+                        <div className="flex items-center gap-1.5 ml-1 text-[11px] text-[#9aa2af]">
+                          <span className="hidden sm:inline">Suggestions:</span>
+                          {['Sprint', 'Client', 'Design', 'Strategy', '1-on-1']
+                            .filter(s => !(activeMeeting.tags || []).includes(s))
+                            .slice(0, 3)
+                            .map((s) => (
+                              <button
+                                key={s}
+                                onClick={() => handleAddTag(s)}
+                                className="px-1.5 py-0.5 rounded bg-gray-100 hover:bg-blue-50 hover:text-[#2563eb] text-gray-500 text-[10.5px] transition cursor-pointer"
+                              >
+                                + {s}
+                              </button>
+                            ))}
+                        </div>
+                      )}
                     </div>
 
                     {/* 3. Summary Block */}
