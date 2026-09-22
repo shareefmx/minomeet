@@ -6,7 +6,9 @@ import {
   FileText,
   Settings,
   MessageSquare,
-  ShieldCheck
+  ShieldCheck,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 export const Titlebar: React.FC = () => {
@@ -14,6 +16,8 @@ export const Titlebar: React.FC = () => {
     currentScreen,
     activeMeeting,
     isRecording,
+    theme,
+    toggleTheme,
     openModal,
     setCurrentScreen,
     setSettingsTab,
@@ -109,6 +113,19 @@ export const Titlebar: React.FC = () => {
             <span>Start Recording</span>
           </button>
         )}
+
+        {/* Theme Toggle (Dark / Light) */}
+        <button
+          onClick={toggleTheme}
+          className="p-2 rounded-xl border border-[#e5e7eb] text-[#6b7280] hover:text-[#111827] hover:bg-[#f3f4f6] bg-[#f9fafb] transition cursor-pointer"
+          title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+        >
+          {theme === 'dark' ? (
+            <Sun className="w-4 h-4 text-amber-400" />
+          ) : (
+            <Moon className="w-4 h-4 text-[#4b5563]" />
+          )}
+        </button>
 
         {/* Settings Shortcut */}
         <button
