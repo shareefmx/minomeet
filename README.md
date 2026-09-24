@@ -63,6 +63,11 @@ Check out the full product walkthrough and see Minomeet AI in action:
 - ⚡ **Multi-Source Audio Ingestion**: Record microphone audio, browser tabs, Google Meet, Zoom, Slack Huddles, or import `.mp3`, `.wav`, `.m4a`, `.webm` files.
 - 🧠 **Dynamic Multi-Model AI**: Seamlessly connect **Ollama (Local LLMs)**, **OpenAI (GPT-4o)**, **Anthropic (Claude 3.7 Sonnet)**, **Google Gemini 2.5**, **Groq**, and **Custom OpenAI-Compatible Servers** (LM Studio, vLLM, DeepSeek, Together AI).
 - 📋 **Executive MOM Generation**: Automatically generates structured Executive Summaries, Key Decisions, Discussion Highlights, Next Steps, and interactive Action Item matrices.
+- 🌙 **Dark & Light Mode Engine**: Seamless theme switching with OS system preference auto-detection, crisp light mode, and deep midnight dark mode.
+- 📋 **High-Fidelity PDF & Markdown Export**: Clean, printable A4 PDF documents with custom typography, status badges, and tables, plus one-click Markdown downloads.
+- 📌 **Meeting Pinning & Priority Sorting**: Pin crucial discussions to the top of the sidebar and home dashboard for rapid access.
+- 🏷️ **Interactive Tags & Multi-Filter Bar**: Organize sessions with custom hashtag pills and quickly filter historical meetings with one click.
+- ⏱️ **Zero-Loss Live Draft Auto-Save**: Background transcript checkpoints saved every 30 seconds with automatic crash recovery alerts.
 - 💬 **Ask Your Meetings AI**: Semantic natural-language Q&A assistant across your historical meeting archives.
 - ✉️ **One-Click Follow-Up Emails**: Generates tailored email drafts in Professional, Concise, or Action-Oriented formats.
 - 💻 **Global Terminal CLI (`minomeet`)**: Launch casually anytime directly from your terminal by typing `minomeet` and pressing `o` to open the app window.
@@ -124,7 +129,7 @@ minomeet
   | |  | | | | | | (_) | | | | | |  __/  __/ |_ 
   |_|  |_|_|_| |_|\___/|_| |_| |_|\___|\___|\__|
 
-  Autonomous On-Device & Cloud AI Meeting Intelligence (v1.2.0)
+  Autonomous On-Device & Cloud AI Meeting Intelligence (v1.2.2)
   -----------------------------------------------------------------
   ➜  Web Application:  http://localhost:5173
   ➜  Backend API:      http://localhost:5001
