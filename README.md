@@ -63,7 +63,6 @@ Check out the full product walkthrough and see Minomeet AI in action:
 - ⚡ **Multi-Source Audio Ingestion**: Record microphone audio, browser tabs, Google Meet, Zoom, Slack Huddles, or import `.mp3`, `.wav`, `.m4a`, `.webm` files.
 - 🧠 **Dynamic Multi-Model AI**: Seamlessly connect **Ollama (Local LLMs)**, **OpenAI (GPT-4o)**, **Anthropic (Claude 3.7 Sonnet)**, **Google Gemini 2.5**, **Groq**, and **Custom OpenAI-Compatible Servers** (LM Studio, vLLM, DeepSeek, Together AI).
 - 📋 **Executive MOM Generation**: Automatically generates structured Executive Summaries, Key Decisions, Discussion Highlights, Next Steps, and interactive Action Item matrices.
-- 🌙 **Dark & Light Mode Engine**: Seamless theme switching with OS system preference auto-detection, crisp light mode, and deep midnight dark mode.
 - 📋 **High-Fidelity PDF & Markdown Export**: Clean, printable A4 PDF documents with custom typography, status badges, and tables, plus one-click Markdown downloads.
 - 📌 **Meeting Pinning & Priority Sorting**: Pin crucial discussions to the top of the sidebar and home dashboard for rapid access.
 - 🏷️ **Interactive Tags & Multi-Filter Bar**: Organize sessions with custom hashtag pills and quickly filter historical meetings with one click.

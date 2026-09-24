@@ -76,9 +76,6 @@ interface MeetingContextType {
   setDefaultTemplate: (id: string) => Promise<void>;
   recoverDraft: () => void;
   dismissDraft: () => void;
-  theme: 'system' | 'light' | 'dark';
-  setTheme: (theme: 'system' | 'light' | 'dark') => void;
-  toggleTheme: () => void;
 }
 
 const MeetingContext = createContext<MeetingContextType | undefined>(undefined);
@@ -127,65 +124,12 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
     refreshTemplates();
   }, []);
 
-  const [theme, setThemeState] = useState<'system' | 'light' | 'dark'>(() => {
-    const saved = localStorage.getItem('minomeet_theme') as 'system' | 'light' | 'dark' | null;
-    return saved || 'light';
-  });
-
-  // Apply theme dynamically to documentElement (light, dark, or system preference)
+  // Enforce Clean Light Theme permanently across entire application
   useEffect(() => {
     const root = document.documentElement;
-    const applyTheme = (t: 'system' | 'light' | 'dark') => {
-      let isDark = false;
-      if (t === 'dark') isDark = true;
-      else if (t === 'light') isDark = false;
-      else if (t === 'system') {
-        isDark = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      }
-      if (isDark) {
-        root.classList.add('dark');
-        root.setAttribute('data-theme', 'dark');
-      } else {
-        root.classList.remove('dark');
-        root.setAttribute('data-theme', 'light');
-      }
-    };
-    applyTheme(theme);
-
-    if (theme === 'system' && typeof window !== 'undefined' && window.matchMedia) {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      const handler = (e: MediaQueryListEvent) => {
-        if (e.matches) {
-          root.classList.add('dark');
-          root.setAttribute('data-theme', 'dark');
-        } else {
-          root.classList.remove('dark');
-          root.setAttribute('data-theme', 'light');
-        }
-      };
-      mediaQuery.addEventListener('change', handler);
-      return () => mediaQuery.removeEventListener('change', handler);
-    }
-  }, [theme]);
-
-  // Sync with loaded settings
-  useEffect(() => {
-    if (settings?.theme && settings.theme !== theme) {
-      setThemeState(settings.theme);
-      localStorage.setItem('minomeet_theme', settings.theme);
-    }
-  }, [settings?.theme]);
-
-  const setTheme = (newTheme: 'system' | 'light' | 'dark') => {
-    setThemeState(newTheme);
-    localStorage.setItem('minomeet_theme', newTheme);
-    updateSettings({ theme: newTheme });
-  };
-
-  const toggleTheme = () => {
-    const nextTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(nextTheme);
-  };
+    root.classList.remove('dark');
+    root.setAttribute('data-theme', 'light');
+  }, []);
 
   // Auto-save draft transcript to localStorage every 30s during recording
   useEffect(() => {
@@ -866,10 +810,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
         deleteTemplate,
         setDefaultTemplate,
         recoverDraft,
-        dismissDraft,
-        theme,
-        setTheme,
-        toggleTheme
+        dismissDraft
       }}
     >
       {children}

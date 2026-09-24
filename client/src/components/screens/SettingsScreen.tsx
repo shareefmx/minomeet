@@ -35,10 +35,7 @@ import {
   RotateCw,
   X,
   ArrowUpRight,
-  Info,
-  Sun,
-  Moon,
-  Monitor
+  Info
 } from 'lucide-react';
 import { SettingsTab, MOMTemplate, AIConnectionStatus, ProviderCredential, AIAgentOverride } from '../../types/meeting.js';
 import {
@@ -79,9 +76,7 @@ export const SettingsScreen: React.FC = () => {
     updateTemplate,
     deleteTemplate,
     setDefaultTemplate,
-    openModal,
-    theme,
-    setTheme
+    openModal
   } = useMeeting();
 
   const [modelFilter, setModelFilter] = useState<'all' | 'whisper' | 'parakeet'>('all');
@@ -2034,56 +2029,6 @@ export const SettingsScreen: React.FC = () => {
         {/* 6. GENERAL & STORAGE TAB */}
         {settingsTab === 'general' && (
           <div className="space-y-5">
-            {/* Appearance & Theme */}
-            <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs">
-              <div className="flex items-center justify-between gap-4 mb-3">
-                <div>
-                  <h4 className="text-sm font-bold text-[#111827] flex items-center gap-2">
-                    <Sun className="w-4 h-4 text-[#2563eb]" />
-                    <span>Appearance &amp; Theme</span>
-                  </h4>
-                  <p className="text-xs text-[#6b7280] mt-0.5">
-                    Customize Minomeet's interface theme for day or night use.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { id: 'light' as const, label: 'Light', desc: 'Clean, crisp white', icon: Sun },
-                  { id: 'dark' as const, label: 'Dark', desc: 'Deep slate & midnight', icon: Moon },
-                  { id: 'system' as const, label: 'System', desc: 'Follows OS preference', icon: Monitor }
-                ].map((t) => {
-                  const Icon = t.icon;
-                  const isSelected = theme === t.id;
-                  return (
-                    <button
-                      key={t.id}
-                      onClick={() => setTheme(t.id)}
-                      className={`p-3.5 rounded-xl border text-left transition cursor-pointer ${
-                        isSelected
-                          ? 'border-[#2563eb] bg-[#eff6ff] shadow-xs'
-                          : 'border-[#e5e7eb] bg-[#fafbfc] hover:bg-gray-50'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-1.5">
-                        <Icon className={`w-4 h-4 ${isSelected ? 'text-[#2563eb]' : 'text-[#6b7280]'}`} />
-                        {isSelected && (
-                          <span className="w-2 h-2 rounded-full bg-[#2563eb]" />
-                        )}
-                      </div>
-                      <div className={`text-xs font-bold ${isSelected ? 'text-[#1e3a8a]' : 'text-[#111827]'}`}>
-                        {t.label}
-                      </div>
-                      <div className="text-[10.5px] text-[#6b7280] mt-0.5">
-                        {t.desc}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
             {/* Desktop Notifications */}
             <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs">
               <div className="flex items-center justify-between gap-4">
