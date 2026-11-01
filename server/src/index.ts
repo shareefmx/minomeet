@@ -276,7 +276,7 @@ app.get('/', (req, res, next) => {
     status: 'online',
     app: 'Minomeet AI Backend',
     message: 'Minomeet AI Backend Server is running.',
-    version: '1.2.2',
+    version: '1.2.0',
     frontendUrl: 'http://localhost:5173',
     endpoints: {
       health: '/api/health',
