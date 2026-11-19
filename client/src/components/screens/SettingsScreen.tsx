@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useMeeting } from '../../context/MeetingContext.js';
 import { api } from '../../services/api.js';
 import {
-  ArrowLeft,
   Sliders,
   Mic,
   FileAudio,
@@ -60,7 +59,6 @@ export const SettingsScreen: React.FC = () => {
     storageStats,
     settingsTab,
     setSettingsTab,
-    setCurrentScreen,
     updateSettings,
     showToast,
     openStorageFolder,
@@ -526,20 +524,8 @@ export const SettingsScreen: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col h-full bg-white overflow-hidden select-none">
-      {/* Settings Header */}
-      <div className="flex items-center gap-3 px-8 pt-5 pb-2">
-        <button
-          onClick={() => setCurrentScreen('home')}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-[#6b7280] hover:text-[#111827] transition cursor-pointer"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to Home</span>
-        </button>
-        <h2 className="text-xl font-black text-[#111827]">Minomeet Settings</h2>
-      </div>
-
       {/* Tabs Navigation */}
-      <div className="flex items-center gap-4 px-8 border-b border-[#e5e7eb] mt-2 overflow-x-auto">
+      <div className="flex items-center gap-4 px-8 pt-5 border-b border-[#e5e7eb] overflow-x-auto">
         {tabs.map((tab) => {
           const isActive = settingsTab === tab.id;
           const Icon = tab.icon;
