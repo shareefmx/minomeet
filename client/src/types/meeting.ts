@@ -72,9 +72,6 @@ export interface AppSettings {
   audioBitrate?: '128k' | '256k' | '320k';
   defaultAudioSource?: 'mic' | 'system' | 'mixed';
   selectedMicDeviceId?: string;
-  selectedSystemDeviceId?: string;
-  recordingStartNotification?: boolean;
-  audioBackend?: string;
   noiseSuppression?: boolean;
   echoCancellation?: boolean;
   autoGainControl?: boolean;
