@@ -72,6 +72,9 @@ export interface AppSettings {
   audioBitrate?: '128k' | '256k' | '320k';
   defaultAudioSource?: 'mic' | 'system' | 'mixed';
   selectedMicDeviceId?: string;
+  selectedSystemDeviceId?: string;
+  systemAudioBackend?: 'screencapturekit' | 'coreaudio';
+  recordingStartNotification?: boolean;
   noiseSuppression?: boolean;
   echoCancellation?: boolean;
   autoGainControl?: boolean;

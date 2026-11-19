@@ -34,7 +34,9 @@ import {
   RotateCw,
   X,
   ArrowUpRight,
-  Info
+  Info,
+  Speaker,
+  HelpCircle
 } from 'lucide-react';
 import { SettingsTab, MOMTemplate, AIConnectionStatus, ProviderCredential, AIAgentOverride } from '../../types/meeting.js';
 import {
@@ -339,36 +341,125 @@ export const SettingsScreen: React.FC = () => {
     showToast('Configuration Saved', `Active AI model set to ${effectiveModelId} (${provDef.name}).`, 'success');
   };
 
-  // Audio Input Devices & Mic Test State
-  const [audioDevices, setAudioDevices] = useState<{ deviceId: string; label: string }[]>([]);
+  // Audio Input & System Audio Devices State
+  const [audioDevices, setAudioDevices] = useState<{ deviceId: string; label: string; isDefault?: boolean }[]>([]);
+  const [systemAudioDevices, setSystemAudioDevices] = useState<{ deviceId: string; label: string; isDefault?: boolean }[]>([]);
+  const [isRefreshingDevices, setIsRefreshingDevices] = useState(false);
+  const [systemBackend, setSystemBackend] = useState<'coreaudio' | 'screencapturekit'>('coreaudio');
+
+  // Microphone Live Test State
   const [isTestingMic, setIsTestingMic] = useState(false);
   const [micTestVolume, setMicTestVolume] = useState(0);
+  const [micTestBars, setMicTestBars] = useState<number[]>(new Array(16).fill(6));
   const micTestStreamRef = useRef<MediaStream | null>(null);
   const micTestAudioCtxRef = useRef<AudioContext | null>(null);
   const micTestAnimRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    // Enumerate audio input devices
-    const getDevices = async () => {
+  // Storage / Recording Folder Path State
+  const [recordingSavePath, setRecordingSavePath] = useState<string>('/Users/muhammedshraeef/Movies/meetily-recordings');
+  const [isEditingPath, setIsEditingPath] = useState(false);
+  const [customPathInput, setCustomPathInput] = useState('');
+
+  const getNativeInvoke = (): ((cmd: string, args?: any) => Promise<any>) | null => {
+    if (typeof window === 'undefined') return null;
+    const w = window as any;
+    if (w.__TAURI__?.core?.invoke) return w.__TAURI__.core.invoke;
+    if (w.__TAURI_INTERNALS__?.invoke) return w.__TAURI_INTERNALS__.invoke;
+    return null;
+  };
+
+  const refreshDevices = async () => {
+    setIsRefreshingDevices(true);
+    let found = false;
+
+    const invoke = getNativeInvoke();
+    if (invoke) {
+      try {
+        const nativeDevices = await invoke('get_audio_devices');
+        if (Array.isArray(nativeDevices) && nativeDevices.length > 0) {
+          const inputs = nativeDevices
+            .filter((d: any) => d.device_type === 'Input')
+            .map((d: any) => ({
+              deviceId: d.name,
+              label: d.label || d.name,
+              isDefault: d.is_default
+            }));
+          const outputs = nativeDevices
+            .filter((d: any) => d.device_type === 'Output')
+            .map((d: any) => ({
+              deviceId: d.name,
+              label: d.label || d.name,
+              isDefault: d.is_default
+            }));
+          if (inputs.length > 0) setAudioDevices(inputs);
+          if (outputs.length > 0) setSystemAudioDevices(outputs);
+          found = true;
+        }
+
+        try {
+          const currentBackend = await invoke('get_current_audio_backend');
+          if (currentBackend === 'screencapturekit' || currentBackend === 'coreaudio') {
+            setSystemBackend(currentBackend);
+          }
+        } catch {
+          // keep coreaudio
+        }
+
+        try {
+          const defaultPath = await invoke('get_default_recordings_folder_path');
+          if (defaultPath && (!settings?.storagePath || settings.storagePath === 'Default Application Recordings')) {
+            setRecordingSavePath(defaultPath);
+          }
+        } catch {
+          // keep fallback
+        }
+      } catch (err) {
+        console.warn('Native get_audio_devices fallback to web audio:', err);
+      }
+    }
+
+    if (!found) {
       try {
         if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
           const devices = await navigator.mediaDevices.enumerateDevices();
-          const audioInputs = devices
+          const inputs = devices
             .filter(d => d.kind === 'audioinput')
             .map((d, idx) => ({
               deviceId: d.deviceId,
-              label: d.label || `Microphone ${idx + 1}`
+              label: d.label || (idx === 0 ? 'Default System Microphone' : `Microphone ${idx + 1}`)
             }));
-          if (audioInputs.length > 0) {
-            setAudioDevices(audioInputs);
-          }
+          const outputs = devices
+            .filter(d => d.kind === 'audiooutput')
+            .map((d, idx) => ({
+              deviceId: d.deviceId,
+              label: d.label || (idx === 0 ? 'Default System Audio' : `Audio Output ${idx + 1}`)
+            }));
+          if (inputs.length > 0) setAudioDevices(inputs);
+          if (outputs.length > 0) setSystemAudioDevices(outputs);
         }
       } catch (err) {
         console.warn('Could not enumerate audio devices:', err);
       }
-    };
-    getDevices();
+    }
+
+    setTimeout(() => setIsRefreshingDevices(false), 350);
+  };
+
+  useEffect(() => {
+    refreshDevices();
   }, []);
+
+  useEffect(() => {
+    if (settings?.storagePath && settings.storagePath !== 'Default Application Recordings') {
+      setRecordingSavePath(settings.storagePath);
+    }
+  }, [settings?.storagePath]);
+
+  useEffect(() => {
+    if (settings?.systemAudioBackend) {
+      setSystemBackend(settings.systemAudioBackend);
+    }
+  }, [settings?.systemAudioBackend]);
 
   const toggleMicTest = async () => {
     if (isTestingMic) {
@@ -383,6 +474,7 @@ export const SettingsScreen: React.FC = () => {
       }
       setIsTestingMic(false);
       setMicTestVolume(0);
+      setMicTestBars(new Array(16).fill(6));
     } else {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -418,7 +510,7 @@ export const SettingsScreen: React.FC = () => {
 
         const source = ctx.createMediaStreamSource(stream);
         const analyser = ctx.createAnalyser();
-        analyser.fftSize = 256;
+        analyser.fftSize = 64;
         source.connect(analyser);
 
         const dataArray = new Uint8Array(analyser.frequencyBinCount);
@@ -430,6 +522,21 @@ export const SettingsScreen: React.FC = () => {
           for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
           const avg = sum / dataArray.length;
           setMicTestVolume(Math.min(100, Math.round(avg * 2.2)));
+
+          // Compute 16 equalizer bars
+          const barCount = 16;
+          const step = Math.max(1, Math.floor(dataArray.length / barCount));
+          const bars: number[] = [];
+          for (let b = 0; b < barCount; b++) {
+            let bSum = 0;
+            for (let s = 0; s < step; s++) {
+              bSum += dataArray[b * step + s] || 0;
+            }
+            const bAvg = bSum / step;
+            bars.push(Math.max(6, Math.min(100, Math.round(bAvg * 2.2))));
+          }
+          setMicTestBars(bars);
+
           micTestAnimRef.current = requestAnimationFrame(updateMeter);
         };
         updateMeter();
@@ -437,6 +544,85 @@ export const SettingsScreen: React.FC = () => {
         showToast('Microphone Test Notice', 'Please allow microphone access to test input levels.', 'info');
       }
     }
+  };
+
+  const handleStartEditPath = () => {
+    setCustomPathInput(recordingSavePath);
+    setIsEditingPath(true);
+  };
+
+  const handleSaveCustomPath = async () => {
+    const trimmed = customPathInput.trim();
+    if (!trimmed) {
+      showToast('Path Required', 'Please enter a valid directory path.', 'warning');
+      return;
+    }
+    setRecordingSavePath(trimmed);
+    updateSettings({ storagePath: trimmed });
+    const invoke = getNativeInvoke();
+    if (invoke) {
+      try {
+        const prefs = await invoke('get_recording_preferences').catch(() => null);
+        if (prefs) {
+          prefs.save_folder = trimmed;
+          await invoke('set_recording_preferences', { preferences: prefs });
+        }
+      } catch (e) {
+        console.warn('Could not save to Tauri recording preferences:', e);
+      }
+    }
+    setIsEditingPath(false);
+    showToast('Save Location Updated', trimmed, 'success');
+  };
+
+  const handleResetDefaultPath = async () => {
+    let defPath = '/Users/muhammedshraeef/Movies/meetily-recordings';
+    const invoke = getNativeInvoke();
+    if (invoke) {
+      try {
+        const nativeDef = await invoke('get_default_recordings_folder_path');
+        if (nativeDef) defPath = nativeDef;
+        const prefs = await invoke('get_recording_preferences').catch(() => null);
+        if (prefs) {
+          prefs.save_folder = defPath;
+          await invoke('set_recording_preferences', { preferences: prefs });
+        }
+      } catch {
+        // fallback
+      }
+    }
+    setRecordingSavePath(defPath);
+    updateSettings({ storagePath: defPath });
+    setIsEditingPath(false);
+    showToast('Reset to Default Path', defPath, 'info');
+  };
+
+  const handleOpenRecordingsFolder = async () => {
+    const invoke = getNativeInvoke();
+    if (invoke) {
+      try {
+        await invoke('open_recordings_folder');
+        showToast('Recordings Folder Opened', recordingSavePath, 'success');
+        return;
+      } catch (e) {
+        console.warn('Native open_recordings_folder error:', e);
+      }
+    }
+    openStorageFolder(recordingSavePath);
+  };
+
+  const handleBackendChange = async (backend: 'coreaudio' | 'screencapturekit') => {
+    setSystemBackend(backend);
+    updateSettings({ systemAudioBackend: backend });
+    const invoke = getNativeInvoke();
+    if (invoke) {
+      try {
+        await invoke('set_audio_backend', { backend });
+      } catch (e) {
+        console.warn('Failed to invoke set_audio_backend:', e);
+      }
+    }
+    showToast('Audio Backend Selected', backend === 'coreaudio' ? 'Core Audio (Active)' : 'ScreenCaptureKit (Disabled)', 'info');
   };
 
   useEffect(() => {
@@ -660,20 +846,179 @@ export const SettingsScreen: React.FC = () => {
               </div>
             </div>
 
-            {/* 2. Microphone Input Device & Live Test Meter */}
-            <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs">
-              <div className="flex items-center justify-between gap-4 mb-3 flex-wrap">
+            {/* 2. Default Audio Devices (Image 2 - Integrated Seamlessly into Minomeet UI Pattern) */}
+            <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs space-y-4">
+              <div>
+                <h4 className="text-sm font-bold text-[#111827]">Default Audio Devices</h4>
+                <p className="text-xs text-[#6b7280] mt-0.5">
+                  Set your preferred microphone and system audio devices for recording. These will be automatically selected when starting new recordings.
+                </p>
+              </div>
+
+              {/* Audio Devices Subheading with Refresh */}
+              <div className="pt-1">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-bold text-[#374151] uppercase tracking-wider">Audio Devices</span>
+                  <button
+                    onClick={refreshDevices}
+                    title="Refresh Audio Hardware Devices"
+                    className="p-1.5 rounded-lg text-[#6b7280] hover:text-[#111827] hover:bg-[#f3f4f6] border border-[#e5e7eb] transition cursor-pointer"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingDevices ? 'animate-spin text-[#2563eb]' : ''}`} />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  {/* Microphone selection */}
+                  <div>
+                    <label className="flex items-center gap-1.5 text-xs font-semibold text-[#374151] mb-1.5">
+                      <Mic className="w-3.5 h-3.5 text-[#2563eb]" />
+                      <span>Microphone</span>
+                      <span title="Records your voice and ambient sound" className="cursor-help text-[#9ca3af] hover:text-[#4b5563]">
+                        <HelpCircle className="w-3.5 h-3.5 inline" />
+                      </span>
+                    </label>
+                    <select
+                      value={settings.selectedMicDeviceId || 'default'}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        updateSettings({ selectedMicDeviceId: val });
+                        const label = audioDevices.find(d => d.deviceId === val)?.label || (val === 'default' ? 'Default Microphone' : val);
+                        showToast('Microphone Selected', label, 'info');
+                      }}
+                      className="w-full bg-[#f9fafb] border border-[#d1d5db] rounded-xl px-3.5 py-2 text-xs font-semibold text-[#111827] focus:ring-2 focus:ring-[#2563eb] focus:bg-white outline-none transition cursor-pointer"
+                    >
+                      <option value="default">Default Microphone</option>
+                      {audioDevices.map((dev) => (
+                        <option key={dev.deviceId} value={dev.deviceId}>
+                          {dev.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* System Audio selection */}
+                  <div>
+                    <label className="flex items-center gap-1.5 text-xs font-semibold text-[#374151] mb-1.5">
+                      <Speaker className="w-3.5 h-3.5 text-[#2563eb]" />
+                      <span>System Audio</span>
+                      <span title="Records computer audio (music, calls, remote attendees)" className="cursor-help text-[#9ca3af] hover:text-[#4b5563]">
+                        <HelpCircle className="w-3.5 h-3.5 inline" />
+                      </span>
+                    </label>
+                    <select
+                      value={settings.selectedSystemDeviceId || 'default'}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        updateSettings({ selectedSystemDeviceId: val });
+                        const label = systemAudioDevices.find(d => d.deviceId === val)?.label || (val === 'default' ? 'Default System Audio' : val);
+                        showToast('System Audio Selected', label, 'info');
+                      }}
+                      className="w-full bg-[#f9fafb] border border-[#d1d5db] rounded-xl px-3.5 py-2 text-xs font-semibold text-[#111827] focus:ring-2 focus:ring-[#2563eb] focus:bg-white outline-none transition cursor-pointer"
+                    >
+                      <option value="default">Default System Audio</option>
+                      {systemAudioDevices.map((dev) => (
+                        <option key={dev.deviceId} value={dev.deviceId}>
+                          {dev.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* System Audio Backend */}
+              <div className="pt-2 border-t border-[#f3f4f6]">
+                <div className="flex items-center gap-1.5 mb-2.5">
+                  <span className="text-xs font-bold text-[#374151]">System Audio Backend</span>
+                  <span title="Audio capture framework configured on macOS" className="cursor-help text-[#9ca3af] hover:text-[#4b5563]">
+                    <Info className="w-3.5 h-3.5 inline" />
+                  </span>
+                </div>
+
+                <div className="space-y-2.5">
+                  {/* ScreenCaptureKit (Disabled) */}
+                  <div
+                    onClick={() => {
+                      showToast('ScreenCaptureKit Notice', 'ScreenCaptureKit is currently disabled; Core Audio is the active direct capture engine.', 'info');
+                    }}
+                    className="flex items-start justify-between p-3 rounded-xl border border-[#e5e7eb] bg-[#f9fafb] opacity-60 cursor-not-allowed text-xs transition"
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <input
+                        type="radio"
+                        name="sysBackend"
+                        checked={false}
+                        disabled
+                        className="mt-0.5 text-gray-400"
+                      />
+                      <div>
+                        <div className="font-semibold text-[#374151]">ScreenCaptureKit</div>
+                        <p className="text-[11px] text-[#6b7280] mt-0.5">
+                          Apple's ScreenCaptureKit framework - Higher level API with good compatibility
+                        </p>
+                      </div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded bg-gray-200 text-gray-600 text-[10px] font-semibold">
+                      Disabled
+                    </span>
+                  </div>
+
+                  {/* Core Audio (Active) */}
+                  <div
+                    onClick={() => handleBackendChange('coreaudio')}
+                    className={`flex items-start justify-between p-3 rounded-xl border transition cursor-pointer text-xs ${
+                      systemBackend === 'coreaudio'
+                        ? 'border-[#2563eb] bg-[#eff6ff] shadow-2xs'
+                        : 'border-[#e5e7eb] bg-white hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <input
+                        type="radio"
+                        name="sysBackend"
+                        checked={systemBackend === 'coreaudio'}
+                        onChange={() => handleBackendChange('coreaudio')}
+                        className="mt-0.5 text-[#2563eb] focus:ring-[#2563eb]"
+                      />
+                      <div>
+                        <div className="font-bold text-[#1e3a8a]">Core Audio</div>
+                        <p className="text-[11px] text-[#4b5563] mt-0.5">
+                          Direct Core Audio API - Lower latency, more control over audio pipeline
+                        </p>
+                      </div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded bg-[#2563eb] text-white text-[10px] font-bold">
+                      Active
+                    </span>
+                  </div>
+                </div>
+
+                {/* Helpful bullets */}
+                <div className="mt-3.5 space-y-1 text-[11px] text-[#6b7280]">
+                  <p>• Backend selection only affects system audio capture</p>
+                  <p>• Microphone always uses the default method</p>
+                  <p>• Changes apply to new recording sessions</p>
+                  <p>• <b>Microphone:</b> Records your voice and ambient sound</p>
+                  <p>• <b>System Audio:</b> Records computer audio (music, calls, etc.)</p>
+                </div>
+              </div>
+            </div>
+
+            {/* 3. Microphone Input Device & Live Level Equalizer (Redesigned) */}
+            <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs space-y-4">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div>
-                  <h4 className="text-sm font-bold text-[#111827]">Microphone Input Device</h4>
+                  <h4 className="text-sm font-bold text-[#111827]">Microphone Input &amp; Level Testing</h4>
                   <p className="text-xs text-[#6b7280] mt-0.5">
-                    Select your preferred physical audio input hardware (built-in mic, external USB, or Bluetooth headset).
+                    Calibrate your input sensitivity and verify physical microphone signal with real-time spectrum analysis.
                   </p>
                 </div>
                 <button
                   onClick={toggleMicTest}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-2xs ${
                     isTestingMic
-                      ? 'bg-red-50 text-red-700 border border-red-200'
+                      ? 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100'
                       : 'bg-[#eff6ff] text-[#2563eb] hover:bg-[#dbeafe] border border-[#bfdbfe]'
                   }`}
                 >
@@ -682,130 +1027,218 @@ export const SettingsScreen: React.FC = () => {
                 </button>
               </div>
 
-              <div className="space-y-3">
-                <select
-                  value={settings.selectedMicDeviceId || 'default'}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    updateSettings({ selectedMicDeviceId: val });
-                    const selectedLabel = audioDevices.find(d => d.deviceId === val)?.label || (val === 'default' ? 'Default System Microphone' : val);
-                    showToast('Microphone Selected', selectedLabel, 'info');
-                  }}
-                  className="w-full bg-[#f9fafb] border border-[#d1d5db] rounded-xl px-3.5 py-2 text-xs font-semibold text-[#111827] focus:ring-2 focus:ring-[#2563eb] focus:bg-white outline-none transition cursor-pointer"
-                >
-                  <option value="default">Default System Microphone</option>
-                  {audioDevices.map((dev) => (
-                    <option key={dev.deviceId} value={dev.deviceId}>
-                      {dev.label}
-                    </option>
-                  ))}
-                </select>
-
-                {/* Live Mic Volume Level Meter */}
-                {isTestingMic && (
-                  <div className="p-3 rounded-xl bg-[#f0fdf4] border border-[#bbf7d0] space-y-1.5 animate-in fade-in duration-150">
-                    <div className="flex items-center justify-between text-xs font-bold text-[#166534]">
-                      <span className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-[#16a34a] animate-pulse" />
-                        Microphone Input Level
-                      </span>
-                      <span className="font-mono">{micTestVolume}%</span>
-                    </div>
-                    <div className="w-full h-2 bg-emerald-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-[#22c55e] to-[#16a34a] rounded-full transition-all duration-75"
-                        style={{ width: `${micTestVolume}%` }}
-                      />
-                    </div>
-                    <p className="text-[11px] text-[#15803d]">Speak into your microphone to test volume normalization.</p>
-                  </div>
-                )}
+              {/* Active hardware badge */}
+              <div className="flex items-center justify-between p-3 rounded-xl bg-[#f9fafb] border border-[#e5e7eb] text-xs">
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${isTestingMic ? 'bg-emerald-500 animate-pulse' : 'bg-[#9ca3af]'}`} />
+                  <span className="font-semibold text-[#374151]">
+                    Active Input Hardware:
+                  </span>
+                  <span className="font-bold text-[#111827]">
+                    {audioDevices.find(d => d.deviceId === settings.selectedMicDeviceId)?.label || 'Default System Microphone'}
+                  </span>
+                </div>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                  isTestingMic ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'
+                }`}>
+                  {isTestingMic ? 'SIGNAL LIVE' : 'STANDBY'}
+                </span>
               </div>
+
+              {/* Live Audio Level Meter & Equalizer Visualizer */}
+              {isTestingMic && (
+                <div className="p-4 rounded-xl bg-gradient-to-b from-[#f0fdf4] to-[#ecfdf5] border border-[#bbf7d0] space-y-3 animate-in fade-in duration-200">
+                  <div className="flex items-center justify-between text-xs font-bold text-[#166534]">
+                    <span className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#16a34a] animate-ping" />
+                      <span>Microphone Input Level</span>
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
+                        micTestVolume > 70
+                          ? 'bg-amber-100 text-amber-800'
+                          : micTestVolume > 10
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {micTestVolume > 70 ? 'High Gain' : micTestVolume > 10 ? 'Optimal' : 'Quiet'}
+                      </span>
+                      <span className="font-mono text-sm">{micTestVolume}%</span>
+                    </div>
+                  </div>
+
+                  {/* Horizontal Level Bar */}
+                  <div className="w-full h-2.5 bg-emerald-100/80 rounded-full overflow-hidden p-0.5 shadow-inner">
+                    <div
+                      className="h-full bg-gradient-to-r from-[#22c55e] via-[#16a34a] to-[#15803d] rounded-full transition-all duration-75"
+                      style={{ width: `${micTestVolume}%` }}
+                    />
+                  </div>
+
+                  {/* 16-Bar Real-Time Audio Frequency Spectrum Equalizer */}
+                  <div className="pt-2">
+                    <div className="text-[10px] font-bold text-[#166534] uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                      <span>Real-time Audio Spectrum</span>
+                      <span className="font-mono">16-band EQ</span>
+                    </div>
+                    <div className="h-12 bg-white/70 rounded-lg p-2 border border-[#86efac] flex items-end justify-between gap-1">
+                      {micTestBars.map((val, idx) => (
+                        <div
+                          key={idx}
+                          className="flex-1 bg-gradient-to-t from-[#16a34a] to-[#4ade80] rounded-xs transition-all duration-75"
+                          style={{ height: `${val}%` }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] text-[#15803d]">
+                    Speak into your microphone. If the meter moves smoothly into green, your audio is clear and properly calibrated.
+                  </p>
+                </div>
+              )}
             </div>
 
-            {/* 3. Audio Enhancement & Acoustic Filters */}
+            {/* 4. Audio Enhancement & Acoustic Filters (Redesigned Modern Feature Cards) */}
             <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs space-y-4">
               <div>
                 <h4 className="text-sm font-bold text-[#111827]">Acoustic Filters &amp; Neural Preprocessing</h4>
                 <p className="text-xs text-[#6b7280] mt-0.5">
-                  Real-time Web Audio constraints applied during live voice capture.
+                  Real-time DSP and neural audio constraints applied during live voice capture to maximize speech clarity.
                 </p>
               </div>
 
-              <div className="space-y-3 divide-y divide-gray-100">
-                {/* Noise Suppression */}
-                <div className="flex items-center justify-between pt-1 gap-4">
-                  <div>
-                    <div className="text-xs font-bold text-[#111827]">Noise Suppression</div>
-                    <p className="text-[11px] text-[#6b7280]">
-                      Filter out background ambient room noise, typing clatter, and HVAC hum.
-                    </p>
+              <div className="space-y-3">
+                {/* 1. Noise Suppression Card */}
+                <div className={`p-4 rounded-xl border transition flex items-center justify-between gap-4 ${
+                  settings.noiseSuppression !== false
+                    ? 'border-[#bfdbfe] bg-[#f8faff]'
+                    : 'border-[#e5e7eb] bg-white'
+                }`}>
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-[#eff6ff] text-[#2563eb] flex items-center justify-center flex-none mt-0.5 border border-[#dbeafe]">
+                      <ShieldCheck className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-[#111827]">Noise Suppression</span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                          settings.noiseSuppression !== false
+                            ? 'bg-[#dcfce7] text-[#15803d]'
+                            : 'bg-gray-100 text-gray-500'
+                        }`}>
+                          {settings.noiseSuppression !== false ? 'Active' : 'Off'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-[#6b7280] mt-0.5 max-w-xl">
+                        Filter out background ambient room noise, typing keyboard clatter, air conditioner hum, and traffic murmur.
+                      </p>
+                    </div>
                   </div>
+
                   <div
                     onClick={() => {
                       const next = settings.noiseSuppression === false ? true : false;
                       updateSettings({ noiseSuppression: next });
                       showToast('Noise Suppression', next ? 'Enabled' : 'Disabled', 'info');
                     }}
-                    className={`w-10 h-5.5 flex items-center rounded-full p-0.5 cursor-pointer transition-colors ${
+                    className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors flex-none ${
                       settings.noiseSuppression !== false ? 'bg-[#2563eb]' : 'bg-gray-300'
                     }`}
                   >
                     <div
-                      className={`bg-white w-4.5 h-4.5 rounded-full shadow-md transform transition-transform ${
-                        settings.noiseSuppression !== false ? 'translate-x-4.5' : 'translate-x-0'
+                      className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                        settings.noiseSuppression !== false ? 'translate-x-5' : 'translate-x-0'
                       }`}
                     />
                   </div>
                 </div>
 
-                {/* Acoustic Echo Cancellation */}
-                <div className="flex items-center justify-between pt-3 gap-4">
-                  <div>
-                    <div className="text-xs font-bold text-[#111827]">Acoustic Echo Cancellation (AEC)</div>
-                    <p className="text-[11px] text-[#6b7280]">
-                      Eliminate speaker feedback loops when remote meeting sound plays through laptop speakers.
-                    </p>
+                {/* 2. Acoustic Echo Cancellation (AEC) Card */}
+                <div className={`p-4 rounded-xl border transition flex items-center justify-between gap-4 ${
+                  settings.echoCancellation !== false
+                    ? 'border-[#e9d5ff] bg-[#faf5ff]'
+                    : 'border-[#e5e7eb] bg-white'
+                }`}>
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-[#f3e8ff] text-[#9333ea] flex items-center justify-center flex-none mt-0.5 border border-[#e9d5ff]">
+                      <RotateCw className="w-4.5 h-4.5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-[#111827]">Acoustic Echo Cancellation (AEC)</span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                          settings.echoCancellation !== false
+                            ? 'bg-[#dcfce7] text-[#15803d]'
+                            : 'bg-gray-100 text-gray-500'
+                        }`}>
+                          {settings.echoCancellation !== false ? 'Active' : 'Off'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-[#6b7280] mt-0.5 max-w-xl">
+                        Eliminate speaker feedback loops when remote attendee meeting sound plays aloud through laptop speakers.
+                      </p>
+                    </div>
                   </div>
+
                   <div
                     onClick={() => {
                       const next = settings.echoCancellation === false ? true : false;
                       updateSettings({ echoCancellation: next });
                       showToast('Echo Cancellation (AEC)', next ? 'Enabled' : 'Disabled', 'info');
                     }}
-                    className={`w-10 h-5.5 flex items-center rounded-full p-0.5 cursor-pointer transition-colors ${
+                    className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors flex-none ${
                       settings.echoCancellation !== false ? 'bg-[#2563eb]' : 'bg-gray-300'
                     }`}
                   >
                     <div
-                      className={`bg-white w-4.5 h-4.5 rounded-full shadow-md transform transition-transform ${
-                        settings.echoCancellation !== false ? 'translate-x-4.5' : 'translate-x-0'
+                      className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                        settings.echoCancellation !== false ? 'translate-x-5' : 'translate-x-0'
                       }`}
                     />
                   </div>
                 </div>
 
-                {/* Auto Gain Control */}
-                <div className="flex items-center justify-between pt-3 gap-4">
-                  <div>
-                    <div className="text-xs font-bold text-[#111827]">Auto Gain Control (AGC)</div>
-                    <p className="text-[11px] text-[#6b7280]">
-                      Automatically adjust microphone sensitivity between quiet and loud speakers.
-                    </p>
+                {/* 3. Auto Gain Control (AGC) Card */}
+                <div className={`p-4 rounded-xl border transition flex items-center justify-between gap-4 ${
+                  settings.autoGainControl !== false
+                    ? 'border-[#fed7aa] bg-[#fffaf5]'
+                    : 'border-[#e5e7eb] bg-white'
+                }`}>
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-[#ffedd5] text-[#d97706] flex items-center justify-center flex-none mt-0.5 border border-[#fed7aa]">
+                      <Sliders className="w-4.5 h-4.5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-[#111827]">Auto Gain Control (AGC)</span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                          settings.autoGainControl !== false
+                            ? 'bg-[#dcfce7] text-[#15803d]'
+                            : 'bg-gray-100 text-gray-500'
+                        }`}>
+                          {settings.autoGainControl !== false ? 'Active' : 'Off'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-[#6b7280] mt-0.5 max-w-xl">
+                        Automatically balance and normalize microphone gain between whisperers and loud room speakers for uniform loudness.
+                      </p>
+                    </div>
                   </div>
+
                   <div
                     onClick={() => {
                       const next = settings.autoGainControl === false ? true : false;
                       updateSettings({ autoGainControl: next });
                       showToast('Auto Gain Control (AGC)', next ? 'Enabled' : 'Disabled', 'info');
                     }}
-                    className={`w-10 h-5.5 flex items-center rounded-full p-0.5 cursor-pointer transition-colors ${
+                    className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors flex-none ${
                       settings.autoGainControl !== false ? 'bg-[#2563eb]' : 'bg-gray-300'
                     }`}
                   >
                     <div
-                      className={`bg-white w-4.5 h-4.5 rounded-full shadow-md transform transition-transform ${
-                        settings.autoGainControl !== false ? 'translate-x-4.5' : 'translate-x-0'
+                      className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                        settings.autoGainControl !== false ? 'translate-x-5' : 'translate-x-0'
                       }`}
                     />
                   </div>
@@ -813,13 +1246,21 @@ export const SettingsScreen: React.FC = () => {
               </div>
             </div>
 
-            {/* 4. Save Audio Recordings to Disk */}
-            <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs">
-              <div className="flex items-center justify-between gap-4">
+            {/* 5. Save Raw Audio Recordings to Disk (Mention Path + Change Path Option + Open Folder + Auto-save) */}
+            <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs space-y-4">
+              <div>
+                <h4 className="text-sm font-bold text-[#111827]">Save Raw Audio Recordings to Disk</h4>
+                <p className="text-xs text-[#6b7280] mt-0.5">
+                  Configure how your audio recordings are preserved and stored locally on your machine.
+                </p>
+              </div>
+
+              {/* Auto Save Toggle */}
+              <div className="flex items-center justify-between p-3.5 rounded-xl border border-[#e5e7eb] bg-[#f9fafb] gap-4">
                 <div>
-                  <h4 className="text-sm font-bold text-[#111827]">Save Raw Audio Recordings to Disk</h4>
-                  <p className="text-xs text-[#6b7280] mt-0.5">
-                    Automatically persist media stream recordings to local disk when you end a meeting, allowing in-app playback.
+                  <div className="text-xs font-bold text-[#111827]">Save Audio Recordings</div>
+                  <p className="text-[11px] text-[#6b7280] mt-0.5">
+                    Automatically save audio files to local storage when recording stops, allowing in-app playback and retranscription.
                   </p>
                 </div>
                 <div
@@ -828,7 +1269,7 @@ export const SettingsScreen: React.FC = () => {
                     updateSettings({ saveAudio: next });
                     showToast('Save Audio Recordings', next ? 'Auto-save audio files enabled' : 'Auto-save disabled', 'info');
                   }}
-                  className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${
+                  className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors flex-none ${
                     settings.saveAudio ? 'bg-[#2563eb]' : 'bg-gray-300'
                   }`}
                 >
@@ -839,9 +1280,124 @@ export const SettingsScreen: React.FC = () => {
                   />
                 </div>
               </div>
+
+              {/* Save Location on Drive with Path Mention & Change Path Option */}
+              {settings.saveAudio && (
+                <div className="p-4 rounded-xl border border-[#e5e7eb] bg-[#fbfcfd] space-y-3">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div>
+                      <div className="text-xs font-bold text-[#111827] flex items-center gap-1.5">
+                        <FolderOpen className="w-4 h-4 text-[#2563eb]" />
+                        <span>Save Location on Drive</span>
+                      </div>
+                      <p className="text-[11px] text-[#6b7280] mt-0.5">
+                        Destination directory on your hard drive where meeting recordings are stored.
+                      </p>
+                    </div>
+
+                    {!isEditingPath && (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={handleStartEditPath}
+                          className="px-3 py-1.5 rounded-lg border border-[#d1d5db] bg-white hover:bg-gray-50 text-xs font-bold text-[#374151] transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                        >
+                          <Edit2 className="w-3.5 h-3.5 text-[#2563eb]" />
+                          <span>Change Folder</span>
+                        </button>
+                        <button
+                          onClick={handleOpenRecordingsFolder}
+                          className="px-3 py-1.5 rounded-lg border border-[#bfdbfe] bg-[#eff6ff] hover:bg-[#dbeafe] text-xs font-bold text-[#2563eb] transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                        >
+                          <FolderOpen className="w-3.5 h-3.5" />
+                          <span>Open Folder</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Display Path Bar or Edit Form */}
+                  {!isEditingPath ? (
+                    <div className="p-3 rounded-lg bg-white border border-[#e5e7eb] font-mono text-xs text-[#1f2937] break-all flex items-center justify-between gap-3 shadow-2xs">
+                      <span>{recordingSavePath}</span>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 p-3 rounded-lg bg-white border border-[#bfdbfe] shadow-xs">
+                      <label className="text-[11px] font-bold text-[#374151]">
+                        Enter New Local Folder Path:
+                      </label>
+                      <input
+                        type="text"
+                        value={customPathInput}
+                        onChange={(e) => setCustomPathInput(e.target.value)}
+                        placeholder="/Users/.../Movies/my-recordings"
+                        className="w-full bg-[#f9fafb] border border-[#d1d5db] rounded-lg px-3 py-2 text-xs font-mono text-[#111827] focus:ring-2 focus:ring-[#2563eb] focus:bg-white outline-none"
+                      />
+                      <div className="flex items-center justify-between pt-1">
+                        <button
+                          onClick={handleResetDefaultPath}
+                          className="text-[11px] text-[#6b7280] hover:text-[#111827] underline cursor-pointer"
+                        >
+                          Reset to default path
+                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setIsEditingPath(false)}
+                            className="px-2.5 py-1 rounded-md text-xs font-medium text-[#6b7280] hover:text-[#111827] cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleSaveCustomPath}
+                            className="px-3 py-1 rounded-md bg-[#2563eb] hover:bg-blue-700 text-white text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-2xs"
+                          >
+                            <Check className="w-3 h-3" />
+                            <span>Save Path</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* File Format Timestamp Note (matching Image 1) */}
+                  <div className="p-3 rounded-lg bg-[#eff6ff] border border-[#bfdbfe] text-xs text-[#1e3a8a]">
+                    <div className="font-bold">
+                      File Format: {settings.audioFormat || 'MP4'} files
+                    </div>
+                    <div className="text-[11px] text-[#3b82f6] mt-0.5">
+                      Recordings are saved with timestamp: <code className="bg-white/80 px-1 py-0.5 rounded font-mono text-[#1e3a8a]">recording_YYYYMMDD_HHMMSS.{settings.audioFormat?.toLowerCase() || 'mp4'}</code>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Recording Start Notification Toggle (matching Image 1) */}
+              <div className="flex items-center justify-between p-3.5 rounded-xl border border-[#e5e7eb] bg-[#f9fafb] gap-4">
+                <div>
+                  <div className="text-xs font-bold text-[#111827]">Recording Start Notification</div>
+                  <p className="text-[11px] text-[#6b7280] mt-0.5">
+                    Show reminder to inform participants when recording starts.
+                  </p>
+                </div>
+                <div
+                  onClick={() => {
+                    const next = settings.recordingStartNotification === false ? true : false;
+                    updateSettings({ recordingStartNotification: next });
+                    showToast('Recording Notification', next ? 'Reminders enabled' : 'Reminders disabled', 'info');
+                  }}
+                  className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors flex-none ${
+                    settings.recordingStartNotification !== false ? 'bg-[#2563eb]' : 'bg-gray-300'
+                  }`}
+                >
+                  <div
+                    className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                      settings.recordingStartNotification !== false ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </div>
+              </div>
             </div>
 
-            {/* 5. Audio File Format & Bitrate Quality */}
+            {/* 6. Audio File Format & Bitrate Quality */}
             <div className="border border-[#e5e7eb] rounded-2xl p-5 bg-white shadow-xs space-y-4">
               <div>
                 <h4 className="text-sm font-bold text-[#111827]">Audio File Format &amp; Quality</h4>
