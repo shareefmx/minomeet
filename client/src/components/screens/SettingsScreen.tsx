@@ -378,7 +378,7 @@ export const SettingsScreen: React.FC = () => {
         micTestStreamRef.current = null;
       }
       if (micTestAudioCtxRef.current) {
-        micTestAudioCtxRef.current.close();
+        micTestAudioCtxRef.current.close().catch(() => {});
         micTestAudioCtxRef.current = null;
       }
       setIsTestingMic(false);
@@ -396,6 +396,21 @@ export const SettingsScreen: React.FC = () => {
           }
         });
         micTestStreamRef.current = stream;
+
+        // Refresh devices to capture real human labels now that permission is active
+        if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+          navigator.mediaDevices.enumerateDevices().then(devices => {
+            const audioInputs = devices
+              .filter(d => d.kind === 'audioinput')
+              .map((d, idx) => ({
+                deviceId: d.deviceId,
+                label: d.label || (idx === 0 ? 'Default System Microphone' : `Microphone ${idx + 1}`)
+              }));
+            if (audioInputs.length > 0) {
+              setAudioDevices(audioInputs);
+            }
+          }).catch(() => {});
+        }
 
         const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
         const ctx = new AudioCtxClass();
@@ -431,7 +446,7 @@ export const SettingsScreen: React.FC = () => {
         micTestStreamRef.current.getTracks().forEach(t => t.stop());
       }
       if (micTestAudioCtxRef.current) {
-        micTestAudioCtxRef.current.close();
+        micTestAudioCtxRef.current.close().catch(() => {});
       }
     };
   }, []);
@@ -514,11 +529,11 @@ export const SettingsScreen: React.FC = () => {
   if (!settings) return null;
 
   const tabs: { id: SettingsTab; label: string; icon: any }[] = [
-    { id: 'recording', label: '1. Recording', icon: Mic },
-    { id: 'transcription', label: '2. Transcription', icon: FileAudio },
-    { id: 'model', label: '3. AI Model', icon: Cpu },
-    { id: 'summary', label: '4. Summary', icon: Sparkles },
-    { id: 'templates', label: '5. Templates', icon: FileText },
+    { id: 'recording', label: 'Recording', icon: Mic },
+    { id: 'transcription', label: 'Transcription', icon: FileAudio },
+    { id: 'model', label: 'AI Model', icon: Cpu },
+    { id: 'summary', label: 'Summary', icon: Sparkles },
+    { id: 'templates', label: 'Templates', icon: FileText },
     { id: 'general', label: 'General & Storage', icon: Sliders }
   ];
 
@@ -564,7 +579,10 @@ export const SettingsScreen: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {/* Mixed Audio */}
                 <div
-                  onClick={() => updateSettings({ defaultAudioSource: 'mixed' })}
+                  onClick={() => {
+                    updateSettings({ defaultAudioSource: 'mixed' });
+                    showToast('Default Capture Source', 'Mixed Audio (Microphone + Remote Meeting Audio)', 'info');
+                  }}
                   className={`p-3.5 rounded-xl border transition cursor-pointer text-xs ${
                     (settings.defaultAudioSource || 'mixed') === 'mixed'
                       ? 'border-[#2563eb] bg-[#eff6ff] shadow-xs'
@@ -590,7 +608,10 @@ export const SettingsScreen: React.FC = () => {
 
                 {/* Microphone Only */}
                 <div
-                  onClick={() => updateSettings({ defaultAudioSource: 'mic' })}
+                  onClick={() => {
+                    updateSettings({ defaultAudioSource: 'mic' });
+                    showToast('Default Capture Source', 'Microphone Only (Physical input device)', 'info');
+                  }}
                   className={`p-3.5 rounded-xl border transition cursor-pointer text-xs ${
                     settings.defaultAudioSource === 'mic'
                       ? 'border-[#2563eb] bg-[#eff6ff] shadow-xs'
@@ -613,7 +634,10 @@ export const SettingsScreen: React.FC = () => {
 
                 {/* System Audio Only */}
                 <div
-                  onClick={() => updateSettings({ defaultAudioSource: 'system' })}
+                  onClick={() => {
+                    updateSettings({ defaultAudioSource: 'system' });
+                    showToast('Default Capture Source', 'System Audio Only (Remote attendees stream)', 'info');
+                  }}
                   className={`p-3.5 rounded-xl border transition cursor-pointer text-xs ${
                     settings.defaultAudioSource === 'system'
                       ? 'border-[#2563eb] bg-[#eff6ff] shadow-xs'
@@ -661,8 +685,13 @@ export const SettingsScreen: React.FC = () => {
               <div className="space-y-3">
                 <select
                   value={settings.selectedMicDeviceId || 'default'}
-                  onChange={(e) => updateSettings({ selectedMicDeviceId: e.target.value })}
-                  className="w-full bg-[#f9fafb] border border-[#d1d5db] rounded-xl px-3.5 py-2 text-xs font-semibold text-[#111827] focus:ring-2 focus:ring-[#2563eb] focus:bg-white outline-none transition"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    updateSettings({ selectedMicDeviceId: val });
+                    const selectedLabel = audioDevices.find(d => d.deviceId === val)?.label || (val === 'default' ? 'Default System Microphone' : val);
+                    showToast('Microphone Selected', selectedLabel, 'info');
+                  }}
+                  className="w-full bg-[#f9fafb] border border-[#d1d5db] rounded-xl px-3.5 py-2 text-xs font-semibold text-[#111827] focus:ring-2 focus:ring-[#2563eb] focus:bg-white outline-none transition cursor-pointer"
                 >
                   <option value="default">Default System Microphone</option>
                   {audioDevices.map((dev) => (
@@ -713,7 +742,11 @@ export const SettingsScreen: React.FC = () => {
                     </p>
                   </div>
                   <div
-                    onClick={() => updateSettings({ noiseSuppression: settings.noiseSuppression === false ? true : false })}
+                    onClick={() => {
+                      const next = settings.noiseSuppression === false ? true : false;
+                      updateSettings({ noiseSuppression: next });
+                      showToast('Noise Suppression', next ? 'Enabled' : 'Disabled', 'info');
+                    }}
                     className={`w-10 h-5.5 flex items-center rounded-full p-0.5 cursor-pointer transition-colors ${
                       settings.noiseSuppression !== false ? 'bg-[#2563eb]' : 'bg-gray-300'
                     }`}
@@ -735,7 +768,11 @@ export const SettingsScreen: React.FC = () => {
                     </p>
                   </div>
                   <div
-                    onClick={() => updateSettings({ echoCancellation: settings.echoCancellation === false ? true : false })}
+                    onClick={() => {
+                      const next = settings.echoCancellation === false ? true : false;
+                      updateSettings({ echoCancellation: next });
+                      showToast('Echo Cancellation (AEC)', next ? 'Enabled' : 'Disabled', 'info');
+                    }}
                     className={`w-10 h-5.5 flex items-center rounded-full p-0.5 cursor-pointer transition-colors ${
                       settings.echoCancellation !== false ? 'bg-[#2563eb]' : 'bg-gray-300'
                     }`}
@@ -757,7 +794,11 @@ export const SettingsScreen: React.FC = () => {
                     </p>
                   </div>
                   <div
-                    onClick={() => updateSettings({ autoGainControl: settings.autoGainControl === false ? true : false })}
+                    onClick={() => {
+                      const next = settings.autoGainControl === false ? true : false;
+                      updateSettings({ autoGainControl: next });
+                      showToast('Auto Gain Control (AGC)', next ? 'Enabled' : 'Disabled', 'info');
+                    }}
                     className={`w-10 h-5.5 flex items-center rounded-full p-0.5 cursor-pointer transition-colors ${
                       settings.autoGainControl !== false ? 'bg-[#2563eb]' : 'bg-gray-300'
                     }`}
@@ -782,7 +823,11 @@ export const SettingsScreen: React.FC = () => {
                   </p>
                 </div>
                 <div
-                  onClick={() => updateSettings({ saveAudio: !settings.saveAudio })}
+                  onClick={() => {
+                    const next = !settings.saveAudio;
+                    updateSettings({ saveAudio: next });
+                    showToast('Save Audio Recordings', next ? 'Auto-save audio files enabled' : 'Auto-save disabled', 'info');
+                  }}
                   className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${
                     settings.saveAudio ? 'bg-[#2563eb]' : 'bg-gray-300'
                   }`}
@@ -812,7 +857,10 @@ export const SettingsScreen: React.FC = () => {
                   {['MP4', 'WAV', 'WebM'].map((fmt) => (
                     <button
                       key={fmt}
-                      onClick={() => updateSettings({ audioFormat: fmt })}
+                      onClick={() => {
+                        updateSettings({ audioFormat: fmt });
+                        showToast('Audio Format', `Container format set to ${fmt}`, 'info');
+                      }}
                       className={`px-3.5 py-1.5 rounded-lg text-xs font-bold border transition cursor-pointer ${
                         settings.audioFormat === fmt
                           ? 'bg-[#eaf1ff] border-[#2563eb] text-[#1e3a8a]'
@@ -836,7 +884,10 @@ export const SettingsScreen: React.FC = () => {
                   ].map((preset) => (
                     <button
                       key={preset.id}
-                      onClick={() => updateSettings({ audioBitrate: preset.id as any })}
+                      onClick={() => {
+                        updateSettings({ audioBitrate: preset.id as any });
+                        showToast('Audio Quality', `${preset.label} selected`, 'info');
+                      }}
                       className={`p-2.5 rounded-xl text-left border transition cursor-pointer ${
                         (settings.audioBitrate || '256k') === preset.id
                           ? 'bg-[#eff6ff] border-[#2563eb] text-[#1e3a8a]'
