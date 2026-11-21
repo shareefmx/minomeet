@@ -26,7 +26,17 @@ export function parseAIJsonResponse<T extends Record<string, any>>(
   rawText: string,
   fallbackExtractor?: (text: string) => T
 ): T {
+  // Strategy 0: Direct JSON.parse first
+  try {
+    const direct = JSON.parse(rawText);
+    if (direct && typeof direct === 'object') return direct;
+  } catch (_) {}
+
   const cleaned = cleanModelOutput(rawText);
+  try {
+    const directCleaned = JSON.parse(cleaned);
+    if (directCleaned && typeof directCleaned === 'object') return directCleaned;
+  } catch (_) {}
 
   // Strategy 1: Extract from markdown code blocks (```json ... ``` or ``` json ... ``` or ``` ... ```)
   const codeBlockMatches = [...cleaned.matchAll(/```(?:json)?\s*([\s\S]*?)\s*```/gi)];
@@ -61,6 +71,13 @@ export function parseAIJsonResponse<T extends Record<string, any>>(
     // Direct JSON.parse
     try {
       const parsed = JSON.parse(candidate);
+      if (parsed && typeof parsed === 'object') return parsed;
+    } catch (_) {}
+
+    // Sanitize ONLY control characters if direct parse fails
+    try {
+      const controlCharSanitized = candidate.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+      const parsed = JSON.parse(controlCharSanitized);
       if (parsed && typeof parsed === 'object') return parsed;
     } catch (_) {}
 
@@ -846,7 +863,8 @@ Answer the user's question directly, simply, and concisely in 1 to 3 short sente
   public async generateFollowUpEmail(
     meetingId: string,
     tone: 'professional' | 'concise' | 'action-oriented' = 'professional',
-    agentId: string = 'follow_up_email'
+    agentId: string = 'follow_up_email',
+    variantSeed: number = 0
   ): Promise<FollowUpEmailResponse> {
     const settings = storageService.getSettings();
     const resolved = resolveModel(settings, agentId);
@@ -874,11 +892,14 @@ Answer the user's question directly, simply, and concisely in 1 to 3 short sente
     // Call configured AI model to draft email
     if (summaryText) {
       try {
+        const variantInstruction = variantSeed > 0 
+          ? `Draft variation #${variantSeed + 1}. Create a distinctly alternate draft with a different subject line style and structure.` 
+          : '';
         const sysPrompt = `You are a corporate communication specialist. Draft a clear, impactful follow-up email after a meeting.
-Tone requested: ${tone}.
+Tone requested: ${tone}. ${variantInstruction}
 Respond strictly in JSON format with keys: "subject" and "body". Example:
 {"subject": "Follow-up: Meeting Title", "body": "Dear Team,\\n\\nThank you for attending..."}`;
-        const userPrompt = `Meeting Title: ${title}\nAttendees: ${attendees}\nSummary: ${summaryText}\nKey Decisions: ${meeting.summary?.keyDecisions?.join('; ') || 'None'}\nAction Items: ${actionItems.map(a => `${a.owner}: ${a.task} (Due: ${a.due})`).join('; ')}`;
+        const userPrompt = `Meeting Title: ${title}\nAttendees: ${attendees}\nSummary: ${summaryText}\nKey Decisions: ${meeting.summary?.keyDecisions?.join('; ') || 'None'}\nAction Items: ${actionItems.map(a => `${a.owner}: ${a.task} (Due: ${a.due})`).join('; ')}\nVariant Seed: ${variantSeed}`;
 
         const llmResponse = await this.callLLM(resolved.providerId, resolved.apiKey, resolved.baseUrl, resolved.modelId, sysPrompt, userPrompt);
         
@@ -1158,9 +1179,23 @@ Respond strictly in JSON format with keys: "subject" and "body". Example:
       }
     }
 
-    // OpenRouter API
+    // OpenRouter API: /auth/key then /models
     if (provider === 'openrouter') {
       try {
+        const authRes = await fetch('https://openrouter.ai/api/v1/auth/key', {
+          headers: { 'Authorization': `Bearer ${key}` }
+        });
+        if (!authRes.ok) {
+          const errData = (await authRes.json().catch(() => ({}))) as any;
+          const msg = errData.error?.message || (authRes.status === 401 ? 'Invalid API key provided.' : `OpenRouter returned HTTP ${authRes.status}`);
+          return {
+            success: false,
+            models: [],
+            error: `OpenRouter authentication failed (${authRes.status}): ${msg}`,
+            status: 'invalid'
+          };
+        }
+
         const res = await fetch('https://openrouter.ai/api/v1/models', {
           headers: { 'Authorization': `Bearer ${key}` }
         });
@@ -1170,18 +1205,18 @@ Respond strictly in JSON format with keys: "subject" and "body". Example:
           return {
             success: false,
             models: [],
-            error: `OpenRouter authentication failed: ${msg}`,
-            status: 'invalid'
+            error: `OpenRouter error (${res.status}): ${msg}`,
+            status: 'error'
           };
         }
         const data = (await res.json()) as any;
         const rawModels: any[] = data.data || [];
         const orModels = rawModels
           .map((m: any) => m.id)
-          .filter((id: string) => !isNonChatOrTranscriptionModel(id));
+          .filter((id: string) => typeof id === 'string' && !isNonChatOrTranscriptionModel(id));
         return {
           success: true,
-          models: orModels.length > 0 ? orModels : ['openai/gpt-4o', 'anthropic/claude-3.7-sonnet', 'deepseek/deepseek-r1', 'meta-llama/llama-3.3-70b-instruct', 'mistralai/mistral-large-2411'],
+          models: orModels,
           status: 'connected'
         };
       } catch (err: any) {

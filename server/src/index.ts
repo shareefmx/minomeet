@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import multer from 'multer';
 import { fileURLToPath } from 'url';
 import meetingsRouter from './routes/meetings.js';
 import aiRouter from './routes/ai.js';
@@ -64,6 +65,25 @@ if (resolvedClientDist) {
 }
 
 // Routes
+const uploadStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, UPLOADS_DIR),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname) || '.webm';
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, `audio-${uniqueSuffix}${ext}`);
+  }
+});
+const audioUpload = multer({ storage: uploadStorage });
+
+// POST /api/upload - dedicated audio upload endpoint
+app.post('/api/upload', audioUpload.single('audio'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, error: 'No audio file provided' });
+  }
+  const filePath = `/uploads/${req.file.filename}`;
+  res.json({ success: true, filePath, filename: req.file.filename });
+});
+
 app.use('/api/meetings', meetingsRouter);
 app.use('/api/ai', aiRouter);
 app.use('/api/settings', settingsRouter);

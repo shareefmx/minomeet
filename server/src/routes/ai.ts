@@ -53,14 +53,19 @@ router.post('/ask', async (req: Request, res: Response) => {
 // POST /api/ai/follow-up-email - generate professional follow up email
 router.post('/follow-up-email', async (req: Request, res: Response) => {
   try {
-    const { meetingId, tone, recipientGroup, agentId } = req.body;
+    const { meetingId, tone, recipientGroup, agentId, variantSeed } = req.body;
 
     if (!meetingId) {
       res.status(400).json({ success: false, error: 'Meeting ID is required' });
       return;
     }
 
-    const email = await aiService.generateFollowUpEmail(meetingId, tone, agentId || 'follow_up_email');
+    const email = await aiService.generateFollowUpEmail(
+      meetingId,
+      tone,
+      agentId || 'follow_up_email',
+      Number(variantSeed) || 0
+    );
     res.json({ success: true, ...email });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });

@@ -62,6 +62,15 @@ export interface AIAgentOverride {
   modelId?: string;
 }
 
+export const AUDIO_CAPTURE_MODES = {
+  MIXED: 'mixed',
+  MICROPHONE_ONLY: 'mic',
+  SYSTEM_ONLY: 'system',
+} as const;
+
+export type AudioCaptureMode = typeof AUDIO_CAPTURE_MODES[keyof typeof AUDIO_CAPTURE_MODES];
+export type AudioSourceType = AudioCaptureMode;
+
 export interface AppSettings {
   theme?: 'system' | 'light' | 'dark';
   notifications: boolean;
@@ -70,7 +79,7 @@ export interface AppSettings {
   saveAudio: boolean;
   audioFormat: string;
   audioBitrate?: '128k' | '256k' | '320k';
-  defaultAudioSource?: 'mic' | 'system' | 'mixed';
+  defaultAudioSource?: AudioCaptureMode;
   selectedMicDeviceId?: string;
   noiseSuppression?: boolean;
   echoCancellation?: boolean;
@@ -161,11 +170,18 @@ export interface TranscriptionModel {
   ramRequired: string;
   speedRating: string;
   accuracyScore: number;
+  rating?: number;
+  tag?: string;
+  fileName?: string;
   recommended?: boolean;
-  status: 'not_downloaded' | 'downloading' | 'downloaded';
+  status: 'not_downloaded' | 'downloading' | 'paused' | 'downloaded' | 'error';
   downloadProgress?: number;
+  downloadSpeed?: string;
+  downloadedMB?: number;
+  totalMB?: number;
   downloadedAt?: string;
   localPath?: string;
+  errorMessage?: string;
 }
 
 export interface TranscriptionEngineStatus {
@@ -185,7 +201,9 @@ export interface MOMTemplate {
   category: string;
   description: string;
   sections: string[];
+  tableColumns?: string[];
   promptInstructions: string;
+  sampleDocument?: string;
   isDefault?: boolean;
   isSystem?: boolean;
   createdAt?: string;

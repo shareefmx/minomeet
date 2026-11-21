@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { storageService } from '../services/storageService.js';
-import { exec } from 'child_process';
+import { AUDIO_CAPTURE_MODES, AudioCaptureMode } from '../types/index.js';
+import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -109,7 +110,46 @@ router.get('/stats', (_req: Request, res: Response) => {
 // PUT /api/settings - update app settings
 router.put('/', (req: Request, res: Response) => {
   try {
-    const updated = storageService.updateSettings(req.body);
+    const updates = { ...req.body };
+    if (updates.defaultAudioSource !== undefined) {
+      const validModes: string[] = Object.values(AUDIO_CAPTURE_MODES);
+      const raw = String(updates.defaultAudioSource).toLowerCase().trim();
+      let normalized: AudioCaptureMode | null = null;
+      if (raw === 'mixed') normalized = 'mixed';
+      else if (raw === 'mic' || raw === 'microphone' || raw === 'microphone_only') normalized = 'mic';
+      else if (raw === 'system' || raw === 'system_only') normalized = 'system';
+
+      if (!normalized) {
+        return res.status(400).json({
+          success: false,
+          error: `Invalid defaultAudioSource '${updates.defaultAudioSource}'. Expected one of: ${validModes.join(', ')}`
+        });
+      }
+      updates.defaultAudioSource = normalized;
+    }
+
+    if (updates.noiseSuppression !== undefined) {
+      updates.noiseSuppression = Boolean(updates.noiseSuppression);
+    }
+    if (updates.echoCancellation !== undefined) {
+      updates.echoCancellation = Boolean(updates.echoCancellation);
+    }
+    if (updates.autoGainControl !== undefined) {
+      updates.autoGainControl = Boolean(updates.autoGainControl);
+    }
+    if (updates.systemAudioBackend !== undefined) {
+      const b = String(updates.systemAudioBackend).toLowerCase().trim();
+      if (b === 'screencapturekit' || b === 'coreaudio') {
+        updates.systemAudioBackend = b;
+      } else {
+        return res.status(400).json({
+          success: false,
+          error: `Invalid systemAudioBackend '${updates.systemAudioBackend}'. Expected 'screencapturekit' or 'coreaudio'`
+        });
+      }
+    }
+
+    const updated = storageService.updateSettings(updates);
     res.json({ success: true, settings: updated });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -126,29 +166,37 @@ router.post('/open-folder', (req: Request, res: Response) => {
       targetPath = MODELS_DIR;
     } else if (requested === 'data') {
       targetPath = DATA_DIR;
-    } else if (requested && typeof requested === 'string' && fs.existsSync(requested)) {
-      targetPath = requested;
+    } else if (requested && typeof requested === 'string') {
+      const resolved = path.resolve(requested);
+      if (fs.existsSync(resolved) && fs.statSync(resolved).isDirectory()) {
+        targetPath = resolved;
+      }
     }
 
     if (!fs.existsSync(targetPath)) {
       fs.mkdirSync(targetPath, { recursive: true });
     }
 
-    const platform = process.platform;
-    let cmd = `open "${targetPath}"`;
-    if (platform === 'win32') {
-      cmd = `explorer.exe "${targetPath}"`;
-    } else if (platform === 'linux') {
-      cmd = `xdg-open "${targetPath}"`;
+    const resolvedPath = path.resolve(targetPath);
+    if (!fs.existsSync(resolvedPath) || !fs.statSync(resolvedPath).isDirectory()) {
+      return res.status(400).json({ success: false, error: 'Target directory does not exist or is invalid.' });
     }
 
-    exec(cmd, (err) => {
-      if (err) {
-        console.warn('System folder open command warning:', err.message);
-      }
-    });
+    const platform = process.platform;
+    let command = 'open';
+    let args = [resolvedPath];
+    if (platform === 'win32') {
+      command = 'explorer.exe';
+      args = [resolvedPath];
+    } else if (platform === 'linux') {
+      command = 'xdg-open';
+      args = [resolvedPath];
+    }
 
-    res.json({ success: true, path: targetPath, message: `Opened ${targetPath}` });
+    const child = spawn(command, args, { detached: true, stdio: 'ignore' });
+    child.unref();
+
+    res.json({ success: true, path: resolvedPath, message: `Opened ${resolvedPath}` });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -158,6 +206,16 @@ router.post('/open-folder', (req: Request, res: Response) => {
 router.post('/purge-recordings', (req: Request, res: Response) => {
   try {
     const days = typeof req.body.days === 'number' ? req.body.days : 30;
+    if (days <= 0) {
+      return res.json({
+        success: true,
+        deletedCount: 0,
+        freedBytes: 0,
+        freedFormatted: '0 B',
+        message: 'Auto-purge is disabled (Off).'
+      });
+    }
+
     let deletedCount = 0;
     let freedBytes = 0;
 
@@ -171,7 +229,7 @@ router.post('/purge-recordings', (req: Request, res: Response) => {
         const filePath = path.join(UPLOADS_DIR, file);
         try {
           const stats = fs.statSync(filePath);
-          if (days === 0 || (now - stats.mtimeMs > maxAgeMs)) {
+          if (now - stats.mtimeMs > maxAgeMs) {
             freedBytes += stats.size;
             fs.unlinkSync(filePath);
             deletedCount++;
@@ -197,6 +255,7 @@ router.get('/export-data', (_req: Request, res: Response) => {
   try {
     const meetings = storageService.getMeetings();
     const settings = storageService.getSettings();
+    const templates = storageService.getTemplates();
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Content-Disposition', `attachment; filename=minomeet_backup_${new Date().toISOString().slice(0, 10)}.json`);
     res.json({
@@ -204,7 +263,52 @@ router.get('/export-data', (_req: Request, res: Response) => {
       app: 'Minomeet AI Meeting Assistant',
       totalMeetings: meetings.length,
       settings,
+      templates,
       meetings
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/settings/restore-data - restores and merges meetings, templates, and settings from a JSON backup
+router.post('/restore-data', (req: Request, res: Response) => {
+  try {
+    const { meetings, templates, settings } = req.body;
+    let restoredMeetings = 0;
+    let restoredTemplates = 0;
+
+    if (Array.isArray(meetings)) {
+      const existing = storageService.getMeetings();
+      const existingIds = new Set(existing.map(m => m.id));
+      for (const m of meetings) {
+        if (m && m.id && !existingIds.has(m.id)) {
+          storageService.createMeeting(m);
+          restoredMeetings++;
+        }
+      }
+    }
+
+    if (Array.isArray(templates)) {
+      const existingT = storageService.getTemplates();
+      const existingIds = new Set(existingT.map(t => t.id));
+      for (const t of templates) {
+        if (t && t.id && !existingIds.has(t.id)) {
+          storageService.createTemplate(t);
+          restoredTemplates++;
+        }
+      }
+    }
+
+    if (settings && typeof settings === 'object') {
+      storageService.updateSettings(settings);
+    }
+
+    res.json({
+      success: true,
+      restoredMeetings,
+      restoredTemplates,
+      message: `Restored ${restoredMeetings} meetings and ${restoredTemplates} templates successfully.`
     });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });

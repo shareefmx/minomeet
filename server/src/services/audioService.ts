@@ -84,7 +84,7 @@ export class AudioService {
     clientDuration?: string
   ): Promise<TranscribeResult> {
     const baseName = originalFilename.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
-    const chosenModel = modelId || transcriptionModelService.getActiveModel().id;
+    const chosenModel = modelId || transcriptionModelService.getActiveModel()?.id || "parakeet-tdt-0.6b-v3-int8";
     const pyScript = path.join(SCRIPTS_DIR, 'transcribe.py');
 
     let effectiveAudioPath = filePath;
@@ -165,7 +165,7 @@ export class AudioService {
   ): Promise<TranscriptLine[]> {
     if (!filePath || !fs.existsSync(filePath)) return [];
 
-    const chosenModel = modelId || transcriptionModelService.getActiveModel().id;
+    const chosenModel = modelId || transcriptionModelService.getActiveModel()?.id || "parakeet-tdt-0.6b-v3-int8";
     const pyScript = path.join(SCRIPTS_DIR, 'transcribe.py');
 
     try {

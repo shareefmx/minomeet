@@ -9,6 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const DATA_DIR = path.join(__dirname, '../../data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
+const UPLOADS_DIR = path.join(__dirname, '../../uploads');
 
 interface DatabaseSchema {
   meetings: Meeting[];
@@ -91,13 +92,27 @@ class StorageService {
   }
 
   public deleteMeeting(id: string): boolean {
-    const initialLength = this.db.meetings.length;
-    this.db.meetings = this.db.meetings.filter(m => m.id !== id);
-    if (this.db.meetings.length !== initialLength) {
-      this.save();
-      return true;
+    const meeting = this.db.meetings.find(m => m.id === id);
+    if (!meeting) return false;
+
+    // Delete associated audio file when meeting is deleted
+    if (meeting.audioPath) {
+      try {
+        const fileName = path.basename(meeting.audioPath);
+        const resolvedUploadFile = path.join(UPLOADS_DIR, fileName);
+        if (fs.existsSync(resolvedUploadFile)) {
+          fs.unlinkSync(resolvedUploadFile);
+        } else if (fs.existsSync(meeting.audioPath)) {
+          fs.unlinkSync(meeting.audioPath);
+        }
+      } catch (err) {
+        console.warn(`[storageService] Could not remove audio file for meeting ${id}:`, err);
+      }
     }
-    return false;
+
+    this.db.meetings = this.db.meetings.filter(m => m.id !== id);
+    this.save();
+    return true;
   }
 
   // Settings
