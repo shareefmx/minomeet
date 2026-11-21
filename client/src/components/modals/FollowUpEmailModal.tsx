@@ -11,21 +11,37 @@ export const FollowUpEmailModal: React.FC = () => {
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [loading, setLoading] = useState(false);
+  const [variantSeed, setVariantSeed] = useState(0);
 
   const agentModel = getEffectiveModelForAgent(settings, 'follow_up_email');
 
   useEffect(() => {
     if (modals.email && activeMeeting) {
-      loadEmailDraft(tone);
+      loadEmailDraft(tone, variantSeed);
     }
-  }, [modals.email, activeMeeting, tone]);
+  }, [modals.email, activeMeeting]);
+
+  const handleToneChange = (newTone: 'professional' | 'concise' | 'action-oriented') => {
+    setTone(newTone);
+    setVariantSeed(0);
+    loadEmailDraft(newTone, 0);
+  };
+
+  const handleRegenerate = () => {
+    const nextSeed = variantSeed + 1;
+    setVariantSeed(nextSeed);
+    loadEmailDraft(tone, nextSeed);
+  };
 
   if (!modals.email || !activeMeeting) return null;
 
-  const loadEmailDraft = async (selectedTone: 'professional' | 'concise' | 'action-oriented') => {
+  const loadEmailDraft = async (
+    selectedTone: 'professional' | 'concise' | 'action-oriented',
+    seed: number = 0
+  ) => {
     setLoading(true);
     try {
-      const res = await api.generateFollowUpEmail(activeMeeting.id, selectedTone);
+      const res = await api.generateFollowUpEmail(activeMeeting.id, selectedTone, undefined, seed);
       setSubject(res.subject);
       setBody(res.body);
     } catch (err: any) {
@@ -64,21 +80,28 @@ export const FollowUpEmailModal: React.FC = () => {
         </div>
 
         {/* Tone Selector */}
-        <div className="px-6 py-3 bg-[#f8fafd] border-b border-[#e5e7eb] flex items-center gap-3">
-          <span className="text-xs font-bold text-[#6b7280]">Email Style / Tone:</span>
-          {(['professional', 'concise', 'action-oriented'] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTone(t)}
-              className={`px-3 py-1 rounded-lg text-xs font-bold capitalize transition cursor-pointer border ${
-                tone === t
-                  ? 'bg-[#2563eb] border-[#2563eb] text-white shadow-2xs'
-                  : 'bg-white border-[#d6dbe2] text-[#374151] hover:bg-[#f3f4f6]'
-              }`}
-            >
-              {t}
-            </button>
-          ))}
+        <div className="px-6 py-3 bg-[#f8fafd] border-b border-[#e5e7eb] flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-[#6b7280]">Email Style / Tone:</span>
+            {(['professional', 'concise', 'action-oriented'] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => handleToneChange(t)}
+                className={`px-3 py-1 rounded-lg text-xs font-bold capitalize transition cursor-pointer border ${
+                  tone === t
+                    ? 'bg-[#2563eb] border-[#2563eb] text-white shadow-2xs'
+                    : 'bg-white border-[#d6dbe2] text-[#374151] hover:bg-[#f3f4f6]'
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+          {variantSeed > 0 && (
+            <span className="text-[11px] font-mono text-[#2563eb] bg-[#eff6ff] px-2 py-0.5 rounded-md border border-[#bfdbfe]">
+              Alternative Version #{variantSeed + 1}
+            </span>
+          )}
         </div>
 
         {/* Body */}
@@ -86,7 +109,9 @@ export const FollowUpEmailModal: React.FC = () => {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-16 space-y-3">
               <Loader2 className="w-8 h-8 text-[#2563eb] animate-spin" />
-              <p className="text-xs text-[#6b7280] font-semibold">Drafting stakeholder email from action items…</p>
+              <p className="text-xs text-[#6b7280] font-semibold">
+                Synthesizing {tone} draft using {agentModel.modelId || 'AI LLM'}…
+              </p>
             </div>
           ) : (
             <>
@@ -141,12 +166,12 @@ export const FollowUpEmailModal: React.FC = () => {
         {/* Footer */}
         <div className="flex items-center justify-between px-6 py-4 bg-[#f9fafb] border-t border-[#e5e7eb]">
           <button
-            onClick={() => loadEmailDraft(tone)}
+            onClick={handleRegenerate}
             disabled={loading}
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#4f46e5] hover:underline cursor-pointer"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#4f46e5] hover:underline cursor-pointer disabled:opacity-50"
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Regenerate Draft</span>
+            <span>{variantSeed > 0 ? `Regenerate Draft (Version #${variantSeed + 1})` : 'Regenerate Alternative Draft'}</span>
           </button>
 
           <div className="flex items-center gap-2">
@@ -170,4 +195,3 @@ export const FollowUpEmailModal: React.FC = () => {
     </div>
   );
 };
-

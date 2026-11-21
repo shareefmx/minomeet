@@ -81,10 +81,14 @@ export const RecordingScreen: React.FC = () => {
           {/* Audio Source Switcher Badge */}
           <div className="hidden sm:flex items-center bg-[#f3f4f6] rounded-lg p-0.5 border border-[#e5e7eb] text-xs">
             <button
-              onClick={() => {
-                speechService.setAudioSource('mic');
-                setAudioSource('mic');
-                showToast('Audio Source: Microphone', 'Capturing local speech (You)', 'info');
+              onClick={async () => {
+                try {
+                  await speechService.setAudioSource('mic');
+                  setAudioSource('mic');
+                  showToast('Audio Source: Microphone', 'Capturing local speech (Microphone only)', 'info');
+                } catch (err: any) {
+                  showToast('Audio Switch Failed', err?.message || String(err), 'error');
+                }
               }}
               className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md font-bold transition cursor-pointer ${
                 audioSource === 'mic' ? 'bg-white text-[#2563eb] shadow-2xs' : 'text-[#6b7280] hover:text-[#111827]'
@@ -95,13 +99,13 @@ export const RecordingScreen: React.FC = () => {
             </button>
             <button
               onClick={async () => {
-                speechService.setAudioSource('system');
-                setAudioSource('system');
-                if (!hasSystemAudio) {
-                  const ok = await speechService.attachSystemAudioTab();
-                  if (ok) showToast('Chrome Tab Audio Connected!', 'Now capturing Google Meet sound.', 'success');
+                try {
+                  await speechService.setAudioSource('system');
+                  setAudioSource('system');
+                  showToast('Audio Source: System Audio', 'Capturing meeting audio (System audio only)', 'info');
+                } catch (err: any) {
+                  showToast('Audio Switch Failed', err?.message || String(err), 'error');
                 }
-                showToast('Audio Source: System Audio', 'Capturing meeting audio (Meeting Participant)', 'info');
               }}
               className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md font-bold transition cursor-pointer ${
                 audioSource === 'system' ? 'bg-white text-[#2563eb] shadow-2xs' : 'text-[#6b7280] hover:text-[#111827]'
@@ -112,13 +116,13 @@ export const RecordingScreen: React.FC = () => {
             </button>
             <button
               onClick={async () => {
-                speechService.setAudioSource('mixed');
-                setAudioSource('mixed');
-                if (!hasSystemAudio) {
-                  const ok = await speechService.attachSystemAudioTab();
-                  if (ok) showToast('Chrome Tab Audio Connected!', 'Now capturing Google Meet sound.', 'success');
+                try {
+                  await speechService.setAudioSource('mixed');
+                  setAudioSource('mixed');
+                  showToast('Audio Source: Mixed', 'Capturing microphone and system audio.', 'info');
+                } catch (err: any) {
+                  showToast('Audio Switch Failed', err?.message || String(err), 'error');
                 }
-                showToast('Audio Source: Mixed', 'Capturing You (Microphone) + Meeting Participant (System Audio)', 'info');
               }}
               className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md font-bold transition cursor-pointer ${
                 audioSource === 'mixed' ? 'bg-white text-[#2563eb] shadow-2xs' : 'text-[#6b7280] hover:text-[#111827]'

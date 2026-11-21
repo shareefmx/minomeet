@@ -130,12 +130,19 @@ export const AskMeetingsModal: React.FC = () => {
     }
   };
 
-  const sampleSuggestions = [
-    'What was decided in the latest meetings?',
-    'Summarize all pending action deliverables',
-    'What key topics or roadblocks were discussed?',
-    'Who has upcoming task deadlines?'
-  ];
+  const sampleSuggestions = selectedMeetingScope === 'all'
+    ? [
+        '📊 Cross-meeting executive summary',
+        '🔥 All pending deliverables & owners',
+        '📌 Key decisions made recently',
+        '📅 Upcoming deadlines & commitments'
+      ]
+    : [
+        '📋 Summarize this meeting',
+        '✅ What decisions were agreed on?',
+        '🎯 List all action items & assignees',
+        '👥 Key discussion points & highlights'
+      ];
 
   return (
     <div className="fixed inset-0 bg-[#0f1117]/65 backdrop-blur-xs flex items-center justify-center z-50 p-3 sm:p-4">
@@ -252,6 +259,38 @@ export const AskMeetingsModal: React.FC = () => {
                       <div className="whitespace-pre-line leading-relaxed font-normal text-xs text-[#334155]">
                         {item.content}
                       </div>
+
+                      {/* Clickable Suggested Follow-ups */}
+                      {item.suggestedFollowUps && item.suggestedFollowUps.length > 0 && (
+                        <div className="pt-2 flex flex-wrap gap-1.5">
+                          {item.suggestedFollowUps.map((su, sIdx) => (
+                            <button
+                              key={sIdx}
+                              onClick={() => handleSendMessage(su)}
+                              className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-[#f1f5f9] hover:bg-[#eff6ff] text-[#334155] hover:text-[#2563eb] border border-[#e2e8f0] transition cursor-pointer"
+                            >
+                              ✨ {su}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Sources Preview */}
+                      {item.sources && item.sources.length > 0 && (
+                        <div className="pt-2 border-t border-gray-100 flex flex-wrap gap-1.5 items-center">
+                          <span className="text-[10px] font-bold text-gray-400">Sources:</span>
+                          {item.sources.slice(0, 3).map((src, srcIdx) => (
+                            <span
+                              key={srcIdx}
+                              title={src.snippet}
+                              className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-[#f8fafc] text-[#475569] border border-[#e2e8f0]"
+                            >
+                              📄 {src.meetingTitle} ({src.type})
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
                       {/* Message Actions (Copy & Model Badge) */}
                       <div className="flex items-center justify-between pt-2 border-t border-[#f8fafc] text-[10px] text-[#94a3b8] flex-wrap gap-1">
                         <div className="flex items-center gap-2">

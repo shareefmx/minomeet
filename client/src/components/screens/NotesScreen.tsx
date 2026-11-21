@@ -61,7 +61,22 @@ const getTemplateConfig = (tmpl: string): TemplateConfig => {
       nextStepsLabel: 'Strategic Horizon Roadmap'
     };
   }
-  if (t.includes('standup') || t.includes('engineering') || t.includes('developer') || t.includes('agile') || t.includes('daily')) {
+  if (t.includes('product') || t.includes('design') || t.includes('ux') || t.includes('spec')) {
+    return {
+      summaryLabel: 'Product Vision & User Problem',
+      decisionsLabel: 'Scope Trade-offs & Spec Decisions',
+      actionItemsLabel: 'Design System & Component Actions',
+      tableCols: {
+        owner: 'Designer / PM',
+        task: 'UX Flow / Component',
+        due: 'Release Target',
+        notes: 'Revision Needed'
+      },
+      highlightsLabel: 'Design Critiques & UX Feedback',
+      nextStepsLabel: 'Sprint Release Timeline'
+    };
+  }
+    if (t.includes('standup') || t.includes('engineering') || t.includes('developer') || t.includes('agile') || t.includes('daily')) {
     return {
       summaryLabel: 'Sprint Status & Daily Sync Summary',
       decisionsLabel: 'Architectural Decisions (ADR) & Consensus',
@@ -134,7 +149,8 @@ export const NotesScreen: React.FC = () => {
     openModal,
     openDeleteModal,
     openRenameModal,
-    showToast
+    showToast,
+    sendDesktopNotification
   } = useMeeting();
 
   const [activeLang, setActiveLang] = useState<string>(activeMeeting?.summary?.language || settings?.defaultLanguage || 'English');
@@ -277,12 +293,18 @@ export const NotesScreen: React.FC = () => {
     { id: 'template-executive', name: 'Executive & Board Summary', category: 'Leadership & Strategy' },
     { id: 'template-standup', name: 'Engineering & Daily Standup', category: 'Agile & Development' },
     { id: 'template-sales', name: 'Client & Sales Engagement', category: 'Commercial & Sales' },
+    { id: 'template-product-design', name: 'Product & Design Review', category: 'Product & Design' },
     { id: 'template-retrospective', name: 'Project Milestone & Retrospective', category: 'Project Management' }
   ];
 
   // Actions
   const handleCopyTranscript = async () => {
-    const text = activeMeeting.transcript.map(t => `[${t.time}] ${t.speaker ? `${t.speaker}: ` : ''}${t.text}`).join('\n');
+    const text = activeMeeting.transcript.map(t => {
+      const showSpeaker = t.speaker && 
+        !t.speaker.toLowerCase().includes('you') && 
+        !t.speaker.toLowerCase().includes('mic');
+      return `[${t.time}] ${showSpeaker ? `${t.speaker}: ` : ''}${t.text}`;
+    }).join('\n');
     await exportService.copyToClipboard(text);
     showToast('Transcript copied to clipboard', '', 'success');
   };
@@ -428,35 +450,40 @@ export const NotesScreen: React.FC = () => {
           </div>
 
           {/* Transcript Lines Scroll View */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
-            {activeMeeting.transcript.map((line, idx) => (
-              <div key={line.id || idx} className="text-[14px] leading-relaxed group">
-                <div className="flex items-start gap-2.5">
-                  <span className="text-xs text-[#9aa2af] font-mono select-none pt-0.5 min-w-[42px]">
-                    [{line.time}]
-                  </span>
-                  <div className="flex-1">
-                    {line.speaker && (
-                      <span className="font-bold text-[#1e3a8a] mr-2 text-xs uppercase tracking-wider bg-[#eff6ff] px-1.5 py-0.5 rounded">
-                        {line.speaker}
-                      </span>
-                    )}
-                    <span
-                      contentEditable
-                      suppressContentEditableWarning
-                      onBlur={(e) => {
-                        const updatedTranscript = [...activeMeeting.transcript];
-                        updatedTranscript[idx].text = e.currentTarget.textContent || '';
-                        updateActiveMeeting({ transcript: updatedTranscript });
-                      }}
-                      className="text-[#1f2937] hover:bg-yellow-50/60 p-0.5 rounded transition"
-                    >
-                      {line.text}
+          <div className="flex-1 overflow-y-auto no-scrollbar p-6 space-y-4">
+            {activeMeeting.transcript.map((line, idx) => {
+              const showSpeaker = line.speaker && 
+                !line.speaker.toLowerCase().includes('you') && 
+                !line.speaker.toLowerCase().includes('mic');
+              return (
+                <div key={line.id || idx} className="text-[14px] leading-relaxed group">
+                  <div className="flex items-start gap-2.5">
+                    <span className="text-xs text-[#9aa2af] font-mono select-none pt-0.5 min-w-[42px]">
+                      [{line.time}]
                     </span>
+                    <div className="flex-1">
+                      {showSpeaker && (
+                        <span className="font-bold text-[#1e3a8a] mr-2 text-xs uppercase tracking-wider bg-[#eff6ff] px-1.5 py-0.5 rounded">
+                          {line.speaker}
+                        </span>
+                      )}
+                      <span
+                        contentEditable
+                        suppressContentEditableWarning
+                        onBlur={(e) => {
+                          const updatedTranscript = [...activeMeeting.transcript];
+                          updatedTranscript[idx].text = e.currentTarget.textContent || '';
+                          updateActiveMeeting({ transcript: updatedTranscript });
+                        }}
+                        className="text-[#1f2937] hover:bg-yellow-50/60 p-0.5 rounded transition"
+                      >
+                        {line.text}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -622,45 +649,61 @@ export const NotesScreen: React.FC = () => {
                   <ChevronDown className="w-3.5 h-3.5 text-[#94a3b8] flex-none" />
                 </button>
                 {exportMenuOpen && (
-                  <div className="absolute top-full mt-1.5 left-0 w-60 bg-white border border-[#e2e8f0] rounded-2xl shadow-xl py-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
+                  <div className="absolute top-full mt-1.5 left-0 w-64 bg-white border border-[#e2e8f0] rounded-2xl shadow-xl py-2 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
                     <div
-                      onClick={() => {
-                        exportService.downloadFile(exportService.toMarkdown(activeMeeting), `${activeMeeting.title}.md`, 'text/markdown');
+                      onClick={async () => {
                         setExportMenuOpen(false);
-                        showToast('Markdown file downloaded', '', 'success');
+                        try {
+                          const savedPath = await exportService.exportToWord(activeMeeting);
+                          showToast('Word Document Downloaded', `Saved to ${savedPath}`, 'success');
+                          sendDesktopNotification('MOM Report Downloaded', `Saved Word Document (.doc) to ${savedPath}`);
+                        } catch (err: any) {
+                          showToast('Export Error', err?.message || 'Failed to export Word document', 'error');
+                        }
                       }}
-                      className="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-[#f8fafc] text-[#374151] font-medium"
+                      className="flex items-center gap-2.5 px-3.5 py-2 cursor-pointer hover:bg-[#f8fafc] text-[#374151] font-medium"
                     >
                       <Download className="w-3.5 h-3.5 text-[#2563eb]" />
-                      <span>Download Markdown (.md)</span>
+                      <span>Download Word Document (.doc)</span>
                     </div>
                     <div
-                      onClick={() => {
-                        exportService.printMeeting(activeMeeting);
+                      onClick={async () => {
                         setExportMenuOpen(false);
+                        try {
+                          const savedPath = await exportService.exportToPDF(activeMeeting);
+                          showToast('MOM PDF Report Ready', `Saved to ${savedPath}. Print dialog opened.`, 'success');
+                          sendDesktopNotification('MOM Report Downloaded', `Saved PDF report to ${savedPath}`);
+                        } catch (err: any) {
+                          showToast('Export Error', err?.message || 'Failed to export PDF', 'error');
+                        }
                       }}
-                      className="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-[#f8fafc] text-[#374151] font-medium"
+                      className="flex items-center gap-2.5 px-3.5 py-2 cursor-pointer hover:bg-[#f8fafc] text-[#374151] font-medium"
                     >
                       <Printer className="w-3.5 h-3.5 text-[#15803d]" />
-                      <span>Print / Save PDF</span>
+                      <span>Print / Save as PDF</span>
                     </div>
                     <div
-                      onClick={() => {
-                        exportService.exportToPDF(activeMeeting);
+                      onClick={async () => {
                         setExportMenuOpen(false);
-                        showToast('PDF export opened', 'Use Save as PDF in print dialog', 'info');
+                        try {
+                          const savedPath = await exportService.exportToMarkdown(activeMeeting);
+                          showToast('Markdown Downloaded', `Saved to ${savedPath}`, 'success');
+                          sendDesktopNotification('MOM Report Downloaded', `Saved Markdown (.md) to ${savedPath}`);
+                        } catch (err: any) {
+                          showToast('Export Error', err?.message || 'Failed to export Markdown', 'error');
+                        }
                       }}
-                      className="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-[#f8fafc] text-[#374151] font-medium"
+                      className="flex items-center gap-2.5 px-3.5 py-2 cursor-pointer hover:bg-[#f8fafc] text-[#374151] font-medium"
                     >
                       <Download className="w-3.5 h-3.5 text-[#e2564c]" />
-                      <span>Export Full PDF</span>
+                      <span>Download Markdown (.md)</span>
                     </div>
                     <div
                       onClick={() => {
                         handleCopyMOM();
                         setExportMenuOpen(false);
                       }}
-                      className="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-[#f8fafc] text-[#374151] font-medium"
+                      className="flex items-center gap-2.5 px-3.5 py-2 cursor-pointer hover:bg-[#f8fafc] text-[#374151] font-medium border-t border-[#f1f5f9] mt-1 pt-2"
                     >
                       <Copy className="w-3.5 h-3.5 text-[#7c3aed]" />
                       <span>Copy Formatted Text</span>
