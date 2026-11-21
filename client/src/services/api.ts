@@ -1,6 +1,29 @@
+export interface EngineDiagnosticResult {
+  healthy: boolean;
+  modelName: string;
+  isLoaded: boolean;
+  modelsDir: string;
+  hardwareAcceleration: string;
+  latencyMs: number;
+  message: string;
+}
 import { Meeting, AppSettings, MOMSummary, TranscriptLine, TranscriptionModel, TranscriptionEngineStatus, StorageStats, MOMTemplate, AskQuestionResponse } from '../types/meeting.js';
 
 const API_BASE = '/api';
+
+export function toCanonicalModelId(id: string): string {
+  const norm = (id || '').trim().toLowerCase();
+  if (norm.includes('parakeet')) return 'parakeet-tdt-0.6b-v3-int8';
+  if (norm === 'tiny' || norm === 'ggml-tiny.bin' || norm === 'whisper-tiny') return 'whisper-tiny';
+  if (norm === 'tiny-q5_1' || norm === 'ggml-tiny-q5_1.bin' || norm === 'whisper-tiny-q5_1') return 'whisper-tiny-q5_1';
+  if (norm === 'base' || norm === 'ggml-base.bin' || norm === 'whisper-base') return 'whisper-base';
+  if (norm === 'base-q5_1' || norm === 'ggml-base-q5_1.bin' || norm === 'whisper-base-q5_1') return 'whisper-base-q5_1';
+  if (norm === 'small-q5_1' || norm === 'ggml-small-q5_1.bin' || norm === 'whisper-small-q5_1') return 'whisper-small-q5_1';
+  if (norm === 'medium' || norm === 'ggml-medium.bin' || norm === 'whisper-medium') return 'whisper-medium';
+  if (norm === 'large-v3-turbo-q5_0' || norm === 'ggml-large-v3-turbo-q5_0.bin' || norm === 'whisper-large-v3-turbo-q5_0') return 'whisper-large-v3-turbo-q5_0';
+  if (norm === 'large-v3-turbo' || norm === 'ggml-large-v3-turbo.bin' || norm === 'whisper-large-v3-turbo') return 'whisper-large-v3-turbo';
+  return id;
+}
 
 export const api = {
   // Templates
@@ -182,11 +205,16 @@ export const api = {
     };
   },
 
-  async generateFollowUpEmail(meetingId: string, tone?: string, agentId?: string): Promise<{ subject: string; body: string }> {
+  async generateFollowUpEmail(
+    meetingId: string,
+    tone?: string,
+    agentId?: string,
+    variantSeed: number = 0
+  ): Promise<{ subject: string; body: string }> {
     const res = await fetch(`${API_BASE}/ai/follow-up-email`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ meetingId, tone, agentId: agentId || 'follow_up_email' })
+      body: JSON.stringify({ meetingId, tone, agentId: agentId || 'follow_up_email', variantSeed })
     });
     const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Failed to generate follow-up email');
@@ -270,25 +298,74 @@ export const api = {
     return data;
   },
 
+  async exportBackup(): Promise<string> {
+    const res = await fetch(`${API_BASE}/settings/export-data`);
+    const data = await res.json();
+    return JSON.stringify(data, null, 2);
+  },
+
+  async restoreBackup(backupJson: string): Promise<{ success: boolean; restoredMeetings: number; restoredTemplates: number; message: string }> {
+    try {
+      const parsed = JSON.parse(backupJson);
+      const res = await fetch(`${API_BASE}/settings/restore-data`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(parsed)
+      });
+      return await res.json();
+    } catch (err: any) {
+      return {
+        success: false,
+        restoredMeetings: 0,
+        restoredTemplates: 0,
+        message: err.message || 'Failed to parse or restore backup'
+      };
+    }
+  },
+
   // Transcription Models & Engine
-  async getTranscriptionModels(): Promise<{ models: TranscriptionModel[]; activeModel: TranscriptionModel }> {
+  async getTranscriptionModels(): Promise<{ models: TranscriptionModel[]; activeModel: TranscriptionModel | null }> {
     const res = await fetch(`${API_BASE}/transcription/models`);
     const data = await res.json();
-    return { models: data.models || [], activeModel: data.activeModel };
+    return { models: data.models || [], activeModel: data.activeModel || null };
   },
 
   async downloadTranscriptionModel(id: string): Promise<TranscriptionModel> {
     const res = await fetch(`${API_BASE}/transcription/models/${encodeURIComponent(id)}/download`, {
-      method: 'POST'
+      method: "POST"
     });
     const data = await res.json();
-    if (!data.success) throw new Error(data.error || 'Failed to download model');
+    if (!data.success) throw new Error(data.error || "Failed to download model");
     return data.model;
+  },
+
+  async pauseTranscriptionModel(id: string): Promise<boolean> {
+    const res = await fetch(`${API_BASE}/transcription/models/${encodeURIComponent(id)}/pause`, {
+      method: "POST"
+    });
+    const data = await res.json();
+    return data.success;
+  },
+
+  async resumeTranscriptionModel(id: string): Promise<boolean> {
+    const res = await fetch(`${API_BASE}/transcription/models/${encodeURIComponent(id)}/resume`, {
+      method: "POST"
+    });
+    const data = await res.json();
+    return data.success;
+  },
+
+  async stopTranscriptionModel(id: string): Promise<boolean> {
+    const res = await fetch(`${API_BASE}/transcription/models/${encodeURIComponent(id)}/stop`, {
+      method: "POST"
+    });
+    const data = await res.json();
+    return data.success;
   },
 
   async deleteTranscriptionModel(id: string): Promise<boolean> {
     const res = await fetch(`${API_BASE}/transcription/models/${encodeURIComponent(id)}`, {
-      method: 'DELETE'
+      method: "DELETE"
     });
     const data = await res.json();
     return data.success;
@@ -296,11 +373,25 @@ export const api = {
 
   async selectTranscriptionModel(id: string): Promise<TranscriptionModel> {
     const res = await fetch(`${API_BASE}/transcription/models/${encodeURIComponent(id)}/select`, {
-      method: 'POST'
+      method: "POST"
     });
     const data = await res.json();
-    if (!data.success) throw new Error(data.error || 'Failed to select model');
+    if (!data.success) throw new Error(data.error || "Failed to select model");
     return data.activeModel;
+  },
+
+  async testTranscriptionEngine(): Promise<EngineDiagnosticResult> {
+    const res = await fetch(`${API_BASE}/transcription/test`, {
+      method: "POST"
+    });
+    const data = await res.json();
+    return data;
+  },
+
+  async openModelsFolder(): Promise<void> {
+    await fetch(`${API_BASE}/transcription/open-folder`, {
+      method: "POST"
+    });
   },
 
   async getTranscriptionEngineStatus(): Promise<TranscriptionEngineStatus> {

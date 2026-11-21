@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Meeting, AppSettings, ScreenType, SettingsTab, ToastMessage, TranscriptLine, MOMSummary, TranscriptionModel, TranscriptionEngineStatus, StorageStats, MOMTemplate } from '../types/meeting.js';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import { Meeting, AppSettings, ScreenType, SettingsTab, ToastMessage, TranscriptLine, MOMSummary, TranscriptionModel, TranscriptionEngineStatus, StorageStats, MOMTemplate, AudioCaptureMode, AUDIO_CAPTURE_MODES } from '../types/meeting.js';
 import { api } from '../services/api.js';
 import { speechService } from '../services/speech.js';
 
@@ -13,7 +13,7 @@ interface MeetingContextType {
   recordingTimer: number;
   liveTranscript: TranscriptLine[];
   interimTranscript: string;
-  audioSource: 'mic' | 'system' | 'mixed';
+  audioSource: AudioCaptureMode;
   isGeneratingSummary: boolean;
   settings: AppSettings | null;
   storageStats: StorageStats | null;
@@ -38,9 +38,9 @@ interface MeetingContextType {
   setCurrentScreen: (screen: ScreenType) => void;
   setSettingsTab: (tab: SettingsTab) => void;
   setSearchQuery: (query: string) => void;
-  setAudioSource: (src: 'mic' | 'system' | 'mixed') => void;
+  setAudioSource: (src: AudioCaptureMode) => void;
   selectMeeting: (meeting: Meeting) => void;
-  startRecording: (sourceType?: 'mic' | 'system' | 'mixed') => Promise<void>;
+  startRecording: (sourceType?: AudioCaptureMode) => Promise<void>;
   stopRecording: () => Promise<void>;
   cancelRecording: () => void;
   generateSummaryForActive: (template?: string, language?: string, model?: string) => Promise<void>;
@@ -61,11 +61,15 @@ interface MeetingContextType {
   closeModal: (modal: keyof MeetingContextType['modals']) => void;
   closeAllModals: () => void;
   showToast: (title: string, subtitle?: string, type?: ToastMessage['type']) => void;
+  sendDesktopNotification: (title: string, body: string) => void;
   removeToast: (id: string) => void;
   updateSettings: (updates: Partial<AppSettings>) => Promise<void>;
   refreshMeetings: () => Promise<void>;
   refreshTranscriptionModels: () => Promise<void>;
   downloadTranscriptionModel: (id: string) => Promise<void>;
+  pauseTranscriptionModel: (id: string) => Promise<void>;
+  resumeTranscriptionModel: (id: string) => Promise<void>;
+  stopTranscriptionModel: (id: string) => Promise<void>;
   deleteTranscriptionModel: (id: string) => Promise<void>;
   selectTranscriptionModel: (id: string) => Promise<void>;
   installPythonPackages: () => Promise<void>;
@@ -90,7 +94,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [recordingTimer, setRecordingTimer] = useState<number>(0);
   const [liveTranscript, setLiveTranscript] = useState<TranscriptLine[]>([]);
   const [interimTranscript, setInterimTranscript] = useState<string>('');
-  const [audioSource, setAudioSource] = useState<'mic' | 'system' | 'mixed'>('mixed');
+  const [audioSource, setAudioSource] = useState<AudioCaptureMode>(AUDIO_CAPTURE_MODES.MIXED);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState<boolean>(false);
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [storageStats, setStorageStats] = useState<StorageStats | null>(null);
@@ -101,6 +105,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [activeTranscriptionModel, setActiveTranscriptionModel] = useState<TranscriptionModel | null>(null);
   const [engineStatus, setEngineStatus] = useState<TranscriptionEngineStatus | null>(null);
   const [templates, setTemplates] = useState<MOMTemplate[]>([]);
+  const lastModelReadyToastRef = useRef<{ [key: string]: number }>({});
 
   const [meetingToDelete, setMeetingToDelete] = useState<Meeting | null>(null);
   const [meetingToRename, setMeetingToRename] = useState<Meeting | null>(null);
@@ -217,6 +222,11 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
       if (res.storageStats) {
         setStorageStats(res.storageStats);
       }
+      if (res.settings && typeof res.settings.autoDeleteRecordingsDays === 'number' && res.settings.autoDeleteRecordingsDays > 0) {
+        api.purgeRecordings(res.settings.autoDeleteRecordingsDays).catch(err => {
+          console.warn('[MeetingContext] auto-purge on startup error:', err);
+        });
+      }
     } catch (err) {
       console.error('Failed to load settings:', err);
     }
@@ -244,40 +254,96 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
+  // Polling for in-flight model downloads (Web server)
+  useEffect(() => {
+    const hasInFlight = transcriptionModels.some(m => m.status === 'downloading' || m.status === 'paused');
+    if (!hasInFlight) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const { models, activeModel } = await api.getTranscriptionModels();
+        setTranscriptionModels(models);
+        if (activeModel) setActiveTranscriptionModel(activeModel);
+
+        for (const m of models) {
+          if (m.status === 'downloaded') {
+            const now = Date.now();
+            const lastTime = lastModelReadyToastRef.current[m.id] || 0;
+            if (now - lastTime > 4000) {
+              lastModelReadyToastRef.current[m.id] = now;
+              showToast('Model Ready!', `${m.name} downloaded and ready for offline use.`, 'success');
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('[MeetingContext] Error polling model downloads:', err);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [transcriptionModels]);
+
   const downloadTranscriptionModel = async (id: string) => {
     try {
       showToast('Download started', `Downloading model weights to local storage…`, 'info');
       setTranscriptionModels(prev =>
-        prev.map(m => m.id === id ? { ...m, status: 'downloading', downloadProgress: 15 } : m)
+        prev.map(m => m.id === id ? { ...m, status: 'downloading', downloadProgress: 0, errorMessage: undefined } : m)
       );
 
-      // Smooth progress update animation while server downloads weights
-      const progressTimer = setInterval(() => {
-        setTranscriptionModels(prev =>
-          prev.map(m => {
-            if (m.id === id && m.status === 'downloading') {
-              const current = m.downloadProgress || 15;
-              const nextProg = Math.min(95, current + Math.floor(Math.random() * 14) + 8);
-              return { ...m, downloadProgress: nextProg };
-            }
-            return m;
-          })
-        );
-      }, 400);
-
       const updated = await api.downloadTranscriptionModel(id);
-      clearInterval(progressTimer);
-
       setTranscriptionModels(prev =>
         prev.map(m => m.id === id ? { ...updated, status: 'downloaded', downloadProgress: 100 } : m)
       );
-      showToast('Model Ready!', `${updated.name} downloaded and ready for offline use.`, 'success');
+
+      const now = Date.now();
+      const lastTime = lastModelReadyToastRef.current[id] || 0;
+      if (now - lastTime > 4000) {
+        lastModelReadyToastRef.current[id] = now;
+        showToast('Model Ready!', `${updated.name} downloaded and ready for offline use.`, 'success');
+      }
+
       await refreshTranscriptionModels();
     } catch (err: any) {
       showToast('Download failed', err.message, 'error');
       setTranscriptionModels(prev =>
-        prev.map(m => m.id === id ? { ...m, status: 'not_downloaded', downloadProgress: 0 } : m)
+        prev.map(m => m.id === id ? { ...m, status: 'error', errorMessage: err.message, downloadProgress: 0 } : m)
       );
+    }
+  };
+
+  const pauseTranscriptionModel = async (id: string) => {
+    try {
+      await api.pauseTranscriptionModel(id);
+      setTranscriptionModels(prev =>
+        prev.map(m => m.id === id ? { ...m, status: 'paused' } : m)
+      );
+      showToast('Download Paused', 'Model download paused.', 'info');
+    } catch (err: any) {
+      showToast('Failed to pause download', err.message, 'error');
+    }
+  };
+
+  const resumeTranscriptionModel = async (id: string) => {
+    try {
+      await api.resumeTranscriptionModel(id);
+      setTranscriptionModels(prev =>
+        prev.map(m => m.id === id ? { ...m, status: 'downloading' } : m)
+      );
+      showToast('Download Resumed', 'Model download resumed.', 'info');
+    } catch (err: any) {
+      showToast('Failed to resume download', err.message, 'error');
+    }
+  };
+
+  const stopTranscriptionModel = async (id: string) => {
+    try {
+      await api.stopTranscriptionModel(id);
+      setTranscriptionModels(prev =>
+        prev.map(m => m.id === id ? { ...m, status: 'not_downloaded', downloadProgress: 0, downloadSpeed: undefined } : m)
+      );
+      showToast('Download Stopped', 'Model download stopped and partial weights cleaned up.', 'info');
+    } catch (err: any) {
+      showToast('Failed to stop download', err.message, 'error');
     }
   };
 
@@ -322,6 +388,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
 
 
   const showToast = (title: string, subtitle = '', type: ToastMessage['type'] = 'success') => {
+    if (settings?.notifications === false) return;
     const id = 'toast-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
     setToasts(prev => [...prev, { id, title, subtitle, type }]);
     setTimeout(() => {
@@ -361,9 +428,10 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
     closeAllModals();
   };
 
-  const startRecording = async (sourceType?: 'mic' | 'system' | 'mixed') => {
+  const startRecording = async (sourceType?: AudioCaptureMode) => {
     const chosenSource = sourceType || settings?.defaultAudioSource || 'mixed';
     setAudioSource(chosenSource);
+    speechService.setAudioSource(chosenSource).catch(() => {});
     setLiveTranscript([]);
     setInterimTranscript('');
     setRecordingTimer(0);
@@ -418,7 +486,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
       clearInterval(timerInterval);
       setTimerInterval(null);
     }
-    const audioBlob = speechService.stopCapture(settings?.audioFormat || 'MP4');
+    const audioBlob = await speechService.stopCapture(settings?.audioFormat || 'MP4');
     setIsRecording(false);
     setInterimTranscript('');
 
@@ -499,7 +567,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
       clearInterval(timerInterval);
       setTimerInterval(null);
     }
-    speechService.stopCapture();
+    speechService.stopCapture().catch(() => {});
     setIsRecording(false);
     setLiveTranscript([]);
     setInterimTranscript('');
@@ -793,6 +861,7 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
         closeModal,
         closeAllModals,
         showToast,
+        sendDesktopNotification,
         removeToast,
         updateSettings,
         openStorageFolder,
@@ -801,6 +870,9 @@ export const MeetingProvider: React.FC<{ children: ReactNode }> = ({ children })
         refreshMeetings,
         refreshTranscriptionModels,
         downloadTranscriptionModel,
+        pauseTranscriptionModel,
+        resumeTranscriptionModel,
+        stopTranscriptionModel,
         deleteTranscriptionModel,
         selectTranscriptionModel,
         installPythonPackages,

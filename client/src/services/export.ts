@@ -1,8 +1,26 @@
 import { Meeting } from '../types/meeting.js';
 
+function escapeHtml(str: string): string {
+  if (!str) return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function sanitizeFilename(title: string): string {
+  return (title || 'Meeting_Minutes')
+    .replace(/[/\\?%*:|"<>]/g, '_')
+    .replace(/\s+/g, '_')
+    .slice(0, 80);
+}
+
 export const exportService = {
   /**
    * Formats meeting minutes into clean, professional Markdown.
+   * Excludes the Full Meeting Transcript to focus strictly on actionable MOM data.
    */
   toMarkdown(meeting: Meeting): string {
     const summary = meeting.summary;
@@ -25,7 +43,7 @@ export const exportService = {
       md += `### Action Items\n| Owner | Task | Due Date | Notes | Status |\n|---|---|---|---|---|\n`;
       for (const act of summary.actionItems) {
         const status = act.completed ? '✅ Done' : '⏳ Pending';
-        md += `| ${act.owner} | ${act.task} | ${act.due} | ${act.notes} | ${status} |\n`;
+        md += `| ${act.owner} | ${act.task} | ${act.due} | ${act.notes || ''} | ${status} |\n`;
       }
       md += '\n';
     }
@@ -34,18 +52,131 @@ export const exportService = {
       md += `### Discussion Highlights\n${summary.discussionHighlights.map(h => `- ${h}`).join('\n')}\n\n`;
     }
 
-    if (meeting.transcript && meeting.transcript.length > 0) {
-      md += `### Full Transcript\n`;
-      for (const t of meeting.transcript) {
-        md += `[${t.time}] ${t.speaker ? `**${t.speaker}:** ` : ''}${t.text}\n\n`;
-      }
+    if (summary?.nextSteps && summary.nextSteps.length > 0) {
+      md += `### Next Steps\n${summary.nextSteps.map(s => `- ${s}`).join('\n')}\n\n`;
     }
 
     return md;
   },
 
   /**
-   * Downloads content as a file.
+   * Formats meeting into a complete Microsoft Word (.doc) document
+   * using standard Word-compatible MSO HTML formatting.
+   */
+  toWordDoc(meeting: Meeting): string {
+    const summary = meeting.summary;
+    return `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head>
+        <meta charset='utf-8'>
+        <title>${escapeHtml(meeting.title)}</title>
+        <!--[if gte mso 9]>
+        <xml>
+          <w:WordDocument>
+            <w:View>Print</w:View>
+            <w:Zoom>100</w:Zoom>
+            <w:DoNotOptimizeForBrowser/>
+          </w:WordDocument>
+        </xml>
+        <![endif]-->
+        <style>
+          body { font-family: Calibri, -apple-system, Arial, sans-serif; font-size: 11pt; line-height: 1.6; color: #111827; margin: 30pt; }
+          h1 { font-size: 20pt; color: #1e3a8a; margin-bottom: 4pt; font-weight: bold; }
+          .meta { font-size: 10pt; color: #6b7280; border-bottom: 2pt solid #2563eb; padding-bottom: 8pt; margin-bottom: 16pt; }
+          h2 { font-size: 13pt; color: #1e40af; border-bottom: 1pt solid #e5e7eb; padding-bottom: 3pt; margin-top: 14pt; font-weight: bold; }
+          p { margin: 4pt 0; font-size: 11pt; }
+          ul { margin: 4pt 0 8pt 20pt; }
+          li { margin-bottom: 3pt; }
+          table { width: 100%; border-collapse: collapse; margin-top: 8pt; margin-bottom: 12pt; font-size: 10pt; }
+          th { background-color: #f1f5f9; font-weight: bold; border: 1pt solid #cbd5e1; padding: 6pt 8pt; text-align: left; }
+          td { border: 1pt solid #cbd5e1; padding: 5pt 8pt; vertical-align: top; }
+          .footer { margin-top: 24pt; font-size: 9pt; color: #94a3b8; text-align: center; border-top: 0.5pt solid #e2e8f0; padding-top: 6pt; }
+        </style>
+      </head>
+      <body>
+        <h1>${escapeHtml(meeting.title)}</h1>
+        <div class="meta">
+          <span><b>Date:</b> ${escapeHtml(summary?.date || new Date(meeting.createdAt).toLocaleDateString())}</span> &bull;
+          <span><b>Duration:</b> ${escapeHtml(meeting.duration)}</span> &bull;
+          <span><b>Engine:</b> ${escapeHtml(summary?.modelUsed || 'Minomeet On-Device AI')}</span>
+          ${summary?.attendees && summary.attendees.length > 0 ? ` &bull; <span><b>Attendees:</b> ${escapeHtml(summary.attendees.join(', '))}</span>` : ''}
+        </div>
+
+        ${summary?.summary ? `<h2>Executive Summary</h2><p>${escapeHtml(summary.summary)}</p>` : ''}
+
+        ${summary?.keyDecisions && summary.keyDecisions.length > 0 ? `
+          <h2>Key Decisions</h2>
+          <ul>${summary.keyDecisions.map(d => `<li>${escapeHtml(d)}</li>`).join('')}</ul>
+        ` : ''}
+
+        ${summary?.actionItems && summary.actionItems.length > 0 ? `
+          <h2>Action Items &amp; Ownership</h2>
+          <table>
+            <thead><tr><th style="width:25%">Owner</th><th style="width:40%">Task</th><th style="width:20%">Due Date</th><th style="width:15%">Status</th></tr></thead>
+            <tbody>
+              ${summary.actionItems.map(a => `<tr><td><b>${escapeHtml(a.owner)}</b></td><td>${escapeHtml(a.task)}</td><td>${escapeHtml(a.due)}</td><td>${a.completed ? '✅ Done' : '⏳ Pending'}</td></tr>`).join('')}
+            </tbody>
+          </table>
+        ` : ''}
+
+        ${summary?.discussionHighlights && summary.discussionHighlights.length > 0 ? `
+          <h2>Discussion Highlights</h2>
+          <ul>${summary.discussionHighlights.map(h => `<li>${escapeHtml(h)}</li>`).join('')}</ul>
+        ` : ''}
+
+        ${summary?.nextSteps && summary.nextSteps.length > 0 ? `
+          <h2>Immediate Next Steps</h2>
+          <ul>${summary.nextSteps.map(s => `<li>${escapeHtml(s)}</li>`).join('')}</ul>
+        ` : ''}
+
+        <div class="footer">Generated with Minomeet AI &bull; 100% On-Device Meeting Intelligence</div>
+      </body>
+      </html>
+    `;
+  },
+
+  /**
+   * Saves content to Downloads directory (browser download fallback in web).
+   */
+  async saveToDownloads(filename: string, content: string, mimeType: string = 'text/plain'): Promise<string> {
+    this.downloadFile(content, filename, mimeType);
+    return `~/Downloads/${filename}`;
+  },
+
+  /**
+   * Exports meeting as Word Document (.doc).
+   */
+  async exportToWord(meeting: Meeting): Promise<string> {
+    const filename = `${sanitizeFilename(meeting.title)}_MOM.doc`;
+    const docHtml = this.toWordDoc(meeting);
+    return await this.saveToDownloads(filename, docHtml, 'application/msword');
+  },
+
+  /**
+   * Exports meeting as Markdown (.md).
+   */
+  async exportToMarkdown(meeting: Meeting): Promise<string> {
+    const filename = `${sanitizeFilename(meeting.title)}_MOM.md`;
+    const md = this.toMarkdown(meeting);
+    return await this.saveToDownloads(filename, md, 'text/markdown');
+  },
+
+  /**
+   * Exports meeting as a printable HTML document and opens print dialog for Save as PDF.
+   */
+  async exportToPDF(meeting: Meeting): Promise<string> {
+    const filename = `${sanitizeFilename(meeting.title)}_Report.html`;
+    const html = this.getPrintableHtml(meeting);
+    const savedPath = await this.saveToDownloads(filename, html, 'text/html');
+
+    // Trigger reliable hidden iframe print dialog
+    this.printMeeting(meeting);
+
+    return savedPath;
+  },
+
+  /**
+   * Downloads content as a file via temporary anchor element.
    */
   downloadFile(content: string, filename: string, mimeType: string) {
     const blob = new Blob([content], { type: mimeType });
@@ -67,7 +198,6 @@ export const exportService = {
       await navigator.clipboard.writeText(text);
       return true;
     } catch (e) {
-      console.warn('Clipboard write failed, fallback to execCommand:', e);
       const textArea = document.createElement('textarea');
       textArea.value = text;
       document.body.appendChild(textArea);
@@ -79,156 +209,120 @@ export const exportService = {
   },
 
   /**
-   * Opens clean printable page for browser print / Save as PDF.
+   * Opens clean printable page for browser print / Save as PDF using an invisible iframe.
+   * Strictly avoids window.open.
    */
   printMeeting(meeting: Meeting) {
-    const summary = meeting.summary;
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+    const html = this.getPrintableHtml(meeting);
+    
+    // Remove any existing print iframe
+    const oldFrame = document.getElementById('minomeet-print-frame');
+    if (oldFrame && oldFrame.parentNode) {
+      oldFrame.parentNode.removeChild(oldFrame);
+    }
 
-    const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>${meeting.title} — Minomeet MOM</title>
-        <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; color: #111827; line-height: 1.6; }
-          h1 { font-size: 24px; margin-bottom: 4px; color: #1e3a8a; }
-          .meta { font-size: 13px; color: #6b7280; margin-bottom: 24px; border-bottom: 1px solid #e5e7eb; padding-bottom: 12px; }
-          h2 { font-size: 16px; margin: 20px 0 8px; color: #111827; border-bottom: 1px solid #f3f4f6; padding-bottom: 4px; }
-          p { font-size: 14px; margin: 6px 0; }
-          ul { margin: 6px 0; padding-left: 20px; font-size: 14px; }
-          li { margin-bottom: 4px; }
-          table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
-          th, td { border: 1px solid #e5e7eb; padding: 8px 10px; text-align: left; }
-          th { background: #f8fafc; font-weight: 600; }
-          .footer { margin-top: 40px; font-size: 11px; color: #9aa2af; text-align: center; }
-        </style>
-      </head>
-      <body>
-        <h1>${meeting.title}</h1>
-        <div class="meta">
-          <span><b>Date:</b> ${summary?.date || new Date(meeting.createdAt).toLocaleDateString()}</span> &bull;
-          <span><b>Duration:</b> ${meeting.duration}</span> &bull;
-          <span><b>Model:</b> ${summary?.modelUsed || 'Minomeet On-Device AI'}</span>
-        </div>
+    const iframe = document.createElement('iframe');
+    iframe.id = 'minomeet-print-frame';
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    iframe.style.visibility = 'hidden';
+    document.body.appendChild(iframe);
 
-        ${summary?.summary ? `<h2>Executive Summary</h2><p>${summary.summary}</p>` : ''}
+    const doc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (doc) {
+      doc.open();
+      doc.write(html);
+      doc.close();
 
-        ${summary?.keyDecisions && summary.keyDecisions.length > 0 ? `
-          <h2>Key Decisions</h2>
-          <ul>${summary.keyDecisions.map(d => `<li>${d}</li>`).join('')}</ul>
-        ` : ''}
-
-        ${summary?.actionItems && summary.actionItems.length > 0 ? `
-          <h2>Action Items</h2>
-          <table>
-            <thead><tr><th>Owner</th><th>Task</th><th>Due Date</th><th>Notes</th></tr></thead>
-            <tbody>
-              ${summary.actionItems.map(a => `<tr><td>${a.owner}</td><td>${a.task}</td><td>${a.due}</td><td>${a.notes}</td></tr>`).join('')}
-            </tbody>
-          </table>
-        ` : ''}
-
-        ${summary?.discussionHighlights && summary.discussionHighlights.length > 0 ? `
-          <h2>Discussion Highlights</h2>
-          <ul>${summary.discussionHighlights.map(h => `<li>${h}</li>`).join('')}</ul>
-        ` : ''}
-
-        <div class="footer">Generated with Minomeet AI — Privacy-First Meeting Intelligence</div>
-      </body>
-      </html>
-    `;
-
-    printWindow.document.write(html);
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => {
-      printWindow.print();
-    }, 250);
+      setTimeout(() => {
+        try {
+          iframe.contentWindow?.focus();
+          iframe.contentWindow?.print();
+        } catch (e) {
+          window.print();
+        }
+        setTimeout(() => {
+          try {
+            if (iframe && iframe.parentNode) {
+              iframe.parentNode.removeChild(iframe);
+            }
+          } catch (e) {}
+        }, 4000);
+      }, 350);
+    } else {
+      window.print();
+    }
   },
 
-  /**
-   * Exports meeting as a downloadable PDF using browser's Save as PDF.
-   */
-  exportToPDF(meeting: Meeting) {
+  getPrintableHtml(meeting: Meeting): string {
     const summary = meeting.summary;
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-
-    const html = `
+    return `
       <!DOCTYPE html>
       <html>
       <head>
-        <title>${meeting.title} — Minomeet PDF</title>
+        <title>${escapeHtml(meeting.title)} — Minomeet MOM</title>
         <style>
           @page { margin: 20mm 15mm; size: A4; }
-          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 0; color: #111827; line-height: 1.7; font-size: 13px; }
-          h1 { font-size: 22px; margin-bottom: 2px; color: #000; font-weight: 800; }
-          .meta { font-size: 12px; color: #6b7280; margin-bottom: 20px; border-bottom: 2px solid #e5e5e5; padding-bottom: 10px; }
-          h2 { font-size: 15px; margin: 18px 0 6px; color: #000; border-bottom: 1px solid #f3f4f6; padding-bottom: 4px; font-weight: 700; }
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 25px; color: #111827; line-height: 1.6; font-size: 13px; }
+          h1 { font-size: 22px; margin-bottom: 2px; color: #1e3a8a; font-weight: 800; }
+          .meta { font-size: 12px; color: #6b7280; margin-bottom: 20px; border-bottom: 2px solid #2563eb; padding-bottom: 10px; }
+          h2 { font-size: 15px; margin: 18px 0 6px; color: #111827; border-bottom: 1px solid #f3f4f6; padding-bottom: 4px; font-weight: 700; }
           p { font-size: 13px; margin: 4px 0; }
-          ul { margin: 6px 0; padding-left: 18px; }
+          ul { margin: 6px 0; padding-left: 20px; font-size: 13px; }
           li { margin-bottom: 3px; }
-          table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; }
-          th, td { border: 1px solid #e5e5e5; padding: 7px 9px; text-align: left; }
-          th { background: #fafafa; font-weight: 700; }
-          .transcript-line { margin-bottom: 6px; font-size: 12px; color: #374151; }
-          .transcript-line .time { color: #9ca3af; font-size: 11px; margin-right: 6px; }
-          .transcript-line .speaker { font-weight: 700; color: #111; }
-          .footer { margin-top: 30px; font-size: 10px; color: #9ca3af; text-align: center; border-top: 1px solid #e5e5e5; padding-top: 8px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 8px; margin-bottom: 12px; font-size: 12px; }
+          th, td { border: 1px solid #e5e7eb; padding: 8px 10px; text-align: left; }
+          th { background: #f8fafc; font-weight: 700; }
+          .footer { margin-top: 35px; font-size: 10px; color: #9ca3af; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 10px; }
           .badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
           .badge-done { background: #f0fdf4; color: #15803d; }
           .badge-pending { background: #fefce8; color: #a16207; }
         </style>
       </head>
       <body>
-        <h1>${meeting.title}</h1>
+        <h1>${escapeHtml(meeting.title)}</h1>
         <div class="meta">
-          <b>Date:</b> ${summary?.date || new Date(meeting.createdAt).toLocaleDateString()} &bull;
-          <b>Duration:</b> ${meeting.duration} &bull;
-          <b>Model:</b> ${summary?.modelUsed || 'Minomeet On-Device AI'}
-          ${summary?.attendees && summary.attendees.length > 0 ? `&bull; <b>Attendees:</b> ${summary.attendees.join(', ')}` : ''}
+          <span><b>Date:</b> ${escapeHtml(summary?.date || new Date(meeting.createdAt).toLocaleDateString())}</span> &bull;
+          <span><b>Duration:</b> ${escapeHtml(meeting.duration)}</span> &bull;
+          <span><b>Model:</b> ${escapeHtml(summary?.modelUsed || 'Minomeet On-Device AI')}</span>
+          ${summary?.attendees && summary.attendees.length > 0 ? ` &bull; <span><b>Attendees:</b> ${escapeHtml(summary.attendees.join(', '))}</span>` : ''}
         </div>
 
-        ${summary?.summary ? `<h2>Executive Summary</h2><p>${summary.summary}</p>` : ''}
+        ${summary?.summary ? `<h2>Executive Summary</h2><p>${escapeHtml(summary.summary)}</p>` : ''}
 
         ${summary?.keyDecisions && summary.keyDecisions.length > 0 ? `
           <h2>Key Decisions</h2>
-          <ul>${summary.keyDecisions.map(d => `<li>${d}</li>`).join('')}</ul>
+          <ul>${summary.keyDecisions.map(d => `<li>${escapeHtml(d)}</li>`).join('')}</ul>
         ` : ''}
 
         ${summary?.actionItems && summary.actionItems.length > 0 ? `
-          <h2>Action Items</h2>
+          <h2>Action Items &amp; Ownership</h2>
           <table>
-            <thead><tr><th>Owner</th><th>Task</th><th>Due</th><th>Notes</th><th>Status</th></tr></thead>
-            <tbody>${summary.actionItems.map(a => `<tr><td>${a.owner}</td><td>${a.task}</td><td>${a.due}</td><td>${a.notes}</td><td><span class="badge ${a.completed ? 'badge-done' : 'badge-pending'}">${a.completed ? '✓ Done' : '⏳ Pending'}</span></td></tr>`).join('')}</tbody>
+            <thead><tr><th>Owner</th><th>Task</th><th>Due Date</th><th>Status</th></tr></thead>
+            <tbody>
+              ${summary.actionItems.map(a => `<tr><td><b>${escapeHtml(a.owner)}</b></td><td>${escapeHtml(a.task)}</td><td>${escapeHtml(a.due)}</td><td><span class="badge ${a.completed ? 'badge-done' : 'badge-pending'}">${a.completed ? '✓ Done' : '⏳ Pending'}</span></td></tr>`).join('')}
+            </tbody>
           </table>
         ` : ''}
 
         ${summary?.discussionHighlights && summary.discussionHighlights.length > 0 ? `
           <h2>Discussion Highlights</h2>
-          <ul>${summary.discussionHighlights.map(h => `<li>${h}</li>`).join('')}</ul>
+          <ul>${summary.discussionHighlights.map(h => `<li>${escapeHtml(h)}</li>`).join('')}</ul>
         ` : ''}
 
         ${summary?.nextSteps && summary.nextSteps.length > 0 ? `
-          <h2>Next Steps</h2>
-          <ul>${summary.nextSteps.map(s => `<li>${s}</li>`).join('')}</ul>
+          <h2>Immediate Next Steps</h2>
+          <ul>${summary.nextSteps.map(s => `<li>${escapeHtml(s)}</li>`).join('')}</ul>
         ` : ''}
 
-        ${meeting.transcript && meeting.transcript.length > 0 ? `
-          <h2>Full Transcript</h2>
-          <div>${meeting.transcript.map(t => `<div class="transcript-line"><span class="time">[${t.time}]</span>${t.speaker ? `<span class="speaker">${t.speaker}:</span> ` : ''}${t.text}</div>`).join('')}</div>
-        ` : ''}
-
-        <div class="footer">Generated with Minomeet AI &bull; ${new Date().toLocaleDateString()}</div>
+        <div class="footer">Generated with Minomeet AI &bull; 100% On-Device Meeting Intelligence</div>
       </body>
       </html>
     `;
-
-    printWindow.document.write(html);
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => { printWindow.print(); }, 300);
   }
 };

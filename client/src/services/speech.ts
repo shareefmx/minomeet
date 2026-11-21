@@ -1,4 +1,6 @@
-import { TranscriptLine } from '../types/meeting.js';
+import { TranscriptLine, AudioSourceType, AudioCaptureMode, AUDIO_CAPTURE_MODES } from '../types/meeting.js';
+
+export type { AudioSourceType };
 
 const SAMPLE_DIALOGUE: { speaker: string; text: string }[] = [
   { speaker: 'Dev', text: "Alright, let's start with the scanner updates — we swapped our legacy static scanner for the new Argus engine last week." },
@@ -11,7 +13,6 @@ const SAMPLE_DIALOGUE: { speaker: string; text: string }[] = [
   { speaker: 'Dev', text: "Will do. I'll add that ticket right after this sync." }
 ];
 
-export type AudioSourceType = 'mic' | 'system' | 'mixed';
 
 export interface CaptureOptions {
   sourceType?: AudioSourceType;
@@ -32,6 +33,11 @@ export class SpeechCaptureService {
   private audioContext: AudioContext | null = null;
   private micSourceNode: MediaStreamAudioSourceNode | null = null;
   private sysSourceNode: MediaStreamAudioSourceNode | null = null;
+  private micGainNode: GainNode | null = null;
+  private sysGainNode: GainNode | null = null;
+  private destinationNode: MediaStreamAudioDestinationNode | null = null;
+  private mergerNode: ChannelMergerNode | null = null;
+  private lastCaptureOptions?: CaptureOptions;
   private processorNode: ScriptProcessorNode | null = null;
   private ws: WebSocket | null = null;
   private recognition: any = null;
@@ -39,7 +45,7 @@ export class SpeechCaptureService {
   private simIndex = 0;
   private simInterval: any = null;
   private audioChunks: Blob[] = [];
-  private activeSourceType: AudioSourceType = 'mixed';
+  private activeSourceType: AudioCaptureMode = AUDIO_CAPTURE_MODES.MIXED;
   private hasSystemAudioTrack = false;
   private seenTexts = new Set<string>();
 
@@ -59,8 +65,53 @@ export class SpeechCaptureService {
     return this.hasSystemAudioTrack;
   }
 
-  public setAudioSource(sourceType: AudioSourceType) {
+  public applyCaptureRouting(mode: AudioSourceType) {
+    this.activeSourceType = mode;
+    const isMic = mode === 'mixed' || mode === 'mic';
+    const isSys = mode === 'mixed' || mode === 'system';
+
+    const now = this.audioContext ? this.audioContext.currentTime : 0;
+    const rampTime = 0.05;
+
+    if (this.micGainNode && this.audioContext) {
+      try {
+        this.micGainNode.gain.cancelScheduledValues(now);
+        this.micGainNode.gain.linearRampToValueAtTime(isMic ? 1.0 : 0.0, now + rampTime);
+      } catch (_) {
+        this.micGainNode.gain.value = isMic ? 1.0 : 0.0;
+      }
+    }
+    if (this.sysGainNode && this.audioContext) {
+      try {
+        this.sysGainNode.gain.cancelScheduledValues(now);
+        this.sysGainNode.gain.linearRampToValueAtTime(isSys ? 1.0 : 0.0, now + rampTime);
+      } catch (_) {
+        this.sysGainNode.gain.value = isSys ? 1.0 : 0.0;
+      }
+    }
+
+    if (this.micStream) {
+      this.micStream.getAudioTracks().forEach(t => { t.enabled = isMic; });
+    }
+    if (this.displayStream) {
+      this.displayStream.getAudioTracks().forEach(t => { t.enabled = isSys; });
+    }
+  }
+
+  public async setAudioSource(sourceType: AudioSourceType): Promise<void> {
     this.activeSourceType = sourceType;
+    this.applyCaptureRouting(sourceType);
+
+    if ((sourceType === 'mixed' || sourceType === 'system') && !this.hasSystemAudioTrack) {
+      await this.attachSystemAudioTab();
+      this.applyCaptureRouting(sourceType);
+    }
+
+    if ((sourceType === 'mixed' || sourceType === 'mic') && (!this.micStream || this.micStream.getAudioTracks().length === 0)) {
+      await this.attachMicrophone();
+      this.applyCaptureRouting(sourceType);
+    }
+
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify({
         type: 'metadata',
@@ -141,28 +192,30 @@ export class SpeechCaptureService {
         await this.audioContext.resume();
       }
 
-      // Obtain microphone with configured constraints and device ID
-      try {
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-          const micConstraints: MediaTrackConstraints = {
-            echoCancellation: options?.echoCancellation !== false,
-            noiseSuppression: options?.noiseSuppression !== false,
-            autoGainControl: options?.autoGainControl !== false
-          };
-          if (options?.deviceId && options.deviceId !== 'default') {
-            micConstraints.deviceId = { exact: options.deviceId };
-          }
+      // Obtain microphone if in mixed or mic mode
+      if (this.activeSourceType === 'mixed' || this.activeSourceType === 'mic') {
+        try {
+          if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            const micConstraints: MediaTrackConstraints = {
+              echoCancellation: options?.echoCancellation !== false,
+              noiseSuppression: options?.noiseSuppression !== false,
+              autoGainControl: options?.autoGainControl !== false
+            };
+            if (options?.deviceId && options.deviceId !== 'default') {
+              micConstraints.deviceId = { exact: options.deviceId };
+            }
 
-          this.micStream = await navigator.mediaDevices.getUserMedia({
-            audio: micConstraints
-          });
+            this.micStream = await navigator.mediaDevices.getUserMedia({
+              audio: micConstraints
+            });
+          }
+        } catch (micErr) {
+          console.warn('Microphone permission notice:', micErr);
         }
-      } catch (micErr) {
-        console.warn('Microphone permission notice:', micErr);
       }
 
       // Obtain System Audio Capture (Chrome Tab) if in mixed or system mode
-      if (sourceType === 'mixed' || sourceType === 'system') {
+      if (this.activeSourceType === 'mixed' || this.activeSourceType === 'system') {
         try {
           if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
             this.displayStream = await navigator.mediaDevices.getDisplayMedia({
@@ -183,6 +236,7 @@ export class SpeechCaptureService {
               this.hasSystemAudioTrack = true;
               sysTracks[0].onended = () => {
                 this.hasSystemAudioTrack = false;
+                if (this.sysGainNode) this.sysGainNode.gain.value = 0.0;
               };
             }
           }
@@ -193,13 +247,20 @@ export class SpeechCaptureService {
 
       // Mix Streams into AudioContext Destination & PCM Processor
       if (this.audioContext) {
-        const destination = this.audioContext.createMediaStreamDestination();
-        const merger = this.audioContext.createChannelMerger(2);
+        this.destinationNode = this.audioContext.createMediaStreamDestination();
+        this.mergerNode = this.audioContext.createChannelMerger(2);
+        this.micGainNode = this.audioContext.createGain();
+        this.sysGainNode = this.audioContext.createGain();
+
+        this.micGainNode.connect(this.destinationNode);
+        this.micGainNode.connect(this.mergerNode, 0, 0);
+
+        this.sysGainNode.connect(this.destinationNode);
+        this.sysGainNode.connect(this.mergerNode, 0, 1);
 
         if (this.micStream && this.micStream.getAudioTracks().length > 0) {
           this.micSourceNode = this.audioContext.createMediaStreamSource(this.micStream);
-          this.micSourceNode.connect(destination);
-          this.micSourceNode.connect(merger, 0, 0);
+          this.micSourceNode.connect(this.micGainNode);
           streamObtained = true;
         }
 
@@ -207,18 +268,25 @@ export class SpeechCaptureService {
           this.sysSourceNode = this.audioContext.createMediaStreamSource(
             new MediaStream(this.displayStream.getAudioTracks())
           );
-          this.sysSourceNode.connect(destination);
-          this.sysSourceNode.connect(merger, 0, 1);
+          this.sysSourceNode.connect(this.sysGainNode);
           streamObtained = true;
         }
 
+        this.applyCaptureRouting(this.activeSourceType);
+
         if (streamObtained) {
-          this.audioStream = destination.stream;
+          this.audioStream = this.destinationNode.stream;
 
           let lastTelemetryTime = Date.now();
 
           // ScriptProcessorNode for real-time 16kHz PCM streaming over WebSocket
           this.processorNode = this.audioContext.createScriptProcessor(4096, 2, 1);
+          this.mergerNode.connect(this.processorNode);
+          const zeroGain = this.audioContext.createGain();
+          zeroGain.gain.value = 0;
+          this.processorNode.connect(zeroGain);
+          zeroGain.connect(this.audioContext.destination);
+
           this.processorNode.onaudioprocess = (e) => {
             const micInput = e.inputBuffer.getChannelData(0);
             const sysInput = e.inputBuffer.numberOfChannels > 1 ? e.inputBuffer.getChannelData(1) : micInput;
@@ -272,9 +340,6 @@ export class SpeechCaptureService {
               this.ws.send(pcm16.buffer);
             }
           };
-
-          merger.connect(this.processorNode);
-          this.processorNode.connect(this.audioContext.destination);
         }
       }
 
@@ -419,22 +484,57 @@ export class SpeechCaptureService {
         this.hasSystemAudioTrack = true;
         this.displayStream = stream;
 
-        if (this.audioContext && this.audioStream) {
-          const sysSource = this.audioContext.createMediaStreamSource(new MediaStream(tracks));
-          const destination = this.audioContext.createMediaStreamDestination();
-          if (this.micSourceNode) this.micSourceNode.connect(destination);
-          sysSource.connect(destination);
-          this.sysSourceNode = sysSource;
-          this.audioStream = destination.stream;
+        if (this.audioContext && this.sysGainNode) {
+          if (this.sysSourceNode) {
+            try { this.sysSourceNode.disconnect(); } catch (_) {}
+          }
+          this.sysSourceNode = this.audioContext.createMediaStreamSource(new MediaStream(tracks));
+          this.sysSourceNode.connect(this.sysGainNode);
+          this.applyCaptureRouting(this.activeSourceType);
         }
 
         tracks[0].onended = () => {
           this.hasSystemAudioTrack = false;
+          if (this.sysGainNode && this.audioContext) {
+            this.sysGainNode.gain.value = 0.0;
+          }
         };
         return true;
       }
       return false;
     } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Dynamically links the primary microphone during an active recording.
+   */
+  public async attachMicrophone(): Promise<boolean> {
+    try {
+      if (!navigator.mediaDevices?.getUserMedia) return false;
+
+      const micConstraints: MediaTrackConstraints = {
+        echoCancellation: this.lastCaptureOptions?.echoCancellation !== false,
+        noiseSuppression: this.lastCaptureOptions?.noiseSuppression !== false,
+        autoGainControl: this.lastCaptureOptions?.autoGainControl !== false
+      };
+      if (this.lastCaptureOptions?.deviceId && this.lastCaptureOptions.deviceId !== 'default') {
+        micConstraints.deviceId = { exact: this.lastCaptureOptions.deviceId };
+      }
+
+      this.micStream = await navigator.mediaDevices.getUserMedia({ audio: micConstraints });
+      if (this.audioContext && this.micGainNode) {
+        if (this.micSourceNode) {
+          try { this.micSourceNode.disconnect(); } catch (_) {}
+        }
+        this.micSourceNode = this.audioContext.createMediaStreamSource(this.micStream);
+        this.micSourceNode.connect(this.micGainNode);
+        this.applyCaptureRouting(this.activeSourceType);
+      }
+      return true;
+    } catch (e) {
+      console.warn('attachMicrophone warning:', e);
       return false;
     }
   }
@@ -469,7 +569,7 @@ export class SpeechCaptureService {
     }, 1000);
   }
 
-  public stopCapture(preferredFormat?: string): Blob | null {
+  public async stopCapture(preferredFormat?: string): Promise<Blob | null> {
     if (this.simInterval) {
       clearInterval(this.simInterval);
       this.simInterval = null;
@@ -502,10 +602,17 @@ export class SpeechCaptureService {
       this.recognition = null;
     }
 
+    let recordedMime = this.mediaRecorder?.mimeType || '';
     if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
-      try {
-        this.mediaRecorder.stop();
-      } catch (_) {}
+      await new Promise<void>((resolve) => {
+        if (!this.mediaRecorder) return resolve();
+        this.mediaRecorder.onstop = () => resolve();
+        try {
+          this.mediaRecorder.stop();
+        } catch (_) {
+          resolve();
+        }
+      });
     }
 
     if (this.micStream) {
@@ -523,6 +630,31 @@ export class SpeechCaptureService {
       this.audioStream = null;
     }
 
+    if (this.micSourceNode) {
+      try { this.micSourceNode.disconnect(); } catch (_) {}
+      this.micSourceNode = null;
+    }
+    if (this.sysSourceNode) {
+      try { this.sysSourceNode.disconnect(); } catch (_) {}
+      this.sysSourceNode = null;
+    }
+    if (this.micGainNode) {
+      try { this.micGainNode.disconnect(); } catch (_) {}
+      this.micGainNode = null;
+    }
+    if (this.sysGainNode) {
+      try { this.sysGainNode.disconnect(); } catch (_) {}
+      this.sysGainNode = null;
+    }
+    if (this.destinationNode) {
+      try { this.destinationNode.disconnect(); } catch (_) {}
+      this.destinationNode = null;
+    }
+    if (this.mergerNode) {
+      try { this.mergerNode.disconnect(); } catch (_) {}
+      this.mergerNode = null;
+    }
+
     if (this.audioContext && this.audioContext.state !== 'closed') {
       try {
         this.audioContext.close();
@@ -530,10 +662,13 @@ export class SpeechCaptureService {
       this.audioContext = null;
     }
 
-    let mime = 'audio/webm';
-    const fmt = (preferredFormat || '').toUpperCase();
-    if (fmt === 'MP4') mime = 'audio/mp4';
-    else if (fmt === 'WAV') mime = 'audio/wav';
+    // Keep the real MIME type from MediaRecorder
+    let mime = recordedMime || 'audio/webm';
+    if (!recordedMime) {
+      const fmt = (preferredFormat || '').toUpperCase();
+      if (fmt === 'MP4') mime = 'audio/mp4';
+      else if (fmt === 'WAV') mime = 'audio/wav';
+    }
 
     return this.audioChunks.length > 0 ? new Blob(this.audioChunks, { type: mime }) : null;
   }

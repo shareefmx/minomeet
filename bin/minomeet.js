@@ -89,7 +89,7 @@ function startServices() {
 
   serverProc.stdout.on('data', (data) => {
     const text = data.toString();
-    if (text.includes('Minomeet Server running') || text.includes('Server running on port')) {
+    if (text.includes('Server running') || text.includes('Minomeet AI Server') || text.includes('Minomeet Server running') || text.includes('Server running on port')) {
       console.log(`\x1b[32m✔  API Backend Service Active (Port 5001)\x1b[0m`);
     }
   });
